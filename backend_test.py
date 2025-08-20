@@ -60,329 +60,356 @@ class NetlyAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False, {}
 
-    def test_api_health(self):
-        """Test API health check"""
-        success, response = self.run_test(
-            "API Health Check",
-            "GET",
-            "",
-            200
-        )
-        return success
+    def test_root_endpoint(self):
+        """Test the root API endpoint"""
+        return self.run_test("Root API Endpoint", "GET", "", 200)
 
-    def test_create_user(self, name: str, email: str, rating: float = 4.0):
-        """Test user creation"""
-        user_data = {
-            "name": name,
-            "email": email,
-            "phone": "+1234567890",
-            "rating_level": rating
+    def test_create_league_manager(self):
+        """Create a League Manager user"""
+        manager_data = {
+            "name": "Test League Manager",
+            "email": f"manager_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-0101",
+            "rating_level": 4.5,
+            "role": "League Manager"
         }
         
         success, response = self.run_test(
-            f"Create User - {name}",
+            "Create League Manager",
             "POST",
             "users",
             200,
-            data=user_data
+            data=manager_data
         )
         
         if success and 'id' in response:
-            self.created_resources['users'].append(response)
-            return response['id']
-        return None
+            self.league_manager_id = response['id']
+            print(f"   Created League Manager ID: {self.league_manager_id}")
+        
+        return success
+
+    def test_create_player(self):
+        """Create a Player user"""
+        player_data = {
+            "name": "Test Player",
+            "email": f"player_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-0102",
+            "rating_level": 4.0,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Player",
+            "POST",
+            "users",
+            200,
+            data=player_data
+        )
+        
+        if success and 'id' in response:
+            self.player_id = response['id']
+            print(f"   Created Player ID: {self.player_id}")
+        
+        return success
 
     def test_get_users(self):
         """Test getting all users"""
-        success, response = self.run_test(
-            "Get All Users",
-            "GET",
-            "users",
-            200
-        )
-        return success, response
+        return self.run_test("Get All Users", "GET", "users", 200)
 
-    def test_get_user_by_id(self, user_id: str):
+    def test_get_user_by_id(self):
         """Test getting user by ID"""
-        success, response = self.run_test(
-            f"Get User by ID - {user_id}",
+        if not self.league_manager_id:
+            print("❌ Skipping - No League Manager ID available")
+            return False
+            
+        return self.run_test(
+            "Get User by ID",
             "GET",
-            f"users/{user_id}",
+            f"users/{self.league_manager_id}",
             200
         )
-        return success, response
 
-    def test_create_league(self, name: str, region: str, level: str, format: str = "Doubles"):
-        """Test league creation"""
-        league_data = {
-            "name": name,
-            "region": region,
-            "level": level,
-            "format": format,
-            "surface": "Hard Court",
-            "rules_md": "Standard league rules apply"
-        }
-        
-        success, response = self.run_test(
-            f"Create League - {name}",
-            "POST",
-            "leagues",
-            200,
-            data=league_data
-        )
-        
-        if success and 'id' in response:
-            self.created_resources['leagues'].append(response)
-            return response['id']
-        return None
+    def test_create_main_season(self):
+        """Test creating a main season (League Manager only)"""
+        if not self.league_manager_id:
+            print("❌ Skipping - No League Manager ID available")
+            return False
 
-    def test_get_leagues(self):
-        """Test getting all leagues"""
-        success, response = self.run_test(
-            "Get All Leagues",
-            "GET",
-            "leagues",
-            200
-        )
-        return success, response
-
-    def test_create_season(self, league_id: str, name: str):
-        """Test season creation"""
-        start_date = date.today()
-        end_date = start_date + timedelta(weeks=9)
-        
         season_data = {
-            "league_id": league_id,
-            "name": name,
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
-            "weeks": 9,
-            "max_players": 36
+            "name": "Test Season 14",
+            "description": "Test season for API validation",
+            "start_date": "2024-09-01",
+            "end_date": "2024-12-31"
         }
         
         success, response = self.run_test(
-            f"Create Season - {name}",
+            "Create Main Season",
             "POST",
-            "seasons",
+            f"main-seasons",
             200,
-            data=season_data
+            data=season_data,
+            params={"created_by": self.league_manager_id}
         )
         
         if success and 'id' in response:
-            self.created_resources['seasons'].append(response)
-            return response['id']
-        return None
+            self.main_season_id = response['id']
+            print(f"   Created Main Season ID: {self.main_season_id}")
+        
+        return success
 
-    def test_get_seasons(self):
-        """Test getting all seasons"""
-        success, response = self.run_test(
-            "Get All Seasons",
+    def test_get_main_seasons(self):
+        """Test getting all main seasons"""
+        return self.run_test("Get All Main Seasons", "GET", "main-seasons", 200)
+
+    def test_get_user_main_seasons(self):
+        """Test getting user's main seasons"""
+        if not self.league_manager_id:
+            print("❌ Skipping - No League Manager ID available")
+            return False
+            
+        return self.run_test(
+            "Get User Main Seasons",
             "GET",
-            "seasons",
+            f"users/{self.league_manager_id}/main-seasons",
             200
         )
-        return success, response
 
-    def test_join_season(self, season_id: str, user_id: str):
-        """Test joining a season"""
-        success, response = self.run_test(
-            f"Join Season - User {user_id}",
-            "POST",
-            f"seasons/{season_id}/join?user_id={user_id}",
-            200
-        )
-        return success, response
+    def test_create_format_tier(self):
+        """Test creating a format tier"""
+        if not self.main_season_id:
+            print("❌ Skipping - No Main Season ID available")
+            return False
 
-    def test_get_season_players(self, season_id: str):
-        """Test getting season players"""
-        success, response = self.run_test(
-            f"Get Season Players - {season_id}",
-            "GET",
-            f"seasons/{season_id}/players",
-            200
-        )
-        return success, response
-
-    def test_set_availability(self, season_id: str, user_id: str, week_number: int, status: str = "Yes"):
-        """Test setting player availability"""
-        availability_data = {
-            "season_id": season_id,
-            "week_number": week_number,
-            "status": status,
-            "note": "Available for matches"
+        format_data = {
+            "main_season_id": self.main_season_id,
+            "name": "Singles",
+            "description": "Singles format for test season"
         }
         
         success, response = self.run_test(
-            f"Set Availability - User {user_id}, Week {week_number}",
+            "Create Format Tier",
             "POST",
-            f"availability?user_id={user_id}",
+            "format-tiers",
             200,
-            data=availability_data
-        )
-        return success, response
-
-    def test_get_week_availability(self, season_id: str, week_number: int):
-        """Test getting week availability"""
-        success, response = self.run_test(
-            f"Get Week Availability - Season {season_id}, Week {week_number}",
-            "GET",
-            f"seasons/{season_id}/availability/{week_number}",
-            200
-        )
-        return success, response
-
-    def test_generate_matches(self, season_id: str, week_number: int):
-        """Test generating matches for a week"""
-        success, response = self.run_test(
-            f"Generate Matches - Season {season_id}, Week {week_number}",
-            "POST",
-            f"seasons/{season_id}/generate-matches/{week_number}",
-            200
+            data=format_data
         )
         
-        if success and 'matches' in response:
-            self.created_resources['matches'].extend(response['matches'])
-        return success, response
-
-    def test_get_matches(self, season_id: str, week_number: int = None):
-        """Test getting matches"""
-        endpoint = f"seasons/{season_id}/matches"
-        params = {"week_number": week_number} if week_number else None
+        if success and 'id' in response:
+            self.format_tier_id = response['id']
+            print(f"   Created Format Tier ID: {self.format_tier_id}")
         
-        success, response = self.run_test(
-            f"Get Matches - Season {season_id}" + (f", Week {week_number}" if week_number else ""),
-            "GET",
-            endpoint,
-            200,
-            params=params
-        )
-        return success, response
+        return success
 
-    def test_submit_scores(self, match_id: str, scores: list):
-        """Test submitting match scores"""
-        success, response = self.run_test(
-            f"Submit Scores - Match {match_id}",
-            "POST",
-            f"matches/{match_id}/submit-scores?submitted_by=test_user",
-            200,
-            data=scores
-        )
-        return success, response
-
-    def test_get_standings(self, season_id: str):
-        """Test getting season standings"""
-        success, response = self.run_test(
-            f"Get Standings - Season {season_id}",
+    def test_get_format_tiers(self):
+        """Test getting format tiers for a main season"""
+        if not self.main_season_id:
+            print("❌ Skipping - No Main Season ID available")
+            return False
+            
+        return self.run_test(
+            "Get Format Tiers",
             "GET",
-            f"seasons/{season_id}/standings",
+            f"main-seasons/{self.main_season_id}/format-tiers",
             200
         )
-        return success, response
+
+    def test_create_skill_tier(self):
+        """Test creating a skill tier"""
+        if not self.format_tier_id:
+            print("❌ Skipping - No Format Tier ID available")
+            return False
+
+        skill_data = {
+            "format_tier_id": self.format_tier_id,
+            "name": "4.0",
+            "min_rating": 3.5,
+            "max_rating": 4.5,
+            "max_players": 36,
+            "region": "Test Region",
+            "surface": "Hard Court"
+        }
+        
+        success, response = self.run_test(
+            "Create Skill Tier",
+            "POST",
+            "skill-tiers",
+            200,
+            data=skill_data
+        )
+        
+        if success and 'id' in response:
+            self.skill_tier_id = response['id']
+            self.join_code = response.get('join_code')
+            print(f"   Created Skill Tier ID: {self.skill_tier_id}")
+            print(f"   Generated Join Code: {self.join_code}")
+        
+        return success
+
+    def test_get_skill_tiers(self):
+        """Test getting skill tiers for a format tier"""
+        if not self.format_tier_id:
+            print("❌ Skipping - No Format Tier ID available")
+            return False
+            
+        return self.run_test(
+            "Get Skill Tiers",
+            "GET",
+            f"format-tiers/{self.format_tier_id}/skill-tiers",
+            200
+        )
+
+    def test_get_skill_tier_by_id(self):
+        """Test getting a specific skill tier"""
+        if not self.skill_tier_id:
+            print("❌ Skipping - No Skill Tier ID available")
+            return False
+            
+        return self.run_test(
+            "Get Skill Tier by ID",
+            "GET",
+            f"skill-tiers/{self.skill_tier_id}",
+            200
+        )
+
+    def test_join_by_code(self):
+        """Test player joining by code"""
+        if not self.player_id or not self.join_code:
+            print("❌ Skipping - No Player ID or Join Code available")
+            return False
+
+        join_data = {
+            "join_code": self.join_code
+        }
+        
+        success, response = self.run_test(
+            "Join by Code",
+            "POST",
+            f"join-by-code/{self.player_id}",
+            200,
+            data=join_data
+        )
+        
+        if success:
+            print(f"   Join Status: {response.get('status', 'Unknown')}")
+            print(f"   Message: {response.get('message', 'No message')}")
+        
+        return success
+
+    def test_get_user_joined_tiers(self):
+        """Test getting user's joined tiers"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+            
+        return self.run_test(
+            "Get User Joined Tiers",
+            "GET",
+            f"users/{self.player_id}/joined-tiers",
+            200
+        )
+
+    def test_get_user_standings(self):
+        """Test getting user's standings"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+            
+        return self.run_test(
+            "Get User Standings",
+            "GET",
+            f"users/{self.player_id}/standings",
+            200
+        )
+
+    def test_get_skill_tier_players(self):
+        """Test getting players in a skill tier"""
+        if not self.skill_tier_id:
+            print("❌ Skipping - No Skill Tier ID available")
+            return False
+            
+        return self.run_test(
+            "Get Skill Tier Players",
+            "GET",
+            f"skill-tiers/{self.skill_tier_id}/players",
+            200
+        )
+
+    def test_invalid_join_code(self):
+        """Test joining with invalid code"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+
+        join_data = {
+            "join_code": "INVALID"
+        }
+        
+        # This should return 404 for invalid code
+        return self.run_test(
+            "Join with Invalid Code",
+            "POST",
+            f"join-by-code/{self.player_id}",
+            404,
+            data=join_data
+        )
+
+    def test_unauthorized_season_creation(self):
+        """Test that players cannot create seasons"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+
+        season_data = {
+            "name": "Unauthorized Season",
+            "description": "This should fail",
+            "start_date": "2024-09-01",
+            "end_date": "2024-12-31"
+        }
+        
+        # This should return 403 for unauthorized access
+        return self.run_test(
+            "Unauthorized Season Creation",
+            "POST",
+            f"main-seasons",
+            403,
+            data=season_data,
+            params={"created_by": self.player_id}
+        )
 
     def run_complete_workflow_test(self):
-        """Test the complete user journey"""
+        """Test the complete 3-tier league workflow"""
         print("\n" + "="*60)
-        print("🚀 STARTING COMPLETE WORKFLOW TEST")
+        print("🚀 STARTING NETLY 3-TIER LEAGUE WORKFLOW TEST")
         print("="*60)
 
-        # 1. Test API Health
-        if not self.test_api_health():
-            print("❌ API Health check failed, stopping tests")
-            return False
-
-        # 2. Create test users
-        print("\n📝 Creating test users...")
-        user1_id = self.test_create_user("Alice Johnson", "alice@example.com", 4.2)
-        user2_id = self.test_create_user("Bob Smith", "bob@example.com", 3.8)
-        user3_id = self.test_create_user("Carol Davis", "carol@example.com", 4.0)
-        user4_id = self.test_create_user("David Wilson", "david@example.com", 4.1)
-
-        if not all([user1_id, user2_id, user3_id, user4_id]):
-            print("❌ Failed to create required users")
-            return False
-
-        # 3. Test getting users
-        self.test_get_users()
-        self.test_get_user_by_id(user1_id)
-
-        # 4. Create a league
-        print("\n🏆 Creating test league...")
-        league_id = self.test_create_league(
-            "Downtown Tennis League", 
-            "San Francisco", 
-            "Intermediate (3.5-4.0)"
-        )
+        # Test sequence for new 3-tier structure
+        test_methods = [
+            ("Root API", self.test_root_endpoint),
+            ("Create League Manager", self.test_create_league_manager),
+            ("Create Player", self.test_create_player),
+            ("Get All Users", self.test_get_users),
+            ("Get User by ID", self.test_get_user_by_id),
+            ("Create Main Season", self.test_create_main_season),
+            ("Get All Main Seasons", self.test_get_main_seasons),
+            ("Get User Main Seasons", self.test_get_user_main_seasons),
+            ("Create Format Tier", self.test_create_format_tier),
+            ("Get Format Tiers", self.test_get_format_tiers),
+            ("Create Skill Tier", self.test_create_skill_tier),
+            ("Get Skill Tiers", self.test_get_skill_tiers),
+            ("Get Skill Tier by ID", self.test_get_skill_tier_by_id),
+            ("Join by Code", self.test_join_by_code),
+            ("Get User Joined Tiers", self.test_get_user_joined_tiers),
+            ("Get User Standings", self.test_get_user_standings),
+            ("Get Skill Tier Players", self.test_get_skill_tier_players),
+            ("Invalid Join Code", self.test_invalid_join_code),
+            ("Unauthorized Season Creation", self.test_unauthorized_season_creation)
+        ]
         
-        if not league_id:
-            print("❌ Failed to create league")
-            return False
-
-        # 5. Test getting leagues
-        self.test_get_leagues()
-
-        # 6. Create a season
-        print("\n📅 Creating test season...")
-        season_id = self.test_create_season(league_id, "Spring 2024 Season")
+        # Run all tests
+        for test_name, test_method in test_methods:
+            print(f"\n📋 Running: {test_name}")
+            test_method()
         
-        if not season_id:
-            print("❌ Failed to create season")
-            return False
-
-        # 7. Test getting seasons
-        self.test_get_seasons()
-
-        # 8. Join season with all users
-        print("\n👥 Joining season with users...")
-        for user_id in [user1_id, user2_id, user3_id, user4_id]:
-            self.test_join_season(season_id, user_id)
-
-        # 9. Test getting season players
-        self.test_get_season_players(season_id)
-
-        # 10. Set availability for all users for week 1
-        print("\n📋 Setting availability for week 1...")
-        for user_id in [user1_id, user2_id, user3_id, user4_id]:
-            self.test_set_availability(season_id, user_id, 1, "Yes")
-
-        # 11. Test getting week availability
-        self.test_get_week_availability(season_id, 1)
-
-        # 12. Generate matches for week 1
-        print("\n⚡ Generating matches for week 1...")
-        success, matches_response = self.test_generate_matches(season_id, 1)
-        
-        if not success or not matches_response.get('matches'):
-            print("❌ Failed to generate matches")
-            return False
-
-        # 13. Get matches
-        success, matches_data = self.test_get_matches(season_id, 1)
-        
-        if not success or not matches_data:
-            print("❌ Failed to get matches")
-            return False
-
-        # 14. Submit scores for the first match
-        print("\n🎾 Submitting scores...")
-        if matches_data and len(matches_data) > 0:
-            match = matches_data[0]
-            match_id = match['id']
-            
-            if 'sets' in match and len(match['sets']) > 0:
-                scores = []
-                for set_data in match['sets']:
-                    scores.append({
-                        "set_id": set_data['id'],
-                        "score_a": 6,
-                        "score_b": 4
-                    })
-                
-                self.test_submit_scores(match_id, scores)
-
-        # 15. Get updated standings
-        print("\n🏅 Getting final standings...")
-        self.test_get_standings(season_id)
-
         return True
 
 def main():
