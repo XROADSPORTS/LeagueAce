@@ -339,6 +339,43 @@ class LeagueAceAPITester:
         
         return success
 
+    def test_create_player_groups(self):
+        """Test creating player groups (Tier 4)"""
+        if not self.rating_tier_id:
+            print("❌ Skipping - No Rating Tier ID available")
+            return False
+
+        group_data = {
+            "group_size": 12,
+            "custom_names": ["Group Alpha", "Group Beta", "Group Gamma"]
+        }
+        
+        success, response = self.run_test(
+            "Create Player Groups",
+            "POST",
+            f"rating-tiers/{self.rating_tier_id}/create-groups",
+            200,
+            data=group_data
+        )
+        
+        if success:
+            print(f"   Groups Created: {response.get('message', 'Unknown')}")
+        
+        return success
+
+    def test_get_rating_tier_groups(self):
+        """Test getting groups for a rating tier"""
+        if not self.rating_tier_id:
+            print("❌ Skipping - No Rating Tier ID available")
+            return False
+            
+        return self.run_test(
+            "Get Rating Tier Groups",
+            "GET",
+            f"rating-tiers/{self.rating_tier_id}/groups",
+            200
+        )
+
     def test_get_user_joined_tiers(self):
         """Test getting user's joined tiers"""
         if not self.player_id:
