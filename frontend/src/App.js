@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
-import { Calendar, Users, Trophy, Settings, Plus, TrendingUp, Clock, MapPin, UserCheck, Shield, Code, Copy, Eye, EyeOff } from "lucide-react";
+import { Calendar, Users, Trophy, Settings, Plus, TrendingUp, Clock, MapPin, UserCheck, Shield, Code, Copy, Eye, EyeOff, Bell, BellOff, Zap, Target } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
 import { Input } from "./components/ui/input";
@@ -18,17 +18,19 @@ function App() {
   const [currentView, setCurrentView] = useState("signup");
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("home");
+  const [activeSport, setActiveSport] = useState("Tennis");
   
   // Data states
   const [mainSeasons, setMainSeasons] = useState([]);
   const [userJoinedTiers, setUserJoinedTiers] = useState([]);
   const [userStandings, setUserStandings] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadManagerData = async () => {
     if (user && user.role === "League Manager") {
       try {
-        const response = await axios.get(`${API}/users/${user.id}/main-seasons`);
+        const response = await axios.get(`${API}/users/${user.id}/main-seasons?sport_type=${activeSport}`);
         setMainSeasons(response.data);
       } catch (error) {
         console.error("Error loading manager data:", error);
@@ -40,8 +42,8 @@ function App() {
     if (user && user.role === "Player") {
       try {
         const [joinedTiersRes, standingsRes] = await Promise.all([
-          axios.get(`${API}/users/${user.id}/joined-tiers`),
-          axios.get(`${API}/users/${user.id}/standings`)
+          axios.get(`${API}/users/${user.id}/joined-tiers?sport_type=${activeSport}`),
+          axios.get(`${API}/users/${user.id}/standings?sport_type=${activeSport}`)
         ]);
         setUserJoinedTiers(joinedTiersRes.data);
         setUserStandings(standingsRes.data);
@@ -51,15 +53,127 @@ function App() {
     }
   };
 
+  const loadNotifications = async () => {
+    if (user) {
+      try {
+        const response = await axios.get(`${API}/users/${user.id}/notifications`);
+        setNotifications(response.data);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     if (user) {
+      loadNotifications();
       if (user.role === "League Manager") {
         loadManagerData();
       } else if (user.role === "Player") {
         loadPlayerData();
       }
     }
-  }, [user]);
+  }, [user, activeSport]);
+
+  // Sport Selection Component
+  const SportSelection = () => {
+    const [selectedSports, setSelectedSports] = useState([]);
+
+    const handleSportSelection = async () => {
+      if (selectedSports.length === 0) {
+        alert("Please select at least one sport");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        await axios.patch(`${API}/users/${user.id}/sports`, {
+          sports_preferences: selectedSports
+        });
+        
+        const updatedUser = { ...user, sports_preferences: selectedSports };
+        setUser(updatedUser);
+        setCurrentView("dashboard");
+        setActiveSport(selectedSports[0]); // Set first selected sport as active
+      } catch (error) {
+        console.error("Error updating sport preferences:", error);
+      }
+      setLoading(false);
+    };
+
+    const toggleSport = (sport) => {
+      setSelectedSports(prev => 
+        prev.includes(sport) 
+          ? prev.filter(s => s !== sport)
+          : [...prev, sport]
+      );
+    };
+
+    return (
+      <div className="sport-selection-container">
+        <div className="sport-selection-hero">
+          <h1 className="sport-selection-title">
+            Choose Your <span className="gradient-text">Sports</span>
+          </h1>
+          <p className="sport-selection-subtitle">
+            Select which sports you want to participate in. You can join leagues for both!
+          </p>
+        </div>
+        
+        <div className="sport-options">
+          <Card 
+            className={`glass-card sport-option-card ${selectedSports.includes('Tennis') ? 'selected' : ''}`}
+            onClick={() => toggleSport('Tennis')}
+          >
+            <CardContent className="sport-option-content">
+              <Target className="sport-option-icon tennis-icon" />
+              <h3>Tennis Leagues</h3>
+              <p>Join competitive tennis leagues with advanced scoring</p>
+              <ul className="sport-benefits">
+                <li>Singles & Doubles formats</li>
+                <li>Skill-based matchmaking</li>
+                <li>Professional tournaments</li>
+                <li>Court reservations</li>
+              </ul>
+              {selectedSports.includes('Tennis') && (
+                <Badge className="selected-badge">Selected</Badge>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`glass-card sport-option-card ${selectedSports.includes('Pickleball') ? 'selected' : ''}`}
+            onClick={() => toggleSport('Pickleball')}
+          >
+            <CardContent className="sport-option-content">
+              <Zap className="sport-option-icon pickleball-icon" />
+              <h3>Pickleball Leagues</h3>
+              <p>Fast-paced pickleball leagues for all skill levels</p>
+              <ul className="sport-benefits">
+                <li>Beginner-friendly format</li>
+                <li>Social gameplay</li>
+                <li>Mixed skill levels</li>
+                <li>Community events</li>
+              </ul>
+              {selectedSports.includes('Pickleball') && (
+                <Badge className="selected-badge">Selected</Badge>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="sport-selection-actions">
+          <Button 
+            onClick={handleSportSelection}
+            className="sport-button"
+            disabled={selectedSports.length === 0 || loading}
+          >
+            {loading ? "Setting up..." : `Continue with ${selectedSports.length} sport${selectedSports.length !== 1 ? 's' : ''}`}
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   // Signup Component
   const SignupView = () => {
@@ -129,8 +243,7 @@ function App() {
         try {
           const response = await axios.post(`${API}/users`, formData);
           setUser(response.data);
-          setCurrentView("dashboard");
-          setActiveTab("home");
+          setCurrentView("sport-selection");
         } catch (error) {
           console.error("Error creating user:", error);
         }
@@ -224,6 +337,49 @@ function App() {
     return <SignupForm role={signupType === "player" ? "Player" : "League Manager"} />;
   };
 
+  // Notifications Component
+  const NotificationCenter = () => {
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    const markAsRead = async (notificationId) => {
+      try {
+        await axios.patch(`${API}/notifications/${notificationId}/read`);
+        loadNotifications();
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    };
+
+    return (
+      <div className="notification-center">
+        <div className="notification-header">
+          <h3>Notifications</h3>
+          {unreadCount > 0 && (
+            <Badge className="notification-count">{unreadCount}</Badge>
+          )}
+        </div>
+        <div className="notifications-list">
+          {notifications.slice(0, 5).map((notification) => (
+            <div 
+              key={notification.id} 
+              className={`notification-item ${!notification.read ? 'unread' : ''}`}
+              onClick={() => !notification.read && markAsRead(notification.id)}
+            >
+              <div className="notification-content">
+                <h4>{notification.title}</h4>
+                <p>{notification.message}</p>
+                <span className="notification-time">
+                  {new Date(notification.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              {!notification.read && <div className="unread-dot"></div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // League Manager Components
   const LeagueManagerDashboard = () => {
     const [activeManagerTab, setActiveManagerTab] = useState("overview");
@@ -232,6 +388,7 @@ function App() {
     const CreateSeasonForm = () => {
       const [seasonData, setSeasonData] = useState({
         name: "",
+        sport_type: activeSport,
         description: "",
         start_date: "",
         end_date: ""
@@ -244,7 +401,7 @@ function App() {
           await axios.post(`${API}/main-seasons?created_by=${user.id}`, seasonData);
           loadManagerData();
           setShowCreateSeason(false);
-          setSeasonData({ name: "", description: "", start_date: "", end_date: "" });
+          setSeasonData({ name: "", sport_type: activeSport, description: "", start_date: "", end_date: "" });
         } catch (error) {
           console.error("Error creating season:", error);
         }
@@ -254,8 +411,8 @@ function App() {
       return (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle>Create New Main Season</CardTitle>
-            <CardDescription>Set up a new seasonal league structure</CardDescription>
+            <CardTitle>Create New {activeSport} Season</CardTitle>
+            <CardDescription>Set up a new seasonal league structure for {activeSport}</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
@@ -265,7 +422,7 @@ function App() {
                   id="season-name"
                   value={seasonData.name}
                   onChange={(e) => setSeasonData({...seasonData, name: e.target.value})}
-                  placeholder="e.g., Season 14, Spring 2024"
+                  placeholder={`e.g., ${activeSport} Season 14, Spring 2024`}
                   required
                 />
               </div>
@@ -275,7 +432,7 @@ function App() {
                   id="description"
                   value={seasonData.description}
                   onChange={(e) => setSeasonData({...seasonData, description: e.target.value})}
-                  placeholder="Describe this season..."
+                  placeholder={`Describe this ${activeSport} season...`}
                 />
               </div>
               <div className="date-row">
@@ -310,7 +467,7 @@ function App() {
                 Cancel
               </Button>
               <Button type="submit" className="sport-button" disabled={loading}>
-                {loading ? "Creating..." : "Create Season"}
+                {loading ? "Creating..." : `Create ${activeSport} Season`}
               </Button>
             </CardFooter>
           </form>
@@ -379,7 +536,10 @@ function App() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Badge className="sport-badge">{season.status}</Badge>
+                  <div className="season-badges">
+                    <Badge className="sport-badge">{season.status}</Badge>
+                    <Badge className="sport-type-badge">{season.sport_type}</Badge>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -437,7 +597,7 @@ function App() {
         max_rating: 3.5,
         max_players: 36,
         region: "General",
-        surface: "Hard Court"
+        surface: activeSport === "Tennis" ? "Hard Court" : "Indoor Court"
       });
 
       useEffect(() => {
@@ -464,15 +624,15 @@ function App() {
           max_rating: 3.5,
           max_players: 36,
           region: "General",
-          surface: "Hard Court"
+          surface: activeSport === "Tennis" ? "Hard Court" : "Indoor Court"
         });
       };
 
       return (
         <Card className="glass-card format-tier-card">
           <CardHeader>
-            <CardTitle>{tier.name}</CardTitle>
-            <CardDescription>Skill level tiers for {tier.name}</CardDescription>
+            <CardTitle>{tier.name} - {activeSport}</CardTitle>
+            <CardDescription>Skill level tiers for {tier.name} {activeSport}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="skill-tiers-grid">
@@ -493,6 +653,7 @@ function App() {
                       </Button>
                     </div>
                     <Badge variant="outline">{skillTier.max_players} max players</Badge>
+                    <Badge className="surface-badge">{skillTier.surface}</Badge>
                   </CardContent>
                 </Card>
               ))}
@@ -561,10 +722,10 @@ function App() {
     return (
       <div className="manager-dashboard">
         <div className="dashboard-header">
-          <h2 className="section-title">League Manager Dashboard</h2>
+          <h2 className="section-title">{activeSport} League Manager Dashboard</h2>
           <div className="manager-stats">
             <Badge className="stat-badge">
-              {mainSeasons.length} Seasons Created
+              {mainSeasons.length} {activeSport} Seasons Created
             </Badge>
           </div>
         </div>
@@ -581,14 +742,14 @@ function App() {
                 <Card className="glass-card">
                   <CardContent className="create-season-prompt">
                     <Trophy className="prompt-icon" />
-                    <h3>Ready to Create Your League Structure?</h3>
-                    <p>Build comprehensive league hierarchies with seasons, formats, and skill tiers</p>
+                    <h3>Ready to Create Your {activeSport} League Structure?</h3>
+                    <p>Build comprehensive {activeSport} league hierarchies with seasons, formats, and skill tiers</p>
                     <Button 
                       className="sport-button"
                       onClick={() => setShowCreateSeason(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Create New Season
+                      Create New {activeSport} Season
                     </Button>
                   </CardContent>
                 </Card>
@@ -636,7 +797,7 @@ function App() {
                 <Users className="stat-icon" />
                 <div>
                   <p className="stat-number">{userJoinedTiers.length}</p>
-                  <p className="stat-label">Leagues Joined</p>
+                  <p className="stat-label">{activeSport} Leagues Joined</p>
                 </div>
               </div>
             </CardContent>
@@ -670,9 +831,9 @@ function App() {
         {/* Join League Section */}
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle>Join a League</CardTitle>
+            <CardTitle>Join a {activeSport} League</CardTitle>
             <CardDescription>
-              Enter a join code provided by your league manager to join a specific tier
+              Enter a join code provided by your league manager to join a specific {activeSport} tier
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -682,7 +843,7 @@ function App() {
                 onClick={() => setShowJoinForm(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Join New League
+                Join New {activeSport} League
               </Button>
             ) : (
               <form onSubmit={handleJoinByCode} className="join-form">
@@ -715,7 +876,7 @@ function App() {
         {/* My Leagues */}
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle>My Leagues</CardTitle>
+            <CardTitle>My {activeSport} Leagues</CardTitle>
           </CardHeader>
           <CardContent>
             {userJoinedTiers.length > 0 ? (
@@ -736,13 +897,14 @@ function App() {
                         <p className="tier-rating">
                           Rating: {tierInfo.skill_tier.min_rating} - {tierInfo.skill_tier.max_rating}
                         </p>
+                        <Badge className="sport-type-badge">{tierInfo.main_season.sport_type}</Badge>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : (
-              <p className="no-leagues">No leagues joined yet. Use a join code to get started!</p>
+              <p className="no-leagues">No {activeSport} leagues joined yet. Use a join code to get started!</p>
             )}
           </CardContent>
         </Card>
@@ -751,7 +913,7 @@ function App() {
 
     const PlayerStandings = () => (
       <div className="space-y-6">
-        <h2 className="section-title">My Standings</h2>
+        <h2 className="section-title">My {activeSport} Standings</h2>
         
         {userStandings.length > 0 ? (
           <div className="standings-grid">
@@ -784,6 +946,7 @@ function App() {
                       <span className="stat-label">Win Rate</span>
                     </div>
                   </div>
+                  <Badge className="sport-type-badge mt-2">{standingInfo.sport_type}</Badge>
                 </CardContent>
               </Card>
             ))}
@@ -792,9 +955,9 @@ function App() {
           <Card className="glass-card">
             <CardContent className="p-8 text-center">
               <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No standings yet</h3>
+              <h3 className="text-lg font-semibold mb-2">No {activeSport} standings yet</h3>
               <p className="text-muted-foreground">
-                Your standings will appear here once you start playing matches
+                Your {activeSport} standings will appear here once you start playing matches
               </p>
             </CardContent>
           </Card>
@@ -813,6 +976,8 @@ function App() {
   const DashboardView = () => {
     if (!user) return null;
 
+    const unreadNotifications = notifications.filter(n => !n.read).length;
+
     return (
       <div className="app-container">
         {/* Navigation */}
@@ -820,6 +985,22 @@ function App() {
           <div className="nav-brand">
             <h1 className="nav-logo">Netly</h1>
           </div>
+
+          {/* Sport Switcher */}
+          {user.sports_preferences && user.sports_preferences.length > 1 && (
+            <div className="sport-switcher">
+              <Tabs value={activeSport} onValueChange={setActiveSport}>
+                <TabsList className="sport-tabs">
+                  {user.sports_preferences.map(sport => (
+                    <TabsTrigger key={sport} value={sport} className="sport-tab">
+                      {sport === "Tennis" ? <Target className="w-4 h-4 mr-1" /> : <Zap className="w-4 h-4 mr-1" />}
+                      {sport}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
           
           {user.role === "League Manager" ? (
             <div className="nav-tabs">
@@ -854,6 +1035,12 @@ function App() {
           )}
           
           <div className="nav-user">
+            <div className="notification-bell">
+              <Bell className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <Badge className="notification-badge">{unreadNotifications}</Badge>
+              )}
+            </div>
             <Badge className="user-badge">
               {user.name} ({user.role})
             </Badge>
@@ -862,6 +1049,9 @@ function App() {
 
         {/* Main Content */}
         <main className="main-content">
+          {/* Notification Center */}
+          <NotificationCenter />
+          
           {user.role === "League Manager" ? (
             <LeagueManagerDashboard />
           ) : (
@@ -875,6 +1065,10 @@ function App() {
   // Main App Logic
   if (currentView === "signup") {
     return <SignupView />;
+  }
+
+  if (currentView === "sport-selection") {
+    return <SportSelection />;
   }
 
   return <DashboardView />;

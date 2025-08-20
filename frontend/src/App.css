@@ -44,6 +44,131 @@ body {
   transition: all 0.3s ease;
 }
 
+/* Sport Selection Styles */
+.sport-selection-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.sport-selection-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.sport-selection-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.sport-selection-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.sport-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  max-width: 800px;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.sport-option-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 1rem;
+  position: relative;
+}
+
+.sport-option-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.sport-option-card.selected {
+  border: 2px solid #27ae60;
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.sport-option-content {
+  text-align: center;
+  padding: 2rem 1rem;
+  position: relative;
+}
+
+.sport-option-icon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.tennis-icon {
+  color: #ff6b35;
+}
+
+.pickleball-icon {
+  color: #27ae60;
+}
+
+.sport-option-content h3 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.sport-option-content p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.sport-benefits {
+  list-style: none;
+  text-align: left;
+}
+
+.sport-benefits li {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.sport-benefits li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.selected-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #27ae60;
+  color: white;
+}
+
+.sport-selection-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+}
+
 /* Signup Styles */
 .signup-container {
   min-height: 100vh;
@@ -196,6 +321,30 @@ body {
   background-clip: text;
 }
 
+.sport-switcher {
+  flex-shrink: 0;
+}
+
+.sport-tabs {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.25rem;
+}
+
+.sport-tab {
+  color: white;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sport-tab[data-state="active"] {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
 .nav-tabs {
   display: flex;
   gap: 0.5rem;
@@ -227,6 +376,30 @@ body {
 
 .nav-user {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.notification-bell {
+  position: relative;
+  color: white;
+  cursor: pointer;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e74c3c;
+  color: white;
+  font-size: 0.75rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-badge {
@@ -241,6 +414,85 @@ body {
   padding: 6rem 2rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Notification Center */
+.notification-center {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.notification-header h3 {
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+.notification-count {
+  background: #e74c3c;
+  color: white;
+  font-size: 0.75rem;
+}
+
+.notifications-list {
+  space-y: 0.5rem;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-item.unread {
+  background: rgba(39, 174, 96, 0.1);
+  border-color: rgba(39, 174, 96, 0.3);
+}
+
+.notification-content h4 {
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.notification-content p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.notification-time {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #27ae60;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* Gradient text */
@@ -284,6 +536,20 @@ body {
   color: white;
   border: none;
   font-weight: 600;
+}
+
+.sport-type-badge {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.surface-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.75rem;
 }
 
 /* Stats grid */
@@ -416,6 +682,12 @@ body {
 .season-card.selected {
   border: 2px solid #ff6b35;
   background: rgba(255, 107, 53, 0.1);
+}
+
+.season-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .tier-management {
@@ -561,6 +833,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .tier-rating {
@@ -637,12 +911,18 @@ body {
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .sport-options {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+  
   .signup-options {
     grid-template-columns: 1fr;
     max-width: 400px;
   }
   
-  .signup-title {
+  .signup-title,
+  .sport-selection-title {
     font-size: 2.5rem;
   }
   
@@ -684,6 +964,11 @@ body {
   
   .standing-stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tier-details {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
