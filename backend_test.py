@@ -10,12 +10,12 @@ class NetlyAPITester:
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
         self.tests_passed = 0
-        self.created_resources = {
-            'users': [],
-            'leagues': [],
-            'seasons': [],
-            'matches': []
-        }
+        self.league_manager_id = None
+        self.player_id = None
+        self.main_season_id = None
+        self.format_tier_id = None
+        self.skill_tier_id = None
+        self.join_code = None
 
     def run_test(self, name: str, method: str, endpoint: str, expected_status: int, data: Dict[Any, Any] = None, params: Dict[str, Any] = None) -> tuple[bool, Dict[Any, Any]]:
         """Run a single API test"""
