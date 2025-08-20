@@ -24,13 +24,13 @@ class NetlyAPITester:
 
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
-        print(f"   URL: {url}")
+        print(f"   URL: {method} {url}")
         
         try:
             if method == 'GET':
                 response = requests.get(url, headers=headers, params=params)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=headers)
+                response = requests.post(url, json=data, headers=headers, params=params)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=headers)
             elif method == 'DELETE':
@@ -42,8 +42,8 @@ class NetlyAPITester:
                 print(f"✅ Passed - Status: {response.status_code}")
                 try:
                     response_data = response.json()
-                    if isinstance(response_data, dict) and 'id' in response_data:
-                        print(f"   Created resource ID: {response_data['id']}")
+                    if isinstance(response_data, dict) and len(response_data) > 0:
+                        print(f"   Response keys: {list(response_data.keys())}")
                     return True, response_data
                 except:
                     return True, {}
