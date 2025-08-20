@@ -68,8 +68,8 @@ class LeagueAceAPITester:
     def test_create_league_manager(self):
         """Create a League Manager user"""
         manager_data = {
-            "name": "Test League Manager",
-            "email": f"manager_{datetime.now().strftime('%H%M%S')}@test.com",
+            "name": "Alex Rodriguez",
+            "email": f"alex.rodriguez_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
             "phone": "+1-555-0101",
             "rating_level": 4.5,
             "role": "League Manager"
