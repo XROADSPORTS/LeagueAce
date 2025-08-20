@@ -9,42 +9,76 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #ff6b35 50%, #e74c3c 75%, #ff6b35 100%);
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 25%, #1e40af 50%, #1d4ed8 75%, #1e3a8a 100%);
   background-size: 400% 400%;
-  animation: sportGradient 15s ease infinite;
+  animation: leagueAceGradient 15s ease infinite;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-@keyframes sportGradient {
+@keyframes leagueAceGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* App container */
-.app-container {
+/* LeagueAce Logo */
+.leagueace-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.logo-image {
+  max-width: 300px;
+  height: auto;
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.3));
+}
+
+/* App container with blue theme */
+.app-container-blue {
   min-height: 100vh;
   position: relative;
 }
 
-/* Glassmorphism base styles */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+/* Enhanced iOS 26 Glassmorphism base styles */
+.glass-card-blue {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
 }
 
-.glass-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
+.glass-card-blue:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transform: translateY(-4px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Sport Selection Styles */
+.glass-card-blue::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  z-index: 1;
+}
+
+/* Sport Selection Styles with blue theme */
 .sport-selection-container {
   min-height: 100vh;
   display: flex;
@@ -65,13 +99,13 @@ body {
   font-weight: 800;
   color: white;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .sport-selection-subtitle {
   font-size: 1.25rem;
   color: rgba(255, 255, 255, 0.9);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .sport-options {
@@ -85,25 +119,31 @@ body {
 
 .sport-option-card {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 1rem;
   position: relative;
 }
 
 .sport-option-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
 }
 
 .sport-option-card.selected {
-  border: 2px solid #27ae60;
-  background: rgba(39, 174, 96, 0.1);
+  border: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: 
+    0 16px 48px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .sport-option-content {
   text-align: center;
   padding: 2rem 1rem;
   position: relative;
+  z-index: 2;
 }
 
 .sport-option-icon {
@@ -112,12 +152,12 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.tennis-icon {
-  color: #ff6b35;
+.tennis-icon-blue {
+  color: #3b82f6;
 }
 
-.pickleball-icon {
-  color: #27ae60;
+.pickleball-icon-blue {
+  color: #10b981;
 }
 
 .sport-option-content h3 {
@@ -150,16 +190,18 @@ body {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #27ae60;
+  color: #10b981;
   font-weight: bold;
 }
 
-.selected-badge {
+.selected-badge-blue {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: #27ae60;
+  background: #3b82f6;
   color: white;
+  border: none;
+  font-weight: 600;
 }
 
 .sport-selection-actions {
@@ -169,7 +211,7 @@ body {
   max-width: 400px;
 }
 
-/* Signup Styles */
+/* Signup Styles with blue theme */
 .signup-container {
   min-height: 100vh;
   display: flex;
@@ -190,13 +232,13 @@ body {
   font-weight: 800;
   color: white;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .signup-subtitle {
   font-size: 1.25rem;
   color: rgba(255, 255, 255, 0.9);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .signup-options {
@@ -205,17 +247,20 @@ body {
   gap: 2rem;
   max-width: 800px;
   width: 100%;
+  margin-bottom: 2rem;
 }
 
 .signup-option-card {
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 1rem;
 }
 
 .signup-option-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
 }
 
 .signup-option-content {
@@ -223,10 +268,10 @@ body {
   padding: 2rem 1rem;
 }
 
-.signup-option-icon {
+.signup-option-icon-blue {
   width: 4rem;
   height: 4rem;
-  color: #ff6b35;
+  color: #3b82f6;
   margin-bottom: 1.5rem;
 }
 
@@ -260,8 +305,85 @@ body {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #27ae60;
+  color: #10b981;
   font-weight: bold;
+}
+
+/* Social Login Styles */
+.social-login-section {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 2rem;
+}
+
+.social-login-divider {
+  position: relative;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.social-login-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.social-login-divider span {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0 1rem;
+  font-size: 0.875rem;
+}
+
+.social-login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(16px);
+}
+
+.google-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.google-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  color: white;
+}
+
+.apple-button {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.apple-button:hover {
+  background: rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+  color: white;
+}
+
+.social-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .signup-form-container {
@@ -273,11 +395,17 @@ body {
   padding: 2rem;
 }
 
-.back-button {
+.back-button-blue {
   align-self: flex-start;
   margin-bottom: 2rem;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+}
+
+.back-button-blue:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .signup-form-card {
@@ -285,64 +413,175 @@ body {
   width: 100%;
 }
 
-.rating-help {
+.rating-help-blue {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
   margin-top: 0.25rem;
 }
 
-/* Navigation */
-.nav-glass {
+/* Profile Picture Styles */
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.profile-picture-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-picture-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.profile-picture-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.camera-icon {
+  width: 2rem;
+  height: 2rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.profile-picture-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid white;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+.profile-picture-edit:hover {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+.profile-info h2 {
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.profile-info p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+}
+
+.nav-profile-picture {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Navigation with blue theme */
+.nav-glass-blue {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 1rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .nav-brand {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.nav-logo {
+.nav-logo-blue {
   font-family: 'Montserrat', sans-serif;
   font-size: 1.75rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  line-height: 1;
+}
+
+.nav-tagline {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  margin-top: 0.25rem;
+  font-style: italic;
 }
 
 .sport-switcher {
   flex-shrink: 0;
 }
 
-.sport-tabs {
-  background: rgba(255, 255, 255, 0.1);
+.sport-tabs-blue {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
   border-radius: 12px;
   padding: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sport-tab {
+.sport-tab-blue {
   color: white;
   border: none;
   background: transparent;
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.sport-tab[data-state="active"] {
-  background: rgba(255, 255, 255, 0.2);
+.sport-tab-blue[data-state="active"] {
+  background: rgba(255, 255, 255, 0.15);
   color: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .nav-tabs {
@@ -352,9 +591,10 @@ body {
   justify-content: center;
 }
 
-.nav-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.nav-button-blue {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -362,16 +602,18 @@ body {
   transition: all 0.3s ease;
 }
 
-.nav-button:hover {
+.nav-button-blue:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.nav-button-blue[data-state="on"] {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-}
-
-.nav-button[data-state="on"] {
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .nav-user {
@@ -381,17 +623,23 @@ body {
   gap: 1rem;
 }
 
-.notification-bell {
+.nav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notification-bell-blue {
   position: relative;
   color: white;
   cursor: pointer;
 }
 
-.notification-badge {
+.notification-badge-blue {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #e74c3c;
+  background: #ef4444;
   color: white;
   font-size: 0.75rem;
   min-width: 16px;
@@ -400,29 +648,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
-.user-badge {
-  background: rgba(255, 255, 255, 0.15);
+.user-badge-blue {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 500;
 }
 
-/* Main content */
-.main-content {
+/* Main content with blue theme */
+.main-content-blue {
   padding: 6rem 2rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Notification Center */
-.notification-center {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+/* Notification Center with blue theme */
+.notification-center-blue {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  border-radius: 16px;
   padding: 1rem;
   margin-bottom: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .notification-header {
@@ -438,35 +690,38 @@ body {
   font-weight: 600;
 }
 
-.notification-count {
-  background: #e74c3c;
+.notification-count-blue {
+  background: #ef4444;
   color: white;
   font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
 .notifications-list {
   space-y: 0.5rem;
 }
 
-.notification-item {
+.notification-item-blue {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.notification-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+.notification-item-blue:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
-.notification-item.unread {
-  background: rgba(39, 174, 96, 0.1);
-  border-color: rgba(39, 174, 96, 0.3);
+.notification-item-blue.unread {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .notification-content h4 {
@@ -487,72 +742,98 @@ body {
   font-size: 0.7rem;
 }
 
-.unread-dot {
+.unread-dot-blue {
   width: 8px;
   height: 8px;
-  background: #27ae60;
+  background: #3b82f6;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #e74c3c 100%);
+/* Gradient text with blue theme */
+.gradient-text-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 800;
 }
 
-/* Buttons */
-.sport-button {
-  background: linear-gradient(135deg, #ff6b35 0%, #e74c3c 100%);
+/* Buttons with blue theme */
+.leagueace-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border: none;
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }
 
-.sport-button:hover {
-  background: linear-gradient(135deg, #e74c3c 0%, #ff6b35 100%);
+.leagueace-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
   color: white;
 }
 
-/* Badges */
-.sport-badge {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+.blue-outline-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  border: none;
-  font-weight: 600;
+  backdrop-filter: blur(16px);
 }
 
-.reserve-badge {
-  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+.blue-outline-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
-  border: none;
-  font-weight: 600;
 }
 
-.sport-type-badge {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+/* Badges with blue theme */
+.sport-badge-blue {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   font-weight: 600;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.reserve-badge-blue {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.sport-type-badge-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.role-badge-blue {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-weight: 500;
+  backdrop-filter: blur(16px);
 }
 
 .surface-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   font-size: 0.75rem;
+  backdrop-filter: blur(16px);
 }
 
-/* Stats grid */
+/* Stats grid with blue theme */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -561,7 +842,7 @@ body {
 }
 
 .stat-card {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .stat-content {
@@ -570,14 +851,14 @@ body {
   gap: 1rem;
 }
 
-.stat-icon {
+.stat-icon-blue {
   width: 2.5rem;
   height: 2.5rem;
-  color: #ff6b35;
-  opacity: 0.8;
+  color: #3b82f6;
+  opacity: 0.9;
 }
 
-.stat-number {
+.stat-number-blue {
   font-family: 'Montserrat', sans-serif;
   font-size: 2rem;
   font-weight: 700;
@@ -585,23 +866,23 @@ body {
   line-height: 1;
 }
 
-.stat-label {
+.stat-label-blue {
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
 }
 
-/* Section titles */
-.section-title {
+/* Section titles with blue theme */
+.section-title-blue {
   font-family: 'Montserrat', sans-serif;
   font-size: 2rem;
   font-weight: 700;
   color: white;
   margin-bottom: 1.5rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* League Manager Dashboard */
+/* League Manager Dashboard with blue theme */
 .manager-dashboard {
   space-y: 2rem;
 }
@@ -618,17 +899,20 @@ body {
   gap: 1rem;
 }
 
-.stat-badge {
-  background: rgba(255, 255, 255, 0.15);
+.stat-badge-blue {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 500;
 }
 
-.manager-tabs {
-  background: rgba(255, 255, 255, 0.1);
+.manager-tabs-blue {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
   border-radius: 12px;
   padding: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .create-season-prompt {
@@ -636,10 +920,10 @@ body {
   padding: 3rem 2rem;
 }
 
-.prompt-icon {
+.prompt-icon-blue {
   width: 4rem;
   height: 4rem;
-  color: #ff6b35;
+  color: #3b82f6;
   margin-bottom: 1.5rem;
 }
 
@@ -662,121 +946,7 @@ body {
   gap: 1rem;
 }
 
-/* Season Management */
-.seasons-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.season-card {
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.season-card:hover {
-  transform: translateY(-2px);
-}
-
-.season-card.selected {
-  border: 2px solid #ff6b35;
-  background: rgba(255, 107, 53, 0.1);
-}
-
-.season-badges {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tier-management {
-  space-y: 2rem;
-}
-
-.format-tiers h4 {
-  font-family: 'Montserrat', sans-serif;
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.tier-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.format-tier-list {
-  space-y: 1rem;
-}
-
-.format-tier-card {
-  margin-bottom: 1rem;
-}
-
-.skill-tiers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.skill-tier-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.skill-tier-content {
-  padding: 1rem;
-}
-
-.skill-tier-content h5 {
-  font-family: 'Montserrat', sans-serif;
-  color: white;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.skill-tier-content p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.875rem;
-  margin-bottom: 0.75rem;
-}
-
-.join-code-display {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.5rem;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  color: #ff6b35;
-}
-
-.skill-tier-form {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-top: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-/* Player Dashboard */
+/* Player Dashboard with blue theme */
 .player-dashboard {
   space-y: 2rem;
 }
@@ -791,14 +961,18 @@ body {
   align-items: flex-end;
 }
 
-.join-code-input {
+.join-code-input-blue {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(16px);
 }
 
-.cancel-join {
+.cancel-join-blue {
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -808,9 +982,12 @@ body {
   gap: 1rem;
 }
 
-.joined-tier-card {
-  background: rgba(255, 255, 255, 0.05);
+.joined-tier-card-blue {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .joined-tier-content {
@@ -842,75 +1019,59 @@ body {
   font-size: 0.875rem;
 }
 
-.no-leagues {
+.no-leagues-blue {
   text-align: center;
   color: rgba(255, 255, 255, 0.7);
   padding: 2rem;
 }
 
-/* Player Standings */
-.standings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.standing-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+/* Form styles with blue theme */
+.blue-input {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
   border-radius: 8px;
 }
 
-.stat-value {
-  display: block;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Form styles */
-.glass-card input,
-.glass-card textarea,
-.glass-card select {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.glass-card input::placeholder,
-.glass-card textarea::placeholder {
+.blue-input::placeholder {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.glass-card label {
+.blue-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.blue-textarea {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 8px;
+}
+
+.blue-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.glass-card-blue label {
   color: white;
   font-weight: 500;
 }
 
-/* Card content text */
-.glass-card .text-muted-foreground,
-.glass-card [data-description] {
+/* Card content text with blue theme */
+.glass-card-blue .text-muted-foreground,
+.glass-card-blue [data-description] {
   color: rgba(255, 255, 255, 0.7);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .logo-image {
+    max-width: 250px;
+  }
+  
   .sport-options {
     grid-template-columns: 1fr;
     max-width: 400px;
@@ -926,10 +1087,14 @@ body {
     font-size: 2.5rem;
   }
   
-  .nav-glass {
+  .nav-glass-blue {
     padding: 1rem;
     flex-direction: column;
     gap: 1rem;
+  }
+  
+  .nav-brand {
+    align-items: center;
   }
   
   .nav-tabs {
@@ -937,7 +1102,7 @@ body {
     flex-wrap: wrap;
   }
   
-  .main-content {
+  .main-content-blue {
     padding: 8rem 1rem 2rem;
   }
   
@@ -945,15 +1110,7 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .seasons-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .date-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-row {
     grid-template-columns: 1fr;
   }
   
@@ -961,25 +1118,27 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .standing-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
 
   .tier-details {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .profile-section {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
-/* Additional glassmorphism effects */
-.glass-card::before {
+/* Enhanced glassmorphism effects for iOS 26 feel */
+.glass-card-blue::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   border-radius: inherit;
   z-index: -1;
+  pointer-events: none;
 }
 
 /* Smooth animations */
@@ -987,17 +1146,41 @@ body {
   scroll-behavior: smooth;
 }
 
-.glass-card,
-.sport-button,
-.nav-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.glass-card-blue,
+.leagueace-button,
+.nav-button-blue {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Focus states for accessibility */
-.sport-button:focus,
-.nav-button:focus,
-input:focus,
-textarea:focus {
-  outline: 2px solid #ff6b35;
+.leagueace-button:focus,
+.nav-button-blue:focus,
+.blue-input:focus,
+.blue-textarea:focus {
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+/* Additional enhanced blur effects */
+.notification-center-blue,
+.nav-glass-blue,
+.glass-card-blue {
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
+/* Frosted glass text effects */
+.nav-logo-blue,
+.section-title-blue,
+.signup-title,
+.sport-selection-title {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced hover effects for iOS 26 feel */
+.glass-card-blue:hover,
+.sport-option-card:hover,
+.signup-option-card:hover {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
 }
