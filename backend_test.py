@@ -215,15 +215,16 @@ class LeagueAceAPITester:
         )
 
     def test_create_format_tier(self):
-        """Test creating a format tier"""
-        if not self.main_season_id:
-            print("❌ Skipping - No Main Season ID available")
+        """Test creating a format tier (Singles/Doubles)"""
+        if not self.season_id:
+            print("❌ Skipping - No Season ID available")
             return False
 
         format_data = {
-            "main_season_id": self.main_season_id,
-            "name": "Singles",
-            "description": "Singles format for test season"
+            "season_id": self.season_id,
+            "name": "Singles Competition",
+            "format_type": "Singles",
+            "description": "Singles format for competitive play"
         }
         
         success, response = self.run_test(
@@ -241,15 +242,15 @@ class LeagueAceAPITester:
         return success
 
     def test_get_format_tiers(self):
-        """Test getting format tiers for a main season"""
-        if not self.main_season_id:
-            print("❌ Skipping - No Main Season ID available")
+        """Test getting format tiers for a season"""
+        if not self.season_id:
+            print("❌ Skipping - No Season ID available")
             return False
             
         return self.run_test(
             "Get Format Tiers",
             "GET",
-            f"main-seasons/{self.main_season_id}/format-tiers",
+            f"seasons/{self.season_id}/format-tiers",
             200
         )
 
