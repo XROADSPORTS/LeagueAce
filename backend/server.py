@@ -421,10 +421,16 @@ async def get_season_matches(season_id: str, week_number: Optional[int] = None):
     # Get sets for each match
     result = []
     for match in matches:
+        # Parse match from mongo to handle ObjectId
+        match = parse_from_mongo(match)
+        
         sets = await db.doubles_sets.find({"match_id": match["id"]}).to_list(10)
         
         # Get player names for sets
         for set_data in sets:
+            # Parse set data from mongo
+            set_data = parse_from_mongo(set_data)
+            
             team_a_names = []
             team_b_names = []
             
