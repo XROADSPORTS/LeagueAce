@@ -115,27 +115,33 @@ user_problem_statement: |
 backend:
   - task: "4-Tier League Format API"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Recently implemented 4-tier league structure with data models and API endpoints. Needs testing to verify functionality."
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE TESTING COMPLETED - All 4-tier league functionality working perfectly. Tested: League creation (Tier 1), Season creation (Tier 2), Format tiers for Singles/Doubles (Tier 3), Rating tiers with join codes (Tier 4), Player groups creation and assignment. All API endpoints responding correctly with proper data validation, role-based access control, and MongoDB integration. Fixed minor issue with legacy data in leagues collection."
 
   - task: "User Authentication & Profiles"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "JWT auth, Google/Apple sign-in, and profile picture functionality implemented. Needs verification."
+      - working: true
+        agent: "testing"
+        comment: "✅ AUTHENTICATION FULLY FUNCTIONAL - Tested user registration, social login (Google/Apple), profile picture upload, sports preferences update, role-based access control (League Manager vs Player permissions). All endpoints working correctly with proper validation and error handling."
 
 frontend:
   - task: "4-Tier League Format UI"
