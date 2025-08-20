@@ -78,6 +78,14 @@ body {
   z-index: 1;
 }
 
+.glass-card-blue.selected {
+  border: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.15);
+  box-shadow: 
+    0 16px 48px rgba(59, 130, 246, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
 /* Sport Selection Styles with blue theme */
 .sport-selection-container {
   min-height: 100vh;
@@ -419,98 +427,6 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Profile Picture Styles */
-.profile-section {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  padding: 2rem;
-}
-
-.profile-picture-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.profile-picture-container {
-  position: relative;
-  width: 120px;
-  height: 120px;
-}
-
-.profile-picture {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.profile-picture-placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.camera-icon {
-  width: 2rem;
-  height: 2rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.profile-picture-edit {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #3b82f6;
-  border: 2px solid white;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-}
-
-.profile-picture-edit:hover {
-  background: #2563eb;
-  transform: scale(1.1);
-}
-
-.profile-info h2 {
-  font-family: 'Montserrat', sans-serif;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.profile-info p {
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1rem;
-}
-
-.nav-profile-picture {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
 /* Navigation with blue theme */
 .nav-glass-blue {
   position: fixed;
@@ -659,96 +575,19 @@ body {
   font-weight: 500;
 }
 
+.nav-profile-picture {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
 /* Main content with blue theme */
 .main-content-blue {
   padding: 6rem 2rem 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-}
-
-/* Notification Center with blue theme */
-.notification-center-blue {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px);
-  border-radius: 16px;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.notification-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.notification-header h3 {
-  color: white;
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-}
-
-.notification-count-blue {
-  background: #ef4444;
-  color: white;
-  font-size: 0.75rem;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-}
-
-.notifications-list {
-  space-y: 0.5rem;
-}
-
-.notification-item-blue {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.notification-item-blue:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
-}
-
-.notification-item-blue.unread {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.notification-content h4 {
-  color: white;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.notification-content p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
-}
-
-.notification-time {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.7rem;
-}
-
-.unread-dot-blue {
-  width: 8px;
-  height: 8px;
-  background: #3b82f6;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
 }
 
 /* Gradient text with blue theme */
@@ -801,14 +640,6 @@ body {
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
-.reserve-badge-blue {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border: none;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
 .sport-type-badge-blue {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
@@ -817,59 +648,29 @@ body {
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.role-badge-blue {
-  background: rgba(255, 255, 255, 0.15);
+.format-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  font-weight: 500;
-  backdrop-filter: blur(16px);
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
-.surface-badge {
+.competition-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.group-badge {
   background: rgba(255, 255, 255, 0.15);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.25);
   font-size: 0.75rem;
-  backdrop-filter: blur(16px);
-}
-
-/* Stats grid with blue theme */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-icon-blue {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: #3b82f6;
-  opacity: 0.9;
-}
-
-.stat-number-blue {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-}
-
-.stat-label-blue {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Section titles with blue theme */
@@ -940,13 +741,134 @@ body {
   margin-bottom: 2rem;
 }
 
-.date-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+/* 4-Tier Management Styles */
+.four-tier-management {
+  space-y: 2rem;
 }
 
-/* Player Dashboard with blue theme */
+.tier-section {
+  margin-bottom: 3rem;
+}
+
+.tier-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.leagues-grid,
+.seasons-grid,
+.format-tiers-grid,
+.rating-tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.league-card,
+.season-card,
+.format-tier-card,
+.rating-tier-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.league-card:hover,
+.season-card:hover,
+.format-tier-card:hover {
+  transform: translateY(-2px);
+}
+
+.season-controls,
+.format-controls,
+.rating-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.rating-tier-form {
+  margin-top: 1rem;
+}
+
+.tier-details {
+  space-y: 1rem;
+}
+
+.join-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.competition-info {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.groups-section h4 {
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.no-groups {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.group-creator-form {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+  space-y: 1rem;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Player Dashboard */
 .player-dashboard {
   space-y: 2rem;
 }
@@ -974,55 +896,6 @@ body {
 
 .cancel-join-blue {
   color: rgba(255, 255, 255, 0.7);
-}
-
-.joined-tiers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-.joined-tier-card-blue {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.joined-tier-content {
-  padding: 1.5rem;
-}
-
-.tier-hierarchy h4 {
-  font-family: 'Montserrat', sans-serif;
-  color: white;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.tier-hierarchy p {
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 1rem;
-}
-
-.tier-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tier-rating {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.875rem;
-}
-
-.no-leagues-blue {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 2rem;
 }
 
 /* Form styles with blue theme */
@@ -1106,11 +979,20 @@ body {
     padding: 8rem 1rem 2rem;
   }
   
-  .stats-grid {
+  .leagues-grid,
+  .seasons-grid,
+  .format-tiers-grid,
+  .rating-tiers-grid {
     grid-template-columns: 1fr;
   }
   
-  .date-row {
+  .season-controls,
+  .format-controls,
+  .rating-controls {
+    flex-direction: column;
+  }
+  
+  .form-row {
     grid-template-columns: 1fr;
   }
   
@@ -1119,14 +1001,8 @@ body {
     align-items: stretch;
   }
 
-  .tier-details {
+  .form-actions {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .profile-section {
-    flex-direction: column;
-    text-align: center;
   }
 }
 
@@ -1162,8 +1038,6 @@ body {
 }
 
 /* Additional enhanced blur effects */
-.notification-center-blue,
-.nav-glass-blue,
 .glass-card-blue {
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
@@ -1173,7 +1047,8 @@ body {
 .nav-logo-blue,
 .section-title-blue,
 .signup-title,
-.sport-selection-title {
+.sport-selection-title,
+.tier-title {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
