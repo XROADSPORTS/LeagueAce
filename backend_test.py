@@ -254,61 +254,64 @@ class LeagueAceAPITester:
             200
         )
 
-    def test_create_skill_tier(self):
-        """Test creating a skill tier"""
+    def test_create_rating_tier(self):
+        """Test creating a rating tier (4.0, 4.5, 5.0)"""
         if not self.format_tier_id:
             print("❌ Skipping - No Format Tier ID available")
             return False
 
-        skill_data = {
+        rating_data = {
             "format_tier_id": self.format_tier_id,
-            "name": "4.0",
+            "name": "4.0 Level",
             "min_rating": 3.5,
             "max_rating": 4.5,
             "max_players": 36,
-            "region": "Test Region",
-            "surface": "Hard Court"
+            "competition_system": "Team League Format",
+            "playoff_spots": 8,
+            "region": "Bay Area",
+            "surface": "Hard Court",
+            "rules_md": "Standard USTA rules apply"
         }
         
         success, response = self.run_test(
-            "Create Skill Tier",
+            "Create Rating Tier",
             "POST",
-            "skill-tiers",
+            "rating-tiers",
             200,
-            data=skill_data
+            data=rating_data
         )
         
         if success and 'id' in response:
-            self.skill_tier_id = response['id']
+            self.rating_tier_id = response['id']
             self.join_code = response.get('join_code')
-            print(f"   Created Skill Tier ID: {self.skill_tier_id}")
+            print(f"   Created Rating Tier ID: {self.rating_tier_id}")
             print(f"   Generated Join Code: {self.join_code}")
         
         return success
 
-    def test_get_skill_tiers(self):
-        """Test getting skill tiers for a format tier"""
+    def test_get_rating_tiers(self):
+        """Test getting rating tiers for a format tier"""
         if not self.format_tier_id:
             print("❌ Skipping - No Format Tier ID available")
             return False
             
         return self.run_test(
-            "Get Skill Tiers",
+            "Get Rating Tiers",
             "GET",
-            f"format-tiers/{self.format_tier_id}/skill-tiers",
+            f"format-tiers/{self.format_tier_id}/rating-tiers",
             200
         )
 
-    def test_get_skill_tier_by_id(self):
-        """Test getting a specific skill tier"""
-        if not self.skill_tier_id:
-            print("❌ Skipping - No Skill Tier ID available")
+    def test_get_rating_tier_by_id(self):
+        """Test getting a specific rating tier"""
+        if not self.rating_tier_id:
+            print("❌ Skipping - No Rating Tier ID available")
             return False
             
         return self.run_test(
-            "Get Skill Tier by ID",
+            "Get Rating Tier by ID",
             "GET",
-            f"skill-tiers/{self.skill_tier_id}",
+            f"rating-tiers/{self.rating_tier_id}",
             200
         )
 
