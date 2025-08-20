@@ -477,32 +477,36 @@ class LeagueAceAPITester:
         )
 
     def run_complete_workflow_test(self):
-        """Test the complete 3-tier league workflow"""
+        """Test the complete 4-tier league workflow"""
         print("\n" + "="*60)
-        print("🚀 STARTING NETLY 3-TIER LEAGUE WORKFLOW TEST")
+        print("🚀 STARTING LEAGUEACE 4-TIER LEAGUE WORKFLOW TEST")
         print("="*60)
 
-        # Test sequence for new 3-tier structure
+        # Test sequence for new 4-tier structure
         test_methods = [
             ("Root API", self.test_root_endpoint),
             ("Create League Manager", self.test_create_league_manager),
             ("Create Player", self.test_create_player),
             ("Get All Users", self.test_get_users),
             ("Get User by ID", self.test_get_user_by_id),
-            ("Create Main Season", self.test_create_main_season),
-            ("Get All Main Seasons", self.test_get_main_seasons),
-            ("Get User Main Seasons", self.test_get_user_main_seasons),
+            ("Social Login", self.test_social_login),
+            ("Update Sports Preferences", self.test_update_sports_preferences),
+            ("Update Profile Picture", self.test_update_profile_picture),
+            ("Create League", self.test_create_league),
+            ("Get All Leagues", self.test_get_leagues),
+            ("Get User Leagues", self.test_get_user_leagues),
+            ("Create Season", self.test_create_season),
+            ("Get League Seasons", self.test_get_league_seasons),
             ("Create Format Tier", self.test_create_format_tier),
             ("Get Format Tiers", self.test_get_format_tiers),
-            ("Create Skill Tier", self.test_create_skill_tier),
-            ("Get Skill Tiers", self.test_get_skill_tiers),
-            ("Get Skill Tier by ID", self.test_get_skill_tier_by_id),
+            ("Create Rating Tier", self.test_create_rating_tier),
+            ("Get Rating Tiers", self.test_get_rating_tiers),
+            ("Get Rating Tier by ID", self.test_get_rating_tier_by_id),
             ("Join by Code", self.test_join_by_code),
-            ("Get User Joined Tiers", self.test_get_user_joined_tiers),
-            ("Get User Standings", self.test_get_user_standings),
-            ("Get Skill Tier Players", self.test_get_skill_tier_players),
+            ("Create Player Groups", self.test_create_player_groups),
+            ("Get Rating Tier Groups", self.test_get_rating_tier_groups),
             ("Invalid Join Code", self.test_invalid_join_code),
-            ("Unauthorized Season Creation", self.test_unauthorized_season_creation)
+            ("Unauthorized League Creation", self.test_unauthorized_league_creation)
         ]
         
         # Run all tests
