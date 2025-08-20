@@ -610,7 +610,16 @@ async def get_leagues(sport_type: Optional[SportType] = None):
         query["sport_type"] = sport_type.value
     
     leagues = await db.leagues.find(query).to_list(100)
-    return [League(**parse_from_mongo(league)) for league in leagues]
+    valid_leagues = []
+    for league in leagues:
+        try:
+            # Only include leagues that match the current schema
+            if 'sport_type' in league:
+                valid_leagues.append(League(**parse_from_mongo(league)))
+        except Exception as e:
+            # Skip invalid league records
+            continue
+    return valid_leagues
 
 @api_router.get("/users/{user_id}/leagues", response_model=List[League])
 async def get_user_leagues(user_id: str, sport_type: Optional[SportType] = None):
