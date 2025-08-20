@@ -348,6 +348,7 @@ class LeagueAceAPITester:
             return False
 
         group_data = {
+            "rating_tier_id": self.rating_tier_id,
             "group_size": 12,
             "custom_names": ["Group Alpha", "Group Beta", "Group Gamma"]
         }
