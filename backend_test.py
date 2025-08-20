@@ -454,26 +454,25 @@ class LeagueAceAPITester:
             data=join_data
         )
 
-    def test_unauthorized_season_creation(self):
-        """Test that players cannot create seasons"""
+    def test_unauthorized_league_creation(self):
+        """Test that players cannot create leagues"""
         if not self.player_id:
             print("❌ Skipping - No Player ID available")
             return False
 
-        season_data = {
-            "name": "Unauthorized Season",
-            "description": "This should fail",
-            "start_date": "2024-09-01",
-            "end_date": "2024-12-31"
+        league_data = {
+            "name": "Unauthorized League",
+            "sport_type": "Tennis",
+            "description": "This should fail"
         }
         
         # This should return 403 for unauthorized access
         return self.run_test(
-            "Unauthorized Season Creation",
+            "Unauthorized League Creation",
             "POST",
-            f"main-seasons",
+            f"leagues",
             403,
-            data=season_data,
+            data=league_data,
             params={"created_by": self.player_id}
         )
 
