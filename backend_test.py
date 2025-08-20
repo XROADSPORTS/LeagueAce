@@ -263,9 +263,9 @@ class NetlyAPITester:
         success, response = self.run_test(
             f"Submit Scores - Match {match_id}",
             "POST",
-            f"matches/{match_id}/submit-scores",
+            f"matches/{match_id}/submit-scores?submitted_by=test_user",
             200,
-            data={"scores": scores, "submitted_by": "test_user"}
+            data=scores
         )
         return success, response
 
