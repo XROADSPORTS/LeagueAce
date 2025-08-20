@@ -92,8 +92,8 @@ class LeagueAceAPITester:
     def test_create_player(self):
         """Create a Player user"""
         player_data = {
-            "name": "Test Player",
-            "email": f"player_{datetime.now().strftime('%H%M%S')}@test.com",
+            "name": "Maria Santos",
+            "email": f"maria.santos_{datetime.now().strftime('%H%M%S')}@gmail.com",
             "phone": "+1-555-0102",
             "rating_level": 4.0,
             "role": "Player"
