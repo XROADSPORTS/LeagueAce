@@ -517,10 +517,10 @@ class LeagueAceAPITester:
         return True
 
 def main():
-    print("🎾 Netly API Testing Suite")
+    print("🎾 LeagueAce API Testing Suite")
     print("=" * 50)
     
-    tester = NetlyAPITester()
+    tester = LeagueAceAPITester()
     
     # Run complete workflow test
     success = tester.run_complete_workflow_test()
