@@ -940,7 +940,7 @@ function App() {
       return (
         <Card className="glass-card-blue rating-tier-card">
           <CardHeader>
-            <CardTitle>{tier.name}</Title>
+            <CardTitle>{tier.name}</CardTitle>
             <CardDescription>
               Rating: {tier.min_rating} - {tier.max_rating} | {tier.max_players} max players
             </CardDescription>
