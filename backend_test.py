@@ -188,9 +188,8 @@ class NetlyAPITester:
         success, response = self.run_test(
             f"Join Season - User {user_id}",
             "POST",
-            f"seasons/{season_id}/join",
-            200,
-            data={"user_id": user_id}
+            f"seasons/{season_id}/join?user_id={user_id}",
+            200
         )
         return success, response
 
