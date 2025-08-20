@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone, date
 from enum import Enum
 import random
+import string
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -27,7 +28,7 @@ api_router = APIRouter(prefix="/api")
 # Enums
 class UserRole(str, Enum):
     PLAYER = "Player"
-    CAPTAIN = "Captain"
+    LEAGUE_MANAGER = "League Manager"
     ADMIN = "Admin"
 
 class SeasonStatus(str, Enum):
@@ -56,6 +57,10 @@ class LeagueFormat(str, Enum):
     DOUBLES = "Doubles"
 
 # Utility functions
+def generate_join_code():
+    """Generate a unique 6-character join code"""
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
 def prepare_for_mongo(data):
     """Convert datetime objects to ISO strings for MongoDB storage"""
     if isinstance(data, dict):
@@ -81,7 +86,7 @@ def parse_from_mongo(item):
                     pass
     return item
 
-# Pydantic Models
+# Enhanced Pydantic Models
 class UserProfile(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: EmailStr
@@ -89,7 +94,7 @@ class UserProfile(BaseModel):
     phone: Optional[str] = None
     rating_level: float = Field(ge=3.0, le=5.5)
     photo_url: Optional[str] = None
-    roles: List[UserRole] = Field(default_factory=lambda: [UserRole.PLAYER])
+    role: UserRole = UserRole.PLAYER
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserProfileCreate(BaseModel):
@@ -98,55 +103,75 @@ class UserProfileCreate(BaseModel):
     phone: Optional[str] = None
     rating_level: float = Field(ge=3.0, le=5.5)
     photo_url: Optional[str] = None
+    role: UserRole = UserRole.PLAYER
 
-class League(BaseModel):
+# 3-Tier League Structure Models
+class MainSeason(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    surface: str = "Hard Court"
-    region: str
-    level: str
-    format: LeagueFormat
-    rules_md: Optional[str] = None
-    created_by: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class LeagueCreate(BaseModel):
-    name: str
-    surface: str = "Hard Court"
-    region: str
-    level: str
-    format: LeagueFormat
-    rules_md: Optional[str] = None
-
-class Season(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    league_id: str
-    name: str
+    name: str  # e.g., "Season 14"
+    description: Optional[str] = None
     start_date: date
     end_date: date
     status: SeasonStatus = SeasonStatus.DRAFT
-    weeks: int = 9
-    max_players: int = 36
+    created_by: str  # League Manager ID
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-class SeasonCreate(BaseModel):
-    league_id: str
+class MainSeasonCreate(BaseModel):
     name: str
+    description: Optional[str] = None
     start_date: date
     end_date: date
-    weeks: int = 9
-    max_players: int = 36
 
+class FormatTier(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    main_season_id: str
+    name: str  # e.g., "Singles", "Doubles"
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FormatTierCreate(BaseModel):
+    main_season_id: str
+    name: str
+    description: Optional[str] = None
+
+class SkillTier(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    format_tier_id: str
+    name: str  # e.g., "4.0", "4.5", "5.0"
+    min_rating: float
+    max_rating: float
+    max_players: int = 36
+    join_code: str = Field(default_factory=generate_join_code)
+    region: str = "General"
+    surface: str = "Hard Court"
+    rules_md: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SkillTierCreate(BaseModel):
+    format_tier_id: str
+    name: str
+    min_rating: float
+    max_rating: float
+    max_players: int = 36
+    region: str = "General"
+    surface: str = "Hard Court"
+    rules_md: Optional[str] = None
+
+# Updated Player Seat for Skill Tier
 class PlayerSeat(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    season_id: str
+    skill_tier_id: str
     user_id: str
     status: PlayerSeatStatus = PlayerSeatStatus.ACTIVE
     joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class JoinByCodeRequest(BaseModel):
+    join_code: str
+
+# Existing models with minor updates
 class Match(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    season_id: str
+    skill_tier_id: str
     week_number: int
     format: LeagueFormat
     scheduled_at: Optional[datetime] = None
@@ -165,7 +190,7 @@ class DoublesSet(BaseModel):
 
 class Availability(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    season_id: str
+    skill_tier_id: str
     user_id: str
     week_number: int
     status: AvailabilityStatus
@@ -173,14 +198,14 @@ class Availability(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AvailabilityCreate(BaseModel):
-    season_id: str
+    skill_tier_id: str
     week_number: int
     status: AvailabilityStatus
     note: Optional[str] = None
 
 class StandingSnapshot(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    season_id: str
+    skill_tier_id: str
     player_id: str
     total_set_wins: int = 0
     total_sets_played: int = 0
@@ -214,81 +239,177 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfile(**parse_from_mongo(user))
 
-# League Routes
-@api_router.post("/leagues", response_model=League)
-async def create_league(league_data: LeagueCreate, created_by: str = "system"):
-    league_dict = league_data.dict()
-    league_dict["created_by"] = created_by
-    league_obj = League(**league_dict)
-    league_mongo = prepare_for_mongo(league_obj.dict())
-    await db.leagues.insert_one(league_mongo)
-    return league_obj
-
-@api_router.get("/leagues", response_model=List[League])
-async def get_leagues():
-    leagues = await db.leagues.find().to_list(100)
-    return [League(**parse_from_mongo(league)) for league in leagues]
-
-@api_router.get("/leagues/{league_id}", response_model=League)
-async def get_league(league_id: str):
-    league = await db.leagues.find_one({"id": league_id})
-    if not league:
-        raise HTTPException(status_code=404, detail="League not found")
-    return League(**parse_from_mongo(league))
-
-# Season Routes
-@api_router.post("/seasons", response_model=Season)  
-async def create_season(season_data: SeasonCreate):
-    # Verify league exists
-    league = await db.leagues.find_one({"id": season_data.league_id})
-    if not league:
-        raise HTTPException(status_code=404, detail="League not found")
+# Main Season Routes (League Manager Only)
+@api_router.post("/main-seasons", response_model=MainSeason)
+async def create_main_season(season_data: MainSeasonCreate, created_by: str):
+    # Verify user is League Manager
+    user = await db.users.find_one({"id": created_by})
+    if not user or user["role"] != UserRole.LEAGUE_MANAGER:
+        raise HTTPException(status_code=403, detail="Only League Managers can create seasons")
     
     season_dict = season_data.dict()
-    season_obj = Season(**season_dict)
+    season_dict["created_by"] = created_by
+    season_obj = MainSeason(**season_dict)
     season_mongo = prepare_for_mongo(season_obj.dict())
-    await db.seasons.insert_one(season_mongo)
+    await db.main_seasons.insert_one(season_mongo)
     return season_obj
 
-@api_router.get("/seasons", response_model=List[Season])
-async def get_seasons():
-    seasons = await db.seasons.find().to_list(100)
-    return [Season(**parse_from_mongo(season)) for season in seasons]
+@api_router.get("/main-seasons", response_model=List[MainSeason])
+async def get_main_seasons():
+    seasons = await db.main_seasons.find().to_list(100)
+    return [MainSeason(**parse_from_mongo(season)) for season in seasons]
 
-@api_router.get("/leagues/{league_id}/seasons", response_model=List[Season])
-async def get_league_seasons(league_id: str):
-    seasons = await db.seasons.find({"league_id": league_id}).to_list(100)
-    return [Season(**parse_from_mongo(season)) for season in seasons]
+@api_router.get("/users/{user_id}/main-seasons", response_model=List[MainSeason])
+async def get_user_main_seasons(user_id: str):
+    seasons = await db.main_seasons.find({"created_by": user_id}).to_list(100)
+    return [MainSeason(**parse_from_mongo(season)) for season in seasons]
 
-# Player Seat Routes (Join League)
-@api_router.post("/seasons/{season_id}/join")
-async def join_season(season_id: str, user_id: str):
-    # Check if season exists
-    season = await db.seasons.find_one({"id": season_id})
-    if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
+# Format Tier Routes
+@api_router.post("/format-tiers", response_model=FormatTier)
+async def create_format_tier(tier_data: FormatTierCreate):
+    # Verify main season exists
+    main_season = await db.main_seasons.find_one({"id": tier_data.main_season_id})
+    if not main_season:
+        raise HTTPException(status_code=404, detail="Main season not found")
+    
+    tier_dict = tier_data.dict()
+    tier_obj = FormatTier(**tier_dict)
+    tier_mongo = prepare_for_mongo(tier_obj.dict())
+    await db.format_tiers.insert_one(tier_mongo)
+    return tier_obj
+
+@api_router.get("/main-seasons/{main_season_id}/format-tiers", response_model=List[FormatTier])
+async def get_format_tiers(main_season_id: str):
+    tiers = await db.format_tiers.find({"main_season_id": main_season_id}).to_list(100)
+    return [FormatTier(**parse_from_mongo(tier)) for tier in tiers]
+
+# Skill Tier Routes
+@api_router.post("/skill-tiers", response_model=SkillTier)
+async def create_skill_tier(tier_data: SkillTierCreate):
+    # Verify format tier exists
+    format_tier = await db.format_tiers.find_one({"id": tier_data.format_tier_id})
+    if not format_tier:
+        raise HTTPException(status_code=404, detail="Format tier not found")
+    
+    tier_dict = tier_data.dict()
+    tier_obj = SkillTier(**tier_dict)
+    tier_mongo = prepare_for_mongo(tier_obj.dict())
+    await db.skill_tiers.insert_one(tier_mongo)
+    return tier_obj
+
+@api_router.get("/format-tiers/{format_tier_id}/skill-tiers", response_model=List[SkillTier])
+async def get_skill_tiers(format_tier_id: str):
+    tiers = await db.skill_tiers.find({"format_tier_id": format_tier_id}).to_list(100)
+    return [SkillTier(**parse_from_mongo(tier)) for tier in tiers]
+
+@api_router.get("/skill-tiers/{skill_tier_id}", response_model=SkillTier)
+async def get_skill_tier(skill_tier_id: str):
+    tier = await db.skill_tiers.find_one({"id": skill_tier_id})
+    if not tier:
+        raise HTTPException(status_code=404, detail="Skill tier not found")
+    return SkillTier(**parse_from_mongo(tier))
+
+# Join by Code Route
+@api_router.post("/join-by-code/{user_id}")
+async def join_by_code(user_id: str, request: JoinByCodeRequest):
+    # Find skill tier by join code
+    skill_tier = await db.skill_tiers.find_one({"join_code": request.join_code})
+    if not skill_tier:
+        raise HTTPException(status_code=404, detail="Invalid join code")
+    
+    # Check if user exists
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
     # Check if user already joined
-    existing_seat = await db.player_seats.find_one({"season_id": season_id, "user_id": user_id})
+    existing_seat = await db.player_seats.find_one({"skill_tier_id": skill_tier["id"], "user_id": user_id})
     if existing_seat:
-        raise HTTPException(status_code=400, detail="User already joined this season")
+        raise HTTPException(status_code=400, detail="User already joined this tier")
+    
+    # Check rating compatibility
+    if not (skill_tier["min_rating"] <= user["rating_level"] <= skill_tier["max_rating"]):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Rating {user['rating_level']} not suitable for tier {skill_tier['name']} ({skill_tier['min_rating']}-{skill_tier['max_rating']})"
+        )
     
     # Count current players
-    player_count = await db.player_seats.count_documents({"season_id": season_id, "status": PlayerSeatStatus.ACTIVE})
+    player_count = await db.player_seats.count_documents({
+        "skill_tier_id": skill_tier["id"], 
+        "status": PlayerSeatStatus.ACTIVE
+    })
     
     # Determine status based on capacity
-    status = PlayerSeatStatus.ACTIVE if player_count < season["max_players"] else PlayerSeatStatus.RESERVE
+    status = PlayerSeatStatus.ACTIVE if player_count < skill_tier["max_players"] else PlayerSeatStatus.RESERVE
     
-    seat_obj = PlayerSeat(season_id=season_id, user_id=user_id, status=status)
+    seat_obj = PlayerSeat(skill_tier_id=skill_tier["id"], user_id=user_id, status=status)
     seat_mongo = prepare_for_mongo(seat_obj.dict())
     await db.player_seats.insert_one(seat_mongo)
     
-    return {"message": f"Successfully joined season with status: {status}", "status": status}
+    return {
+        "message": f"Successfully joined {skill_tier['name']} with status: {status}",
+        "status": status,
+        "skill_tier": SkillTier(**parse_from_mongo(skill_tier))
+    }
 
-@api_router.get("/seasons/{season_id}/players", response_model=List[dict])
-async def get_season_players(season_id: str):
+# Player Dashboard Routes
+@api_router.get("/users/{user_id}/joined-tiers")
+async def get_user_joined_tiers(user_id: str):
     # Get player seats
-    seats = await db.player_seats.find({"season_id": season_id}).to_list(100)
+    seats = await db.player_seats.find({"user_id": user_id}).to_list(100)
+    
+    result = []
+    for seat in seats:
+        # Get skill tier details
+        skill_tier = await db.skill_tiers.find_one({"id": seat["skill_tier_id"]})
+        if not skill_tier:
+            continue
+            
+        # Get format tier details
+        format_tier = await db.format_tiers.find_one({"id": skill_tier["format_tier_id"]})
+        if not format_tier:
+            continue
+            
+        # Get main season details
+        main_season = await db.main_seasons.find_one({"id": format_tier["main_season_id"]})
+        if not main_season:
+            continue
+        
+        tier_info = {
+            "seat_id": seat["id"],
+            "status": seat["status"],
+            "joined_at": seat["joined_at"],
+            "skill_tier": SkillTier(**parse_from_mongo(skill_tier)),
+            "format_tier": FormatTier(**parse_from_mongo(format_tier)),
+            "main_season": MainSeason(**parse_from_mongo(main_season))
+        }
+        result.append(tier_info)
+    
+    return result
+
+@api_router.get("/users/{user_id}/standings")
+async def get_user_standings(user_id: str):
+    standings = await db.standings.find({"player_id": user_id}).to_list(100)
+    
+    result = []
+    for standing in standings:
+        # Get skill tier details
+        skill_tier = await db.skill_tiers.find_one({"id": standing["skill_tier_id"]})
+        if skill_tier:
+            standing_info = {
+                "standing": StandingSnapshot(**parse_from_mongo(standing)),
+                "skill_tier": SkillTier(**parse_from_mongo(skill_tier))
+            }
+            result.append(standing_info)
+    
+    return result
+
+# Skill Tier Players Route
+@api_router.get("/skill-tiers/{skill_tier_id}/players")
+async def get_skill_tier_players(skill_tier_id: str):
+    # Get player seats
+    seats = await db.player_seats.find({"skill_tier_id": skill_tier_id}).to_list(100)
     
     # Get user details for each seat
     players = []
@@ -308,12 +429,12 @@ async def get_season_players(season_id: str):
     
     return players
 
-# Availability Routes
+# Availability Routes (Updated for skill tiers)
 @api_router.post("/availability")
 async def set_availability(availability_data: AvailabilityCreate, user_id: str):
-    # Check if availability already exists for this user/season/week
+    # Check if availability already exists for this user/skill_tier/week
     existing = await db.availability.find_one({
-        "season_id": availability_data.season_id,
+        "skill_tier_id": availability_data.skill_tier_id,
         "user_id": user_id,
         "week_number": availability_data.week_number
     })
@@ -337,10 +458,10 @@ async def set_availability(availability_data: AvailabilityCreate, user_id: str):
         await db.availability.insert_one(availability_mongo)
         return {"message": "Availability set successfully"}
 
-@api_router.get("/seasons/{season_id}/availability/{week_number}")
-async def get_week_availability(season_id: str, week_number: int):
+@api_router.get("/skill-tiers/{skill_tier_id}/availability/{week_number}")
+async def get_week_availability(skill_tier_id: str, week_number: int):
     availability_records = await db.availability.find({
-        "season_id": season_id,
+        "skill_tier_id": skill_tier_id,
         "week_number": week_number
     }).to_list(100)
     
@@ -359,12 +480,12 @@ async def get_week_availability(season_id: str, week_number: int):
     
     return result
 
-# Simple Match Generation (MVP version)
-@api_router.post("/seasons/{season_id}/generate-matches/{week_number}")
-async def generate_weekly_matches(season_id: str, week_number: int):
+# Match Generation (Updated for skill tiers)
+@api_router.post("/skill-tiers/{skill_tier_id}/generate-matches/{week_number}")
+async def generate_weekly_matches(skill_tier_id: str, week_number: int):
     # Get available players for this week
     available_players = await db.availability.find({
-        "season_id": season_id,
+        "skill_tier_id": skill_tier_id,
         "week_number": week_number,
         "status": AvailabilityStatus.YES
     }).to_list(100)
@@ -381,7 +502,7 @@ async def generate_weekly_matches(season_id: str, week_number: int):
         match_players = player_ids[i:i+4]
         if len(match_players) == 4:
             match_obj = Match(
-                season_id=season_id,
+                skill_tier_id=skill_tier_id,
                 week_number=week_number,
                 format=LeagueFormat.DOUBLES
             )
@@ -413,10 +534,10 @@ async def generate_weekly_matches(season_id: str, week_number: int):
     
     return {"message": f"Generated {len(matches)} matches for week {week_number}", "matches": matches}
 
-# Get Matches
-@api_router.get("/seasons/{season_id}/matches")
-async def get_season_matches(season_id: str, week_number: Optional[int] = None):
-    query = {"season_id": season_id}
+# Get Matches (Updated for skill tiers)
+@api_router.get("/skill-tiers/{skill_tier_id}/matches")
+async def get_skill_tier_matches(skill_tier_id: str, week_number: Optional[int] = None):
+    query = {"skill_tier_id": skill_tier_id}
     if week_number:
         query["week_number"] = week_number
     
@@ -454,7 +575,7 @@ async def get_season_matches(season_id: str, week_number: Optional[int] = None):
     
     return result
 
-# Submit Scores
+# Submit Scores (Updated for skill tiers)
 @api_router.post("/matches/{match_id}/submit-scores")
 async def submit_match_scores(match_id: str, scores: List[dict], submitted_by: str):
     # Update sets with scores
@@ -475,21 +596,21 @@ async def submit_match_scores(match_id: str, scores: List[dict], submitted_by: s
     )
     
     # Recalculate standings
-    await recalculate_season_standings(match_id)
+    await recalculate_skill_tier_standings(match_id)
     
     return {"message": "Scores submitted successfully"}
 
-async def recalculate_season_standings(match_id: str):
-    """Recalculate standings for a season based on submitted scores"""
-    # Get match to find season
+async def recalculate_skill_tier_standings(match_id: str):
+    """Recalculate standings for a skill tier based on submitted scores"""
+    # Get match to find skill tier
     match = await db.matches.find_one({"id": match_id})
     if not match:
         return
     
-    season_id = match["season_id"]
+    skill_tier_id = match["skill_tier_id"]
     
-    # Get all players in season
-    players = await db.player_seats.find({"season_id": season_id, "status": PlayerSeatStatus.ACTIVE}).to_list(100)
+    # Get all players in skill tier
+    players = await db.player_seats.find({"skill_tier_id": skill_tier_id, "status": PlayerSeatStatus.ACTIVE}).to_list(100)
     
     # Calculate standings for each player
     for player_seat in players:
@@ -520,7 +641,7 @@ async def recalculate_season_standings(match_id: str):
         
         # Update or create standing
         standing_data = {
-            "season_id": season_id,
+            "skill_tier_id": skill_tier_id,
             "player_id": user_id,
             "total_set_wins": total_set_wins,
             "total_sets_played": total_sets_played,
@@ -529,15 +650,15 @@ async def recalculate_season_standings(match_id: str):
         }
         
         await db.standings.update_one(
-            {"season_id": season_id, "player_id": user_id},
+            {"skill_tier_id": skill_tier_id, "player_id": user_id},
             {"$set": prepare_for_mongo(standing_data)},
             upsert=True
         )
 
-# Standings
-@api_router.get("/seasons/{season_id}/standings")
-async def get_season_standings(season_id: str):
-    standings = await db.standings.find({"season_id": season_id}).sort("total_set_wins", -1).to_list(100)
+# Standings (Updated for skill tiers)
+@api_router.get("/skill-tiers/{skill_tier_id}/standings")
+async def get_skill_tier_standings(skill_tier_id: str):
+    standings = await db.standings.find({"skill_tier_id": skill_tier_id}).sort("total_set_wins", -1).to_list(100)
     
     # Add player names
     result = []
