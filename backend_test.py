@@ -376,43 +376,63 @@ class LeagueAceAPITester:
             200
         )
 
-    def test_get_user_joined_tiers(self):
-        """Test getting user's joined tiers"""
+    def test_social_login(self):
+        """Test social login functionality"""
+        social_data = {
+            "provider": "Google",
+            "token": "mock_google_token_123",
+            "email": f"john.doe_{datetime.now().strftime('%H%M%S')}@gmail.com",
+            "name": "John Doe",
+            "provider_id": "google_123456789"
+        }
+        
+        success, response = self.run_test(
+            "Social Login (Google)",
+            "POST",
+            "auth/social-login",
+            200,
+            data=social_data
+        )
+        
+        if success and 'id' in response:
+            print(f"   Social Login User ID: {response['id']}")
+        
+        return success
+
+    def test_update_sports_preferences(self):
+        """Test updating user sports preferences"""
         if not self.player_id:
             print("❌ Skipping - No Player ID available")
             return False
-            
+
+        preferences_data = {
+            "sports_preferences": ["Tennis", "Pickleball"]
+        }
+        
         return self.run_test(
-            "Get User Joined Tiers",
-            "GET",
-            f"users/{self.player_id}/joined-tiers",
-            200
+            "Update Sports Preferences",
+            "PATCH",
+            f"users/{self.player_id}/sports",
+            200,
+            data=preferences_data
         )
 
-    def test_get_user_standings(self):
-        """Test getting user's standings"""
+    def test_update_profile_picture(self):
+        """Test updating profile picture"""
         if not self.player_id:
             print("❌ Skipping - No Player ID available")
             return False
-            
-        return self.run_test(
-            "Get User Standings",
-            "GET",
-            f"users/{self.player_id}/standings",
-            200
-        )
 
-    def test_get_skill_tier_players(self):
-        """Test getting players in a skill tier"""
-        if not self.skill_tier_id:
-            print("❌ Skipping - No Skill Tier ID available")
-            return False
-            
+        picture_data = {
+            "profile_picture": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+        }
+        
         return self.run_test(
-            "Get Skill Tier Players",
-            "GET",
-            f"skill-tiers/{self.skill_tier_id}/players",
-            200
+            "Update Profile Picture",
+            "PATCH",
+            f"users/{self.player_id}/profile-picture",
+            200,
+            data=picture_data
         )
 
     def test_invalid_join_code(self):
