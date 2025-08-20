@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from typing import Dict, Any
 
 class NetlyAPITester:
-    def __init__(self, base_url="https://netly-sports.preview.emergentagent.com"):
+    def __init__(self, base_url="https://courtmaster-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
