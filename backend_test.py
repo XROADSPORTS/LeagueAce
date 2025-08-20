@@ -130,31 +130,30 @@ class LeagueAceAPITester:
             200
         )
 
-    def test_create_main_season(self):
-        """Test creating a main season (League Manager only)"""
+    def test_create_league(self):
+        """Test creating a league (League Manager only)"""
         if not self.league_manager_id:
             print("❌ Skipping - No League Manager ID available")
             return False
 
-        season_data = {
-            "name": "Test Season 14",
-            "description": "Test season for API validation",
-            "start_date": "2024-09-01",
-            "end_date": "2024-12-31"
+        league_data = {
+            "name": "Bay Area Tennis League",
+            "sport_type": "Tennis",
+            "description": "Premier tennis league for Bay Area players"
         }
         
         success, response = self.run_test(
-            "Create Main Season",
+            "Create League",
             "POST",
-            f"main-seasons",
+            f"leagues",
             200,
-            data=season_data,
+            data=league_data,
             params={"created_by": self.league_manager_id}
         )
         
         if success and 'id' in response:
-            self.main_season_id = response['id']
-            print(f"   Created Main Season ID: {self.main_season_id}")
+            self.league_id = response['id']
+            print(f"   Created League ID: {self.league_id}")
         
         return success
 
