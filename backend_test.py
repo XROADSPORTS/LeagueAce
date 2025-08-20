@@ -157,20 +157,60 @@ class LeagueAceAPITester:
         
         return success
 
-    def test_get_main_seasons(self):
-        """Test getting all main seasons"""
-        return self.run_test("Get All Main Seasons", "GET", "main-seasons", 200)
+    def test_get_leagues(self):
+        """Test getting all leagues"""
+        return self.run_test("Get All Leagues", "GET", "leagues", 200)
 
-    def test_get_user_main_seasons(self):
-        """Test getting user's main seasons"""
+    def test_get_user_leagues(self):
+        """Test getting user's leagues"""
         if not self.league_manager_id:
             print("❌ Skipping - No League Manager ID available")
             return False
             
         return self.run_test(
-            "Get User Main Seasons",
+            "Get User Leagues",
             "GET",
-            f"users/{self.league_manager_id}/main-seasons",
+            f"users/{self.league_manager_id}/leagues",
+            200
+        )
+
+    def test_create_season(self):
+        """Test creating a season"""
+        if not self.league_id:
+            print("❌ Skipping - No League ID available")
+            return False
+
+        season_data = {
+            "league_id": self.league_id,
+            "name": "Fall 2024 Season",
+            "start_date": "2024-09-01",
+            "end_date": "2024-12-31"
+        }
+        
+        success, response = self.run_test(
+            "Create Season",
+            "POST",
+            "seasons",
+            200,
+            data=season_data
+        )
+        
+        if success and 'id' in response:
+            self.season_id = response['id']
+            print(f"   Created Season ID: {self.season_id}")
+        
+        return success
+
+    def test_get_league_seasons(self):
+        """Test getting seasons for a league"""
+        if not self.league_id:
+            print("❌ Skipping - No League ID available")
+            return False
+            
+        return self.run_test(
+            "Get League Seasons",
+            "GET",
+            f"leagues/{self.league_id}/seasons",
             200
         )
 
