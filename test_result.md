@@ -160,15 +160,18 @@ backend:
 
   - task: "Round Robin Doubles Algorithm"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Added advanced Round Robin Doubles logic ensuring unique partner combinations. Includes schedule generation API, match creation with chat threads, and player notifications."
+      - working: true
+        agent: "testing"
+        comment: "✅ ROUND ROBIN DOUBLES ALGORITHM WORKING PERFECTLY - Tested complete workflow: 1) `/player-groups/{group_id}/generate-schedule` generates optimal schedule with unique partner combinations (6 partnerships covered out of 6 possible), 2) `/player-groups/{group_id}/create-matches` creates weekly matches with proper team assignments, 3) Match chat threads automatically created with system messages, 4) Player notifications sent successfully. Algorithm correctly handles 4+ even-numbered players, generates 3 weeks of matches, and ensures every player partners with every other player exactly once."
 
   - task: "Competition System Selection"
     implemented: true
