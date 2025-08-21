@@ -200,7 +200,7 @@ function App() {
             onClick={() => toggleSport('Tennis')}
           >
             <CardContent className="sport-option-content">
-              <Target className="sport-option-icon tennis-icon-blue" />
+              <Target className="sport-option-icon tennis-icon-blue glass-icon" />
               <h3>Tennis Leagues</h3>
               <p>Join competitive tennis leagues with advanced organization</p>
               <ul className="sport-benefits">
