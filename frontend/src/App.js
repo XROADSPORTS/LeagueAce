@@ -2579,7 +2579,13 @@ function App() {
       e.preventDefault();
       setLoading(true);
       try {
-        await axios.post(`${API}/join-by-code/${user.id}`, { join_code: joinCode });
+        const code = (joinCode || '').trim().toUpperCase();
+        if (code.length !== 6) {
+          toast({ title: 'Invalid code', description: 'Join code must be 6 characters', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
+        await axios.post(`${API}/join-by-code/${user.id}`, { join_code: code });
         await loadPlayerData();
         setShowJoinForm(false);
         setJoinCode("");
