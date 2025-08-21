@@ -238,7 +238,7 @@ def generate_round_robin_doubles_schedule(players: List[str], total_weeks: int =
         "total_possible_partnerships": len(all_partnerships)
     }
 
-def calculate_player_rankings(player_stats: List[PlayerSetStats]) -> List[PlayerSetStats]:
+def calculate_player_rankings(player_stats: List["PlayerSetStats"]) -> List["PlayerSetStats"]:
     """
     Calculate player rankings based on:
     1. Total sets won (primary)
