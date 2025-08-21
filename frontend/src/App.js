@@ -1086,9 +1086,9 @@ function App() {
         try {
           await axios.post(`${API}/player-groups/${groupId}/generate-schedule`);
           await loadSchedule();
-          toast.success("Round robin schedule generated!");
+          toast({ title: "Success", description: "Round robin schedule generated!" });
         } catch (error) {
-          toast.error(error.response?.data?.detail || "Failed to generate schedule");
+          toast({ title: "Error", description: error.response?.data?.detail || "Failed to generate schedule", variant: "destructive" });
         }
         setLoading(false);
       };
@@ -1101,9 +1101,9 @@ function App() {
             week_number: selectedWeek
           });
           await loadMatches();
-          toast.success(`Week ${selectedWeek} matches created!`);
+          toast({ title: "Success", description: `Week ${selectedWeek} matches created!` });
         } catch (error) {
-          toast.error(error.response?.data?.detail || "Failed to create matches");
+          toast({ title: "Error", description: error.response?.data?.detail || "Failed to create matches", variant: "destructive" });
         }
         setLoading(false);
       };
