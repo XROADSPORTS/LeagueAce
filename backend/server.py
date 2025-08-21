@@ -294,7 +294,7 @@ def update_player_stats_from_match(match: Dict, match_result: "MatchResult") -> 
     
     return updated_stats
 
-def determine_playoff_qualifiers(player_stats: List[PlayerSetStats], playoff_spots: int = 8) -> List[str]:
+def determine_playoff_qualifiers(player_stats: List["PlayerSetStats"], playoff_spots: int = 8) -> List[str]:
     """Determine which players qualify for playoffs (default top 8)"""
     ranked_players = calculate_player_rankings(player_stats)
     qualifiers = [player.player_id for player in ranked_players[:playoff_spots]]
