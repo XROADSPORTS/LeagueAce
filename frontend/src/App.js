@@ -2938,7 +2938,7 @@ function App() {
                 onClick={() => setActiveTab("home")}
                 className="btn-nav-ios"
               >
-                <Shield className="w-4 h-4 mr-2" />
+                <span className="icon-glass-container"><Shield className="w-4 h-4 mr-2" /></span>
                 Dashboard
               </Button>
             </div>
