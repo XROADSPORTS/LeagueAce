@@ -364,6 +364,7 @@ class ProfilePictureUpdate(BaseModel):
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 class SocialLoginRequest(BaseModel):
     provider: AuthProvider
