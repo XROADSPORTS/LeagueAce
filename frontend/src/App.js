@@ -2628,6 +2628,175 @@ function App() {
   // Continue with Player Dashboard and other components...
   // (Player Dashboard, Navigation, etc. remain similar but updated for new structure)
 
+  // Profile Picture Components (moved to global scope)
+  const ProfilePicture = ({ user, size = "md", className = "", onClick = null }) => {
+    const sizeClasses = {
+      sm: "w-8 h-8 text-xs",
+      md: "w-12 h-12 text-sm", 
+      lg: "w-16 h-16 text-base",
+      xl: "w-24 h-24 text-lg"
+    };
+
+    const getInitials = (name) => {
+      if (!name) return "?";
+      return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    };
+
+    if (user?.profile_picture) {
+      return (
+        <img
+          src={user.profile_picture}
+          alt={user.name || "Profile"}
+          className={`profile-picture ${sizeClasses[size]} ${className}`}
+          onClick={onClick}
+          style={{ cursor: onClick ? 'pointer' : 'default' }}
+        />
+      );
+    }
+
+    return (
+      <div 
+        className={`profile-picture-placeholder ${sizeClasses[size]} ${className}`}
+        onClick={onClick}
+        style={{ cursor: onClick ? 'pointer' : 'default' }}
+      >
+        {getInitials(user?.name)}
+      </div>
+    );
+  };
+
+  // Profile Picture Upload Component
+  const ProfilePictureUpload = ({ onUploadComplete }) => {
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handleFileSelect = async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({ 
+          title: "Invalid File", 
+          description: "Please select an image file",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ 
+          title: "File Too Large", 
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await axios.post(`${API}/users/${user.id}/upload-picture`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        setUser(response.data.user);
+        toast({ 
+          title: "Success", 
+          description: "Profile picture updated!" 
+        });
+
+        if (onUploadComplete) onUploadComplete(response.data.user);
+      } catch (error) {
+        toast({ 
+          title: "Upload Failed", 
+          description: error.response?.data?.detail || "Failed to upload profile picture",
+          variant: "destructive"
+        });
+      }
+      setUploading(false);
+    };
+
+    const triggerFileSelect = () => {
+      fileInputRef.current?.click();
+    };
+
+    const removeProfilePicture = async () => {
+      try {
+        await axios.delete(`${API}/users/${user.id}/remove-picture`);
+        const updatedUser = { ...user, profile_picture: null, photo_url: null };
+        setUser(updatedUser);
+        toast({ 
+          title: "Success", 
+          description: "Profile picture removed" 
+        });
+
+        if (onUploadComplete) onUploadComplete(updatedUser);
+      } catch (error) {
+        toast({ 
+          title: "Error", 
+          description: "Failed to remove profile picture",
+          variant: "destructive"
+        });
+      }
+    };
+
+    return (
+      <div className="profile-picture-upload">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept="image/*"
+          style={{ display: 'none' }}
+        />
+        
+        <div className="profile-picture-container">
+          <ProfilePicture 
+            user={user} 
+            size="xl" 
+            onClick={triggerFileSelect}
+            className="upload-target"
+          />
+          <div className="upload-overlay" onClick={triggerFileSelect}>
+            {uploading ? (
+              <div className="upload-spinner">⏳</div>
+            ) : (
+              <Camera className="w-6 h-6" />
+            )}
+          </div>
+        </div>
+
+        <div className="upload-actions">
+          <Button
+            size="sm"
+            className="leagueace-button"
+            onClick={triggerFileSelect}
+            disabled={uploading}
+          >
+            {uploading ? "Uploading..." : "Change Photo"}
+          </Button>
+          
+          {user?.profile_picture && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="blue-outline-button"
+              onClick={removeProfilePicture}
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const PlayerDashboard = () => {
     const [activePlayerTab, setActivePlayerTab] = useState('home');
     const [showJoinForm, setShowJoinForm] = useState(false);
