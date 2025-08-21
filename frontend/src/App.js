@@ -3300,7 +3300,7 @@ function App() {
                     <Button 
                       type="submit" 
                       className="btn-primary-ios"
-                      disabled={loading || joinCode.length !== 6}
+                      disabled={loading || joinCode.length !== 6 || (joinPreview && user && (user.rating_level < joinPreview.min_rating || user.rating_level > joinPreview.max_rating))}
                     >
                       {loading ? "Joining..." : "Join League"}
                     </Button>
