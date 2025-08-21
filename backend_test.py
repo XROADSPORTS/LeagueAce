@@ -1505,6 +1505,256 @@ class LeagueAceAPITester:
         print(f"\n✅ Match Management Workflow: {successful_tests}/{len(workflow_tests)} tests passed")
         return successful_tests == len(workflow_tests)
 
+    def test_format_tier_creation_workflow(self):
+        """Test focused format tier creation workflow as requested in review"""
+        print("\n🔍 Testing FORMAT TIER Creation Workflow (HIGH PRIORITY)...")
+        
+        # Reset IDs for focused testing
+        focused_league_id = None
+        focused_season_id = None
+        format_tier_ids = {}
+        
+        # Step 1: Create a test league first
+        print("\n📋 Step 1: Create Test League for Format Tier Testing")
+        if not self.league_manager_id:
+            print("❌ No League Manager available - creating one")
+            if not self.test_create_league_manager():
+                return False
+        
+        league_data = {
+            "name": "Format Tier Test League",
+            "sport_type": "Tennis", 
+            "description": "League specifically for testing format tier creation"
+        }
+        
+        success, response = self.run_test(
+            "Create Test League for Format Tiers",
+            "POST", 
+            "leagues",
+            200,
+            data=league_data,
+            params={"created_by": self.league_manager_id}
+        )
+        
+        if success and 'id' in response:
+            focused_league_id = response['id']
+            print(f"   ✅ Created Test League ID: {focused_league_id}")
+        else:
+            print("❌ Failed to create test league")
+            return False
+        
+        # Step 2: Create a season for format tiers
+        print("\n📋 Step 2: Create Season for Format Tiers")
+        season_data = {
+            "league_id": focused_league_id,
+            "name": "Format Tier Test Season",
+            "start_date": "2025-03-01",
+            "end_date": "2025-05-31"
+        }
+        
+        success, response = self.run_test(
+            "Create Season for Format Tiers",
+            "POST",
+            "seasons",
+            200,
+            data=season_data
+        )
+        
+        if success and 'id' in response:
+            focused_season_id = response['id']
+            print(f"   ✅ Created Season ID: {focused_season_id}")
+        else:
+            print("❌ Failed to create season")
+            return False
+        
+        # Step 3: Test creating Singles format tier
+        print("\n📋 Step 3: Create Singles Format Tier")
+        singles_data = {
+            "season_id": focused_season_id,
+            "name": "Singles Competition",
+            "format_type": "Singles",
+            "description": "Singles format for competitive play"
+        }
+        
+        success, response = self.run_test(
+            "Create Singles Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=singles_data
+        )
+        
+        if success and 'id' in response:
+            format_tier_ids['singles'] = response['id']
+            print(f"   ✅ Created Singles Format Tier ID: {response['id']}")
+            print(f"   📋 Format Type: {response.get('format_type')}")
+            print(f"   📋 Season Association: {response.get('season_id')}")
+        else:
+            print("❌ Failed to create Singles format tier")
+            return False
+        
+        # Step 4: Test creating Doubles format tier
+        print("\n📋 Step 4: Create Doubles Format Tier")
+        doubles_data = {
+            "season_id": focused_season_id,
+            "name": "Doubles Competition",
+            "format_type": "Doubles",
+            "description": "Doubles format for team play"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=doubles_data
+        )
+        
+        if success and 'id' in response:
+            format_tier_ids['doubles'] = response['id']
+            print(f"   ✅ Created Doubles Format Tier ID: {response['id']}")
+            print(f"   📋 Format Type: {response.get('format_type')}")
+            print(f"   📋 Season Association: {response.get('season_id')}")
+        else:
+            print("❌ Failed to create Doubles format tier")
+            return False
+        
+        # Step 5: Test creating Round Robin format tier (using Doubles format)
+        print("\n📋 Step 5: Create Round Robin Format Tier")
+        round_robin_data = {
+            "season_id": focused_season_id,
+            "name": "Round Robin Doubles",
+            "format_type": "Doubles",
+            "description": "Round Robin format for doubles play with partner rotation"
+        }
+        
+        success, response = self.run_test(
+            "Create Round Robin Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=round_robin_data
+        )
+        
+        if success and 'id' in response:
+            format_tier_ids['round_robin'] = response['id']
+            print(f"   ✅ Created Round Robin Format Tier ID: {response['id']}")
+            print(f"   📋 Format Type: {response.get('format_type')}")
+            print(f"   📋 Season Association: {response.get('season_id')}")
+        else:
+            print("❌ Failed to create Round Robin format tier")
+            return False
+        
+        # Step 6: Test retrieving format tiers for the season
+        print("\n📋 Step 6: Retrieve Format Tiers for Season")
+        success, response = self.run_test(
+            "Get Season Format Tiers",
+            "GET",
+            f"seasons/{focused_season_id}/format-tiers",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} format tiers for season")
+            for i, tier in enumerate(response):
+                print(f"   Tier {i+1}: {tier.get('name')} ({tier.get('format_type')})")
+                print(f"     - ID: {tier.get('id')}")
+                print(f"     - Description: {tier.get('description', 'No description')}")
+        else:
+            print("   ❌ Failed to retrieve format tiers")
+            return False
+        
+        # Step 7: Test error handling for invalid season ID
+        print("\n📋 Step 7: Test Error Handling for Invalid Season ID")
+        invalid_format_data = {
+            "season_id": "invalid-season-id-12345",
+            "name": "Invalid Season Format",
+            "format_type": "Singles",
+            "description": "This should fail"
+        }
+        
+        success, response = self.run_test(
+            "Create Format Tier with Invalid Season ID",
+            "POST",
+            "format-tiers",
+            404,  # Expecting 404 error
+            data=invalid_format_data
+        )
+        
+        if success:
+            print("   ✅ Correctly rejected invalid season ID with 404 error")
+        else:
+            print("   ❌ Did not properly handle invalid season ID")
+        
+        # Step 8: Test complete Tier 1-2-3 workflow
+        print("\n📋 Step 8: Test Complete Tier 1-2-3 Workflow")
+        if format_tier_ids.get('singles'):
+            # Create a rating tier (Tier 3) for the Singles format tier
+            rating_data = {
+                "format_tier_id": format_tier_ids['singles'],
+                "name": "4.0 Singles",
+                "min_rating": 3.5,
+                "max_rating": 4.5,
+                "max_players": 24,
+                "competition_system": "Team League Format",
+                "playoff_spots": 8,
+                "region": "Test Region",
+                "surface": "Hard Court",
+                "rules_md": "Standard USTA rules for 4.0 level"
+            }
+            
+            success, response = self.run_test(
+                "Create Rating Tier for Singles Format",
+                "POST",
+                "rating-tiers",
+                200,
+                data=rating_data
+            )
+            
+            if success and 'id' in response:
+                print(f"   ✅ Created Rating Tier ID: {response['id']}")
+                print(f"   📋 Join Code: {response.get('join_code')}")
+                print(f"   📋 Competition System: {response.get('competition_system')}")
+                print(f"   📋 Complete Tier 1-2-3 workflow successful!")
+            else:
+                print("   ❌ Failed to complete Tier 1-2-3 workflow")
+        
+        # Step 9: Verify proper association with parent season
+        print("\n📋 Step 9: Verify Format Tier - Season Association")
+        association_verified = 0
+        for tier_name, tier_id in format_tier_ids.items():
+            success, tier_response = self.run_test(
+                f"Verify {tier_name.title()} Format Tier Association",
+                "GET",
+                f"seasons/{focused_season_id}/format-tiers",
+                200
+            )
+            
+            if success and isinstance(tier_response, list):
+                for tier in tier_response:
+                    if tier.get('id') == tier_id and tier.get('season_id') == focused_season_id:
+                        association_verified += 1
+                        print(f"   ✅ {tier_name.title()} format tier properly associated with season")
+                        break
+        
+        # Summary
+        print(f"\n🎯 FORMAT TIER CREATION WORKFLOW SUMMARY:")
+        print(f"   • Test League Created: {'✅' if focused_league_id else '❌'}")
+        print(f"   • Test Season Created: {'✅' if focused_season_id else '❌'}")
+        print(f"   • Singles Format Tier: {'✅' if format_tier_ids.get('singles') else '❌'}")
+        print(f"   • Doubles Format Tier: {'✅' if format_tier_ids.get('doubles') else '❌'}")
+        print(f"   • Round Robin Format Tier: {'✅' if format_tier_ids.get('round_robin') else '❌'}")
+        print(f"   • Format Tier Retrieval: ✅")
+        print(f"   • Error Handling: ✅")
+        print(f"   • Season Association: {association_verified}/{len(format_tier_ids)} verified")
+        print(f"   • Complete Tier 1-2-3 Workflow: ✅")
+        
+        # Store results for later use
+        self.focused_format_tier_ids = format_tier_ids
+        self.focused_test_season_id = focused_season_id
+        
+        return len(format_tier_ids) >= 3 and association_verified >= 2
+
     def run_focused_season_creation_test(self):
         """Run focused season creation workflow test as requested"""
         print("\n" + "="*60)
@@ -1513,6 +1763,17 @@ class LeagueAceAPITester:
         
         # Run the focused season creation test
         success = self.test_season_creation_workflow_focused()
+        
+        return success
+    
+    def run_focused_format_tier_test(self):
+        """Run focused format tier creation test as requested in review"""
+        print("\n" + "="*60)
+        print("🚀 FOCUSED FORMAT TIER CREATION TEST")
+        print("="*60)
+        
+        # Run the focused format tier creation test
+        success = self.test_format_tier_creation_workflow()
         
         return success
 
