@@ -175,15 +175,18 @@ backend:
 
   - task: "Competition System Selection"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Backend models support Team League Format vs Knockout System selection with playoff spots configuration."
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPETITION SYSTEM SELECTION WORKING - Tested rating tier creation with both competition systems: 1) 'Team League Format' with configurable playoff spots (tested with 4 spots), 2) 'Knockout System' with null playoff spots (not applicable). Both systems properly stored and retrieved. Competition system field correctly validates and persists the selected format type."
 
 frontend:
   - task: "4-Tier League Format UI"
