@@ -135,6 +135,11 @@ class SlashCommand(str, Enum):
     SCORE = "/score"
     TOSS = "/toss"
 
+class JoinRequestStatus(str, Enum):
+    PENDING = "Pending"
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+
 # Utility functions
 def generate_join_code():
     """Generate a unique 6-character join code"""
