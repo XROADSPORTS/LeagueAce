@@ -372,12 +372,18 @@ class LeagueAceAPITester:
             print("❌ Skipping - No Rating Tier ID available")
             return False
             
-        return self.run_test(
+        success, response = self.run_test(
             "Get Rating Tier Groups",
             "GET",
             f"rating-tiers/{self.rating_tier_id}/groups",
             200
         )
+        
+        if success and isinstance(response, list) and len(response) > 0:
+            self.group_id = response[0].get('id')
+            print(f"   Found Group ID: {self.group_id}")
+        
+        return success
 
     def test_social_login(self):
         """Test social login functionality"""
