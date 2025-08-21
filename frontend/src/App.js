@@ -849,6 +849,11 @@ function App() {
                     </CardContent>
                   </Card>
                 ))}
+                {formatTiers.length === 0 && (
+                  <div className="empty-state">
+                    <p>No format types created yet. Click "Add Singles", "Add Doubles", or "Add Round Robin" to create different match formats!</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
