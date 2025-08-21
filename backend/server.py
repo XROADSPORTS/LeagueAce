@@ -397,7 +397,7 @@ class RoundRobinSchedule(BaseModel):
     player_group_id: str
     total_weeks: int
     matches_per_week: int
-    partner_rotation: List[Dict[str, any]]  # Stores partner combinations for each week
+    partner_rotation: List[Dict[str, Any]]  # Stores partner combinations for each week
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MatchGenerationRequest(BaseModel):
