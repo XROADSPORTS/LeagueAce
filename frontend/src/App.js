@@ -1280,6 +1280,8 @@ function App() {
                     <TossButton matchId={match.id} onTossComplete={loadMatchDetails} />
                   )}
 
+                  <ScoringInterface match={match} onScoreUpdate={loadMatchDetails} />
+
                   {tossResult && (
                     <div className="toss-result">
                       <Badge className="toss-badge">
