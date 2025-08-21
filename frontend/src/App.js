@@ -872,6 +872,11 @@ function App() {
                 {ratingTiers.map((tier) => (
                   <RatingTierCard key={tier.id} tier={tier} />
                 ))}
+                {ratingTiers.length === 0 && (
+                  <div className="empty-state">
+                    <p>No rating tiers created yet. Click "Add Rating Tier" to create skill-based divisions like 4.0, 4.5, 5.0!</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
