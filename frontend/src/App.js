@@ -3368,6 +3368,22 @@ function App() {
                     {!joinPreview && joinPreviewError && (
                       <div className="join-error">{joinPreviewError}</div>
                     )}
+                    {joinPreview && user && (user.rating_level < joinPreview.min_rating || user.rating_level > joinPreview.max_rating) && (
+                      <div className="join-error" style={{ marginTop: 8 }}>
+                        You can request manager approval to join this tier.
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <Input placeholder="Add a note (optional)" className="blue-input" onChange={(e)=> window.__joinNote = e.target.value} />
+                          <Button className="btn-primary-ios" onClick={async ()=>{
+                            try {
+                              const { data } = await axios.post(`${API}/join-requests`, { user_id: user.id, rating_tier_id: joinPreview.id, message: window.__joinNote || '' });
+                              toast({ title: 'Request sent', description: 'Manager will review your request shortly.' });
+                            } catch (err) {
+                              toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to send request', variant: 'destructive' });
+                            }
+                          }}>Request to Join</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="form-actions">
                     <Button 
