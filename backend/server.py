@@ -105,7 +105,7 @@ def generate_group_name(index: int, custom_names: List[str] = None) -> str:
         return custom_names[index]
     return f"Group {chr(65 + index)}"  # A, B, C, etc.
 
-def generate_round_robin_doubles_schedule(players: List[str], total_weeks: int = 12) -> Dict[str, any]:
+def generate_round_robin_doubles_schedule(players: List[str], total_weeks: int = 12) -> Dict[str, Any]:
     """
     Generate a round robin doubles schedule where every player plays with every other player exactly once as partners,
     and against every possible combination of opponents.
