@@ -1349,7 +1349,9 @@ class LeagueAceAPITester:
     
     def test_upload_profile_picture_with_file(self):
         """Test uploading profile picture with actual file (NEW FEATURE)"""
-        if not self.player_id:
+        # Use workflow player ID if available, otherwise use regular player ID
+        test_player_id = getattr(self, 'workflow_player_id', None) or self.player_id
+        if not test_player_id:
             print("❌ Skipping - No Player ID available")
             return False
         
