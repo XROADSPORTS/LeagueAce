@@ -1505,6 +1505,17 @@ class LeagueAceAPITester:
         print(f"\n✅ Match Management Workflow: {successful_tests}/{len(workflow_tests)} tests passed")
         return successful_tests == len(workflow_tests)
 
+    def run_focused_season_creation_test(self):
+        """Run focused season creation workflow test as requested"""
+        print("\n" + "="*60)
+        print("🚀 FOCUSED SEASON CREATION WORKFLOW TEST")
+        print("="*60)
+        
+        # Run the focused season creation test
+        success = self.test_season_creation_workflow_focused()
+        
+        return success
+
     def run_complete_workflow_test(self):
         """Test the complete 4-tier league workflow including Phase 2 features"""
         print("\n" + "="*60)
@@ -1524,6 +1535,10 @@ class LeagueAceAPITester:
             ("Create League", self.test_create_league),
             ("Get All Leagues", self.test_get_leagues),
             ("Get User Leagues", self.test_get_user_leagues),
+            
+            # HIGH PRIORITY: FOCUSED SEASON CREATION TEST
+            ("🎯 FOCUSED Season Creation Workflow", self.test_season_creation_workflow_focused),
+            
             ("Create Season", self.test_create_season),
             ("Get League Seasons", self.test_get_league_seasons),
             ("Create Format Tier", self.test_create_format_tier),
