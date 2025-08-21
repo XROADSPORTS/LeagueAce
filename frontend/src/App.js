@@ -268,7 +268,7 @@ function App() {
             <span className="gradient-text-blue">Find Your Match - On and Off the Court</span>
           </h1>
           <p className="signup-subtitle">
-            Choose how you want to participate in organized tennis and pickleball leagues.
+            Find Your Match - On and Off the Court
           </p>
         </div>
         
