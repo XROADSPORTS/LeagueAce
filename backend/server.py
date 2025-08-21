@@ -2095,6 +2095,363 @@ async def create_playoff_bracket(tier_id: str, playoff_spots: int = 8, created_b
         "qualifiers_count": len(qualifiers)
     }
 
+# Comprehensive Chat System Routes (Phase 5)
+@api_router.post("/chat/messages")
+async def send_message(message_data: ChatMessageCreate, sender_id: str):
+    """Send a message to a chat thread"""
+    # Verify sender is member of thread
+    member = await db.chat_thread_members.find_one({
+        "thread_id": message_data.thread_id,
+        "user_id": sender_id
+    })
+    
+    if not member:
+        raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Get sender info
+    sender = await db.users.find_one({"id": sender_id})
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender not found")
+    
+    # Process mentions (@username)
+    mentions = []
+    if "@" in message_data.text:
+        # Simple mention detection (in production, use more sophisticated parsing)
+        thread_members = await db.chat_thread_members.find({"thread_id": message_data.thread_id}).to_list(100)
+        for member_data in thread_members:
+            user = await db.users.find_one({"id": member_data["user_id"]})
+            if user and f"@{user['name']}" in message_data.text:
+                mentions.append(user["id"])
+    
+    # Detect slash commands
+    slash_command = None
+    if message_data.text.startswith("/"):
+        command_text = message_data.text.split()[0]
+        try:
+            slash_command = SlashCommand(command_text)
+        except ValueError:
+            pass  # Not a recognized slash command
+    
+    # Create message
+    message_obj = ChatMessage(
+        thread_id=message_data.thread_id,
+        sender_id=sender_id,
+        sender_name=sender["name"],
+        text=message_data.text,
+        type=message_data.type,
+        reply_to_message_id=message_data.reply_to_message_id,
+        attachments=message_data.attachments,
+        mentions=mentions,
+        slash_command=slash_command,
+        action_payload=message_data.action_payload
+    )
+    
+    message_mongo = prepare_for_mongo(message_obj.dict())
+    await db.chat_messages.insert_one(message_mongo)
+    
+    # Update thread last message time
+    await db.chat_threads.update_one(
+        {"id": message_data.thread_id},
+        {
+            "$set": {"last_message_at": datetime.now(timezone.utc)},
+            "$inc": {"unread_count": 1}
+        }
+    )
+    
+    # Send mention notifications
+    for mentioned_user_id in mentions:
+        if mentioned_user_id != sender_id:  # Don't notify self
+            notification = NotificationCreate(
+                user_id=mentioned_user_id,
+                title="You were mentioned",
+                message=f"{sender['name']} mentioned you in chat",
+                type=NotificationType.CHAT_MESSAGE,
+                related_entity_id=message_obj.id
+            )
+            await create_notification(notification)
+    
+    # Handle slash commands
+    if slash_command:
+        await handle_slash_command(slash_command, message_obj, message_data)
+    
+    return message_obj
+
+@api_router.get("/chat/threads/{thread_id}/messages")
+async def get_thread_messages(thread_id: str, limit: int = 50, before: Optional[str] = None, user_id: str = None):
+    """Get messages for a chat thread"""
+    # Verify user is member of thread
+    if user_id:
+        member = await db.chat_thread_members.find_one({
+            "thread_id": thread_id,
+            "user_id": user_id
+        })
+        if not member:
+            raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Build query
+    query = {"thread_id": thread_id}
+    if before:
+        # Get messages before a specific message ID (for pagination)
+        before_message = await db.chat_messages.find_one({"id": before})
+        if before_message:
+            query["created_at"] = {"$lt": before_message["created_at"]}
+    
+    # Get messages
+    messages = await db.chat_messages.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    messages.reverse()  # Return in chronological order
+    
+    return [ChatMessage(**parse_from_mongo(message)) for message in messages]
+
+@api_router.post("/chat/messages/{message_id}/react")
+async def react_to_message(message_id: str, reaction: MessageReactionRequest, user_id: str):
+    """Add or remove a reaction to a message"""
+    message = await db.chat_messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Check if user is member of thread
+    member = await db.chat_thread_members.find_one({
+        "thread_id": message["thread_id"],
+        "user_id": user_id
+    })
+    if not member:
+        raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Get current reactions
+    reactions = message.get("reactions", {})
+    reaction_type = reaction.reaction_type.value
+    
+    # Toggle reaction
+    if reaction_type not in reactions:
+        reactions[reaction_type] = []
+    
+    if user_id in reactions[reaction_type]:
+        # Remove reaction
+        reactions[reaction_type].remove(user_id)
+        if not reactions[reaction_type]:  # Remove empty reaction list
+            del reactions[reaction_type]
+    else:
+        # Add reaction
+        reactions[reaction_type].append(user_id)
+    
+    # Update message
+    await db.chat_messages.update_one(
+        {"id": message_id},
+        {"$set": {"reactions": reactions}}
+    )
+    
+    # Create reaction record for analytics
+    reaction_obj = MessageReaction(
+        message_id=message_id,
+        user_id=user_id,
+        reaction_type=reaction.reaction_type
+    )
+    reaction_mongo = prepare_for_mongo(reaction_obj.dict())
+    await db.message_reactions.insert_one(reaction_mongo)
+    
+    return {"message": "Reaction updated successfully", "reactions": reactions}
+
+@api_router.patch("/chat/messages/{message_id}")
+async def edit_message(message_id: str, edit_data: EditMessageRequest, user_id: str):
+    """Edit a message"""
+    message = await db.chat_messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    if message["sender_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Can only edit your own messages")
+    
+    # Check if message is recent (allow editing within 15 minutes)
+    message_time = datetime.fromisoformat(message["created_at"].replace('Z', '+00:00'))
+    if datetime.now(timezone.utc) - message_time > timedelta(minutes=15):
+        raise HTTPException(status_code=400, detail="Message is too old to edit")
+    
+    # Update message
+    await db.chat_messages.update_one(
+        {"id": message_id},
+        {
+            "$set": {
+                "text": edit_data.new_text,
+                "is_edited": True,
+                "edited_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {"message": "Message edited successfully"}
+
+@api_router.post("/chat/messages/{message_id}/pin")
+async def pin_message(message_id: str, pin_data: PinMessageRequest, user_id: str):
+    """Pin or unpin a message"""
+    message = await db.chat_messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Check if user is admin/moderator of thread
+    member = await db.chat_thread_members.find_one({
+        "thread_id": message["thread_id"],
+        "user_id": user_id
+    })
+    
+    if not member or member["role"] not in ["admin", "moderator"]:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can pin messages")
+    
+    # Update message
+    await db.chat_messages.update_one(
+        {"id": message_id},
+        {"$set": {"is_pinned": pin_data.pin}}
+    )
+    
+    # Update thread pinned messages
+    if pin_data.pin:
+        await db.chat_threads.update_one(
+            {"id": message["thread_id"]},
+            {"$addToSet": {"pinned_message_ids": message_id}}
+        )
+    else:
+        await db.chat_threads.update_one(
+            {"id": message["thread_id"]},
+            {"$pull": {"pinned_message_ids": message_id}}
+        )
+    
+    action_text = "pinned" if pin_data.pin else "unpinned"
+    return {"message": f"Message {action_text} successfully"}
+
+@api_router.post("/chat/threads/{thread_id}/typing")
+async def update_typing_indicator(thread_id: str, user_id: str):
+    """Update typing indicator for user in thread"""
+    # Verify user is member of thread
+    member = await db.chat_thread_members.find_one({
+        "thread_id": thread_id,
+        "user_id": user_id
+    })
+    if not member:
+        raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Update typing timestamp
+    await db.chat_thread_members.update_one(
+        {"thread_id": thread_id, "user_id": user_id},
+        {"$set": {"last_typing_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Typing indicator updated"}
+
+@api_router.get("/chat/threads/{thread_id}/typing")
+async def get_typing_indicators(thread_id: str, user_id: str = None):
+    """Get currently typing users in thread"""
+    # Verify user is member of thread if user_id provided
+    if user_id:
+        member = await db.chat_thread_members.find_one({
+            "thread_id": thread_id,
+            "user_id": user_id
+        })
+        if not member:
+            raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Get members who were typing in last 5 seconds
+    cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=5)
+    
+    typing_members = await db.chat_thread_members.find({
+        "thread_id": thread_id,
+        "last_typing_at": {"$gt": cutoff_time}
+    }).to_list(10)
+    
+    # Get user details for typing indicators
+    typing_users = []
+    for member in typing_members:
+        if member["user_id"] != user_id:  # Don't include requester
+            user = await db.users.find_one({"id": member["user_id"]})
+            if user:
+                typing_users.append({
+                    "user_id": user["id"],
+                    "user_name": user["name"],
+                    "started_at": member["last_typing_at"]
+                })
+    
+    return {"typing_users": typing_users}
+
+@api_router.post("/chat/threads/{thread_id}/mark-read")
+async def mark_messages_read(thread_id: str, message_id: Optional[str] = None, user_id: str = None):
+    """Mark messages as read up to a specific message"""
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID required")
+    
+    # Verify user is member of thread
+    member = await db.chat_thread_members.find_one({
+        "thread_id": thread_id,
+        "user_id": user_id
+    })
+    if not member:
+        raise HTTPException(status_code=403, detail="User is not a member of this thread")
+    
+    # Update last read timestamp
+    read_time = datetime.now(timezone.utc)
+    await db.chat_thread_members.update_one(
+        {"thread_id": thread_id, "user_id": user_id},
+        {"$set": {"last_read_at": read_time}}
+    )
+    
+    # Mark specific messages as read
+    if message_id:
+        # Mark all messages up to this message as read
+        message = await db.chat_messages.find_one({"id": message_id})
+        if message:
+            await db.chat_messages.update_many(
+                {
+                    "thread_id": thread_id,
+                    "created_at": {"$lte": message["created_at"]}
+                },
+                {"$addToSet": {"read_by": user_id}}
+            )
+    else:
+        # Mark all messages as read
+        await db.chat_messages.update_many(
+            {"thread_id": thread_id},
+            {"$addToSet": {"read_by": user_id}}
+        )
+    
+    return {"message": "Messages marked as read"}
+
+async def handle_slash_command(command: SlashCommand, message: ChatMessage, message_data: ChatMessageCreate):
+    """Handle slash commands in chat"""
+    thread_id = message.thread_id
+    sender_id = message.sender_id
+    
+    try:
+        if command == SlashCommand.WHEN:
+            # Extract proposed time from message
+            response_text = "⏰ Use the 'Propose Time' button to suggest match times!"
+            
+        elif command == SlashCommand.WHERE:
+            # Extract venue suggestion
+            venue_text = message.text.replace("/where", "").strip()
+            response_text = f"📍 Venue suggestion: {venue_text}" if venue_text else "📍 Please specify a venue location"
+            
+        elif command == SlashCommand.LINEUP:
+            # Show current match lineup
+            response_text = "📋 Use the match card to see current participants and confirmations"
+            
+        elif command == SlashCommand.SUBS:
+            # Handle substitute requests
+            response_text = "🔄 Use the 'Request Substitute' feature in the match card"
+            
+        elif command == SlashCommand.SCORE:
+            # Quick score update
+            response_text = "🎾 Use the scoring interface to update match scores"
+            
+        elif command == SlashCommand.TOSS:
+            # Conduct toss
+            response_text = "🪙 Use the 'Coin Toss' button to conduct pre-match toss"
+            
+        else:
+            response_text = f"❓ Unknown command: {command.value}"
+        
+        # Send system response
+        await create_system_message(thread_id, response_text)
+        
+    except Exception as e:
+        await create_system_message(thread_id, f"❌ Error processing command: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
