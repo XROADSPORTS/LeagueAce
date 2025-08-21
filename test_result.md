@@ -248,8 +248,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Player Grouping Logic"
-    - "Round Robin Doubles Algorithm"
     - "Group Management UI"
   stuck_tasks: []
   test_all: false
