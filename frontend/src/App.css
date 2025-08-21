@@ -507,7 +507,7 @@ body {
   justify-content: center;
 }
 
-.nav-button-blue {
+.nav-button-blue, .btn-nav-ios {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.15);
