@@ -136,15 +136,21 @@ backend:
 
   - task: "Player Join-by-Code Functionality"
     implemented: true
-    working: true
+    working: false
     file: "backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
         comment: "🎉 CRITICAL BUG FIX VERIFIED - Player join-by-code functionality completely restored! Key results: ✅ `/join-by-code/{user_id}` endpoint working perfectly with valid join codes, ✅ NEW `/users/{user_id}/joined-tiers` endpoint working - players can now see all joined leagues in dashboard with league names, tier names, status, and player counts, ✅ `/users/{user_id}/standings` endpoint working for player rankings, ✅ `/users/{user_id}/matches` endpoint working for player matches. Fixed critical MongoDB ObjectId serialization issue in joined-tiers endpoint. Complete player journey verified: join code → see leagues in dashboard. All 7 critical tests passed (100% success rate)."
+      - working: false
+        agent: "user"
+        comment: "User reports: 'still code for sign in league not working with Player side'. Re-open testing and investigation."
+      - working: false
+        agent: "main"
+        comment: "Front-end normalizes code to uppercase and validates length; backend normalizes too. Need to retest end-to-end and inspect backend logs for POST /api/join-by-code/{user_id}."
 
   - task: "Profile Picture Management"
     implemented: true
