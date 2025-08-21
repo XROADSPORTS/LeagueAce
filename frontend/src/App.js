@@ -1165,6 +1165,354 @@ function App() {
       );
     };
 
+    const MatchCard = ({ match }) => {
+      const [timeProposals, setTimeProposals] = useState([]);
+      const [confirmations, setConfirmations] = useState([]);
+      const [showTimeProposal, setShowTimeProposal] = useState(false);
+      const [showConfirmation, setShowConfirmation] = useState(false);
+      const [tossResult, setTossResult] = useState(null);
+
+      useEffect(() => {
+        loadMatchDetails();
+      }, [match.id]);
+
+      const loadMatchDetails = async () => {
+        try {
+          // Load time proposals
+          const proposalsResponse = await axios.get(`${API}/matches/${match.id}/time-proposals`);
+          setTimeProposals(proposalsResponse.data);
+
+          // Load confirmations
+          const confirmationsResponse = await axios.get(`${API}/matches/${match.id}/confirmations`);
+          setConfirmations(confirmationsResponse.data);
+
+          // Load toss result if completed
+          if (match.toss_completed) {
+            try {
+              const tossResponse = await axios.get(`${API}/matches/${match.id}/toss`);
+              setTossResult(tossResponse.data);
+            } catch (error) {
+              // Toss not found, which is fine
+            }
+          }
+        } catch (error) {
+          console.error("Error loading match details:", error);
+        }
+      };
+
+      const getStatusColor = (status) => {
+        switch (status) {
+          case 'Pending': return 'bg-yellow-500/20 text-yellow-200';
+          case 'Confirmed': return 'bg-green-500/20 text-green-200';
+          case 'Played': return 'bg-blue-500/20 text-blue-200';
+          case 'Cancelled': return 'bg-red-500/20 text-red-200';
+          default: return 'bg-gray-500/20 text-gray-200';
+        }
+      };
+
+      return (
+        <Card className="glass-card-blue match-card">
+          <CardHeader>
+            <div className="match-header">
+              <CardTitle className="match-title">
+                {match.format} Match - Week {match.week_number}
+              </CardTitle>
+              <Badge className={`match-status ${getStatusColor(match.status)}`}>
+                {match.status}
+              </Badge>
+            </div>
+            <CardDescription>
+              {match.scheduled_at ? (
+                <div className="match-schedule">
+                  📅 {new Date(match.scheduled_at).toLocaleDateString()} at{' '}
+                  {new Date(match.scheduled_at).toLocaleTimeString()}
+                  {match.venue_name && (
+                    <>
+                      <br />📍 {match.venue_name}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <span>⏰ Time not set</span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="match-actions">
+              {match.status === 'Pending' && (
+                <>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="blue-outline-button"
+                    onClick={() => setShowTimeProposal(true)}
+                  >
+                    <Clock className="w-4 h-4 mr-1" />
+                    Propose Time
+                  </Button>
+                  
+                  {timeProposals.length > 0 && (
+                    <div className="time-proposals">
+                      <h6>Time Proposals ({timeProposals.length})</h6>
+                      {timeProposals.map((proposal) => (
+                        <div key={proposal.id} className="proposal-item">
+                          <span>{new Date(proposal.proposed_datetime).toLocaleString()}</span>
+                          <Badge variant="outline">{proposal.votes?.length || 0} votes</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {match.status === 'Confirmed' && (
+                <>
+                  <Button 
+                    size="sm" 
+                    className="leagueace-button"
+                    onClick={() => setShowConfirmation(true)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Confirm Attendance
+                  </Button>
+                  
+                  {!match.toss_completed && (
+                    <TossButton matchId={match.id} onTossComplete={loadMatchDetails} />
+                  )}
+
+                  {tossResult && (
+                    <div className="toss-result">
+                      <Badge className="toss-badge">
+                        🪙 Toss Winner: {tossResult.winner_id} - {tossResult.choice}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {confirmations.length > 0 && (
+                    <div className="confirmations">
+                      <h6>Player Confirmations</h6>
+                      {confirmations.map((conf) => (
+                        <Badge 
+                          key={conf.id} 
+                          className={conf.status === 'Accepted' ? 'confirmation-accepted' : 'confirmation-pending'}
+                        >
+                          {conf.status}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {showTimeProposal && (
+              <TimeProposalForm 
+                matchId={match.id}
+                onSubmit={() => {
+                  setShowTimeProposal(false);
+                  loadMatchDetails();
+                }}
+                onCancel={() => setShowTimeProposal(false)}
+              />
+            )}
+
+            {showConfirmation && (
+              <ConfirmationForm 
+                matchId={match.id}
+                onSubmit={() => {
+                  setShowConfirmation(false);
+                  loadMatchDetails();
+                }}
+                onCancel={() => setShowConfirmation(false)}
+              />
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
+
+    const TimeProposalForm = ({ matchId, onSubmit, onCancel }) => {
+      const [proposalData, setProposalData] = useState({
+        proposed_datetime: '',
+        venue_name: '',
+        venue_address: '',
+        notes: ''
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await axios.post(`${API}/matches/${matchId}/propose-time`, {
+            ...proposalData,
+            proposed_datetime: new Date(proposalData.proposed_datetime).toISOString()
+          }, {
+            params: { proposed_by: user?.id }
+          });
+          toast({ title: "Success", description: "Match time proposed!" });
+          onSubmit();
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to propose time", 
+            variant: "destructive" 
+          });
+        }
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="time-proposal-form">
+          <div className="form-row">
+            <div>
+              <Label>Proposed Date & Time</Label>
+              <Input
+                type="datetime-local"
+                value={proposalData.proposed_datetime}
+                onChange={(e) => setProposalData({...proposalData, proposed_datetime: e.target.value})}
+                className="blue-input"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Venue Name (Optional)</Label>
+            <Input
+              value={proposalData.venue_name}
+              onChange={(e) => setProposalData({...proposalData, venue_name: e.target.value})}
+              placeholder="Tennis Club, Court Name, etc."
+              className="blue-input"
+            />
+          </div>
+          <div>
+            <Label>Venue Address (Optional)</Label>
+            <Input
+              value={proposalData.venue_address}
+              onChange={(e) => setProposalData({...proposalData, venue_address: e.target.value})}
+              placeholder="123 Main St, City, State"
+              className="blue-input"
+            />
+          </div>
+          <div>
+            <Label>Notes (Optional)</Label>
+            <Textarea
+              value={proposalData.notes}
+              onChange={(e) => setProposalData({...proposalData, notes: e.target.value})}
+              placeholder="Additional details about the proposed time..."
+              className="blue-input"
+            />
+          </div>
+          <div className="form-actions">
+            <Button type="button" variant="outline" onClick={onCancel} className="blue-outline-button">
+              Cancel
+            </Button>
+            <Button type="submit" className="leagueace-button">
+              Propose Time
+            </Button>
+          </div>
+        </form>
+      );
+    };
+
+    const ConfirmationForm = ({ matchId, onSubmit, onCancel }) => {
+      const [confirmationData, setConfirmationData] = useState({
+        status: 'Accepted',
+        notes: ''
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          await axios.post(`${API}/matches/${matchId}/confirm`, confirmationData, {
+            params: { player_id: user?.id }
+          });
+          toast({ title: "Success", description: "Match participation confirmed!" });
+          onSubmit();
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to confirm participation", 
+            variant: "destructive" 
+          });
+        }
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="confirmation-form">
+          <div>
+            <Label>Participation Status</Label>
+            <Select 
+              value={confirmationData.status} 
+              onValueChange={(value) => setConfirmationData({...confirmationData, status: value})}
+            >
+              <SelectTrigger className="blue-input">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Accepted">✅ Accept - I'll be there</SelectItem>
+                <SelectItem value="Declined">❌ Decline - Can't make it</SelectItem>
+                <SelectItem value="Substitute Requested">🔄 Need substitute</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Notes (Optional)</Label>
+            <Textarea
+              value={confirmationData.notes}
+              onChange={(e) => setConfirmationData({...confirmationData, notes: e.target.value})}
+              placeholder="Any additional information..."
+              className="blue-input"
+            />
+          </div>
+          <div className="form-actions">
+            <Button type="button" variant="outline" onClick={onCancel} className="blue-outline-button">
+              Cancel
+            </Button>
+            <Button type="submit" className="leagueace-button">
+              Submit Confirmation
+            </Button>
+          </div>
+        </form>
+      );
+    };
+
+    const TossButton = ({ matchId, onTossComplete }) => {
+      const [loading, setLoading] = useState(false);
+
+      const conductToss = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.post(`${API}/matches/${matchId}/toss`, 
+            { match_id: matchId },
+            { params: { initiated_by: user?.id }}
+          );
+          toast({ 
+            title: "🪙 Toss Complete!", 
+            description: response.data.message 
+          });
+          onTossComplete();
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to conduct toss", 
+            variant: "destructive" 
+          });
+        }
+        setLoading(false);
+      };
+
+      return (
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="blue-outline-button"
+          onClick={conductToss}
+          disabled={loading}
+        >
+          <Shuffle className="w-4 h-4 mr-1" />
+          {loading ? "Tossing..." : "Coin Toss"}
+        </Button>
+      );
+    };
+
     return (
       <div className="manager-dashboard">
         <div className="dashboard-header">
