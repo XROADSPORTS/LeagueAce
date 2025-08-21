@@ -1324,14 +1324,16 @@ class LeagueAceAPITester:
     
     def test_get_user_matches(self):
         """Test getting user's matches (CRITICAL BUG FIX)"""
-        if not self.player_id:
+        # Use workflow player ID if available, otherwise use regular player ID
+        test_player_id = getattr(self, 'workflow_player_id', None) or self.player_id
+        if not test_player_id:
             print("❌ Skipping - No Player ID available")
             return False
         
         success, response = self.run_test(
             "Get User Matches",
             "GET",
-            f"users/{self.player_id}/matches",
+            f"users/{test_player_id}/matches",
             200
         )
         
