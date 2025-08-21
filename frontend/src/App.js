@@ -532,6 +532,128 @@ function App() {
       );
     };
 
+    const SeasonCreator = ({ leagueId, onSeasonCreated }) => {
+      const [showForm, setShowForm] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [seasonData, setSeasonData] = useState({
+        name: "",
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+          await axios.post(`${API}/seasons`, {
+            league_id: leagueId,
+            ...seasonData
+          });
+          
+          toast({ 
+            title: "Success", 
+            description: `Season "${seasonData.name}" created successfully!` 
+          });
+          
+          onSeasonCreated();
+          setShowForm(false);
+          setSeasonData({
+            name: "",
+            start_date: new Date().toISOString().split('T')[0],
+            end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          });
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create season",
+            variant: "destructive"
+          });
+        }
+        setLoading(false);
+      };
+
+      if (!showForm) {
+        return (
+          <Button 
+            className="leagueace-button"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Season
+          </Button>
+        );
+      }
+
+      return (
+        <Card className="glass-card-blue season-creator-form">
+          <CardHeader>
+            <CardTitle>Create New Season</CardTitle>
+            <CardDescription>Add a new season to your league</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="season-form">
+              <div className="form-group">
+                <Label htmlFor="season-name">Season Name</Label>
+                <Input
+                  id="season-name"
+                  type="text"
+                  placeholder="e.g., Spring 2024, Fall Tournament"
+                  value={seasonData.name}
+                  onChange={(e) => setSeasonData({...seasonData, name: e.target.value})}
+                  className="blue-input"
+                  required
+                />
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={seasonData.start_date}
+                    onChange={(e) => setSeasonData({...seasonData, start_date: e.target.value})}
+                    className="blue-input"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={seasonData.end_date}
+                    onChange={(e) => setSeasonData({...seasonData, end_date: e.target.value})}
+                    className="blue-input"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-actions">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowForm(false)}
+                  className="blue-outline-button"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="leagueace-button"
+                  disabled={loading || !seasonData.name.trim()}
+                >
+                  {loading ? "Creating..." : "Create Season"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      );
+    };
+
     const FourTierManagement = () => {
       const [seasons, setSeasons] = useState([]);
 
