@@ -277,11 +277,8 @@ function App() {
         
         <div className="signup-hero">
           <h1 className="signup-title">
-            <span className="gradient-text-blue">Find Your Match - On and Off the Court</span>
+            <span className="gradient-text-blue">Find Your Match</span>
           </h1>
-          <p className="signup-subtitle">
-            Find Your Match - On and Off the Court
-          </p>
         </div>
         
         <div className="signup-options">
