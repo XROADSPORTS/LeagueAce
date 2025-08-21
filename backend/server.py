@@ -466,6 +466,30 @@ class MatchGenerationRequest(BaseModel):
     week_number: int
     matches_per_week: Optional[int] = 4
 
+class TimeProposalRequest(BaseModel):
+    match_id: str
+    proposed_datetime: datetime
+    venue_name: Optional[str] = None
+    venue_address: Optional[str] = None
+    notes: Optional[str] = None
+
+class PlayerConfirmationRequest(BaseModel):
+    match_id: str
+    status: PlayerConfirmationStatus
+    notes: Optional[str] = None
+
+class SubstituteRequestCreate(BaseModel):
+    match_id: str
+    original_player_id: str
+    reason: str
+
+class SubstituteApproval(BaseModel):
+    substitute_request_id: str
+    substitute_player_id: str
+
+class TossRequest(BaseModel):
+    match_id: str
+
 # Chat System Models
 class ChatThread(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
