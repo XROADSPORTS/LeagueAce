@@ -1437,14 +1437,16 @@ class LeagueAceAPITester:
     
     def test_remove_profile_picture(self):
         """Test removing profile picture (NEW FEATURE)"""
-        if not self.player_id:
+        # Use workflow player ID if available, otherwise use regular player ID
+        test_player_id = getattr(self, 'workflow_player_id', None) or self.player_id
+        if not test_player_id:
             print("❌ Skipping - No Player ID available")
             return False
         
         success, response = self.run_test(
             "Remove Profile Picture",
             "DELETE",
-            f"users/{self.player_id}/remove-picture",
+            f"users/{test_player_id}/remove-picture",
             200
         )
         
