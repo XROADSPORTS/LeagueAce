@@ -2744,9 +2744,11 @@ function App() {
         toast({ title: "Success", description: "Successfully joined league!" });
       } catch (error) {
         console.error("Error joining by code:", error);
+        const detail = error?.response?.data?.detail || "Failed to join league";
+        setJoinPreviewError(detail);
         toast({ 
           title: "Error", 
-          description: error.response?.data?.detail || "Failed to join league",
+          description: detail,
           variant: "destructive"
         });
       }
