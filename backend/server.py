@@ -385,10 +385,55 @@ class Match(BaseModel):
     participants: List[str]  # List of user IDs
     scheduled_at: Optional[datetime] = None
     venue_id: Optional[str] = None
+    venue_name: Optional[str] = None
+    venue_address: Optional[str] = None
     status: MatchStatus = MatchStatus.PENDING
     result_confirmed_by: List[str] = Field(default_factory=list)
     chat_thread_id: Optional[str] = None
+    confirmation_deadline: Optional[datetime] = None
+    toss_completed: bool = False
+    toss_winner_id: Optional[str] = None
+    toss_choice: Optional[TossResult] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PlayerConfirmation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    player_id: str
+    status: PlayerConfirmationStatus = PlayerConfirmationStatus.PENDING
+    response_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MatchTimeProposal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    proposed_by: str
+    proposed_datetime: datetime
+    venue_name: Optional[str] = None
+    venue_address: Optional[str] = None
+    notes: Optional[str] = None
+    votes: List[str] = Field(default_factory=list)  # Player IDs who voted for this time
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SubstituteRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    original_player_id: str
+    requested_by: str
+    reason: str
+    status: SubstituteRequestStatus = SubstituteRequestStatus.OPEN
+    substitute_player_id: Optional[str] = None
+    approved_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PreMatchToss(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    initiated_by: str
+    winner_id: str
+    choice: TossResult
+    completed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class SetResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
