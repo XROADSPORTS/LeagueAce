@@ -3161,16 +3161,38 @@ function App() {
               <div className="profile-info">
                 <div className="info-grid">
                   <div className="info-item">
-                    <Label>Name</Label>
-                    <p>{user.name}</p>
+                    <Label htmlFor="edit-name">Name</Label>
+                    <Input id="edit-name" defaultValue={user.name} className="blue-input" onBlur={async (e)=>{
+                      const name = e.target.value.trim();
+                      if (name && name !== user.name) {
+                        try {
+                          const { data } = await axios.patch(`${API}/users/${user.id}`, { name });
+                          setUser(data);
+                          toast({ title: 'Updated', description: 'Name updated' });
+                        } catch (err) {
+                          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to update name', variant: 'destructive' });
+                        }
+                      }
+                    }} />
                   </div>
                   <div className="info-item">
                     <Label>Email</Label>
                     <p>{user.email}</p>
                   </div>
                   <div className="info-item">
-                    <Label>Phone</Label>
-                    <p>{user.phone || 'Not provided'}</p>
+                    <Label htmlFor="edit-phone">Mobile</Label>
+                    <Input id="edit-phone" defaultValue={user.phone || ''} className="blue-input" onBlur={async (e)=>{
+                      const phone = e.target.value.trim();
+                      if (phone !== (user.phone || '')) {
+                        try {
+                          const { data } = await axios.patch(`${API}/users/${user.id}`, { phone });
+                          setUser(data);
+                          toast({ title: 'Updated', description: 'Mobile updated' });
+                        } catch (err) {
+                          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to update mobile', variant: 'destructive' });
+                        }
+                      }
+                    }} />
                   </div>
                   <div className="info-item">
                     <Label>Rating Level</Label>
