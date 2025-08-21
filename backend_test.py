@@ -840,6 +840,463 @@ class LeagueAceAPITester:
         print("   ✅ Edge case validation logic is implemented in the backend")
         return True
 
+    # PHASE 3 TESTS - MATCH MANAGEMENT FEATURES
+
+    def test_propose_match_time(self):
+        """Test proposing a time for a match"""
+        if not self.doubles_group_id:
+            print("❌ Skipping - No Doubles Group ID available")
+            return False
+
+        # First get a match to propose time for
+        success, matches_response = self.run_test(
+            "Get Matches for Time Proposal",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200
+        )
+        
+        if not success or not matches_response or len(matches_response) == 0:
+            print("❌ No matches available for time proposal")
+            return False
+        
+        self.match_id = matches_response[0]['id']
+        participants = matches_response[0]['participants']
+        
+        if not participants:
+            print("❌ No participants in match")
+            return False
+        
+        # Propose a time using the first participant
+        proposer_id = participants[0]
+        proposal_data = {
+            "match_id": self.match_id,
+            "proposed_datetime": (datetime.now() + timedelta(days=7)).isoformat(),
+            "venue_name": "Bay Area Tennis Center",
+            "venue_address": "123 Tennis Court Rd, San Jose, CA",
+            "notes": "Let's play at 2 PM on Saturday!"
+        }
+        
+        success, response = self.run_test(
+            "Propose Match Time",
+            "POST",
+            f"matches/{self.match_id}/propose-time",
+            200,
+            data=proposal_data,
+            params={"proposed_by": proposer_id}
+        )
+        
+        if success and 'id' in response:
+            self.time_proposal_id = response['id']
+            print(f"   Time Proposal ID: {self.time_proposal_id}")
+            print(f"   Proposed by: {response.get('proposed_by')}")
+            print(f"   Venue: {response.get('venue_name')}")
+        
+        return success
+
+    def test_get_match_time_proposals(self):
+        """Test getting all time proposals for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get Match Time Proposals",
+            "GET",
+            f"matches/{self.match_id}/time-proposals",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Total Proposals: {len(response)}")
+            if response:
+                print(f"   First Proposal Venue: {response[0].get('venue_name')}")
+                print(f"   Votes Count: {len(response[0].get('votes', []))}")
+        
+        return success
+
+    def test_vote_for_time_proposal(self):
+        """Test voting for a time proposal"""
+        if not self.match_id or not self.time_proposal_id:
+            print("❌ Skipping - No Match ID or Time Proposal ID available")
+            return False
+        
+        # Get match participants to vote
+        success, match_response = self.run_test(
+            "Get Match for Voting",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200,
+            params={"week_number": 1}
+        )
+        
+        if not success or not match_response:
+            print("❌ Could not get match for voting")
+            return False
+        
+        # Find our match
+        target_match = None
+        for match in match_response:
+            if match['id'] == self.match_id:
+                target_match = match
+                break
+        
+        if not target_match:
+            print("❌ Could not find target match")
+            return False
+        
+        participants = target_match['participants']
+        votes_cast = 0
+        
+        # Vote with multiple participants to test majority voting
+        for i, voter_id in enumerate(participants[:3]):  # Vote with first 3 participants
+            success, response = self.run_test(
+                f"Vote for Time Proposal (Voter {i+1})",
+                "POST",
+                f"matches/{self.match_id}/vote-time/{self.time_proposal_id}",
+                200,
+                params={"voter_id": voter_id}
+            )
+            
+            if success:
+                votes_cast += 1
+                print(f"   Vote {i+1} cast successfully")
+        
+        print(f"   Total votes cast: {votes_cast}")
+        return votes_cast > 0
+
+    def test_confirm_match_participation(self):
+        """Test player confirmation for match participation"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        # Get match participants
+        success, matches_response = self.run_test(
+            "Get Match for Confirmation",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200
+        )
+        
+        if not success or not matches_response:
+            print("❌ Could not get match for confirmation")
+            return False
+        
+        # Find our match
+        target_match = None
+        for match in matches_response:
+            if match['id'] == self.match_id:
+                target_match = match
+                break
+        
+        if not target_match:
+            print("❌ Could not find target match")
+            return False
+        
+        participants = target_match['participants']
+        confirmations_made = 0
+        
+        # Test different confirmation statuses
+        confirmation_statuses = ["Accepted", "Declined", "Substitute Requested"]
+        
+        for i, participant_id in enumerate(participants[:3]):
+            status = confirmation_statuses[i % len(confirmation_statuses)]
+            
+            confirmation_data = {
+                "match_id": self.match_id,
+                "status": status,
+                "notes": f"Player {i+1} confirmation notes - {status.lower()}"
+            }
+            
+            success, response = self.run_test(
+                f"Confirm Match Participation ({status})",
+                "POST",
+                f"matches/{self.match_id}/confirm",
+                200,
+                data=confirmation_data,
+                params={"player_id": participant_id}
+            )
+            
+            if success:
+                confirmations_made += 1
+                print(f"   Confirmation {i+1}: {status}")
+        
+        print(f"   Total confirmations made: {confirmations_made}")
+        return confirmations_made > 0
+
+    def test_get_match_confirmations(self):
+        """Test getting all player confirmations for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get Match Confirmations",
+            "GET",
+            f"matches/{self.match_id}/confirmations",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Total Confirmations: {len(response)}")
+            for i, confirmation in enumerate(response):
+                print(f"   Confirmation {i+1}: {confirmation.get('status')} - {confirmation.get('notes', 'No notes')}")
+        
+        return success
+
+    def test_request_substitute(self):
+        """Test requesting a substitute for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        # Get match participants
+        success, matches_response = self.run_test(
+            "Get Match for Substitute Request",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200
+        )
+        
+        if not success or not matches_response:
+            print("❌ Could not get match for substitute request")
+            return False
+        
+        # Find our match
+        target_match = None
+        for match in matches_response:
+            if match['id'] == self.match_id:
+                target_match = match
+                break
+        
+        if not target_match or not target_match['participants']:
+            print("❌ Could not find target match or participants")
+            return False
+        
+        original_player_id = target_match['participants'][0]
+        
+        substitute_request_data = {
+            "match_id": self.match_id,
+            "original_player_id": original_player_id,
+            "reason": "Family emergency - cannot make the match"
+        }
+        
+        success, response = self.run_test(
+            "Request Substitute",
+            "POST",
+            f"matches/{self.match_id}/request-substitute",
+            200,
+            data=substitute_request_data,
+            params={"requested_by": original_player_id}
+        )
+        
+        if success and 'id' in response:
+            self.substitute_request_id = response['id']
+            print(f"   Substitute Request ID: {self.substitute_request_id}")
+            print(f"   Original Player: {response.get('original_player_id')}")
+            print(f"   Reason: {response.get('reason')}")
+        
+        return success
+
+    def test_get_substitute_requests(self):
+        """Test getting all substitute requests for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get Substitute Requests",
+            "GET",
+            f"matches/{self.match_id}/substitute-requests",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Total Substitute Requests: {len(response)}")
+            for i, request in enumerate(response):
+                print(f"   Request {i+1}: {request.get('status')} - {request.get('reason')}")
+        
+        return success
+
+    def test_approve_substitute(self):
+        """Test approving a substitute player"""
+        if not self.substitute_request_id or not self.additional_players:
+            print("❌ Skipping - No Substitute Request ID or additional players available")
+            return False
+        
+        # Use one of the additional players as substitute
+        substitute_player_id = self.additional_players[0] if self.additional_players else None
+        if not substitute_player_id:
+            print("❌ No substitute player available")
+            return False
+        
+        approval_data = {
+            "substitute_request_id": self.substitute_request_id,
+            "substitute_player_id": substitute_player_id
+        }
+        
+        # Use league manager to approve (they have permission)
+        success, response = self.run_test(
+            "Approve Substitute",
+            "POST",
+            f"substitute-requests/{self.substitute_request_id}/approve",
+            200,
+            data=approval_data,
+            params={"approved_by": self.league_manager_id}
+        )
+        
+        if success:
+            print(f"   Substitute approved successfully")
+            print(f"   Message: {response.get('message')}")
+        
+        return success
+
+    def test_conduct_pre_match_toss(self):
+        """Test conducting a digital coin toss for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        # Get match participants
+        success, matches_response = self.run_test(
+            "Get Match for Toss",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200
+        )
+        
+        if not success or not matches_response:
+            print("❌ Could not get match for toss")
+            return False
+        
+        # Find our match
+        target_match = None
+        for match in matches_response:
+            if match['id'] == self.match_id:
+                target_match = match
+                break
+        
+        if not target_match or not target_match['participants']:
+            print("❌ Could not find target match or participants")
+            return False
+        
+        initiator_id = target_match['participants'][0]
+        
+        toss_request_data = {
+            "match_id": self.match_id
+        }
+        
+        success, response = self.run_test(
+            "Conduct Pre-Match Toss",
+            "POST",
+            f"matches/{self.match_id}/toss",
+            200,
+            data=toss_request_data,
+            params={"initiated_by": initiator_id}
+        )
+        
+        if success:
+            print(f"   Toss Winner: {response.get('winner_id')}")
+            print(f"   Toss Choice: {response.get('choice')}")
+            print(f"   Message: {response.get('message')}")
+        
+        return success
+
+    def test_get_match_toss(self):
+        """Test getting toss result for a match"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get Match Toss Result",
+            "GET",
+            f"matches/{self.match_id}/toss",
+            200
+        )
+        
+        if success:
+            print(f"   Toss Winner: {response.get('winner_id')}")
+            print(f"   Choice: {response.get('choice')}")
+            print(f"   Initiated by: {response.get('initiated_by')}")
+        
+        return success
+
+    def test_duplicate_toss_prevention(self):
+        """Test that duplicate toss is prevented"""
+        if not self.match_id:
+            print("❌ Skipping - No Match ID available")
+            return False
+        
+        # Get match participants
+        success, matches_response = self.run_test(
+            "Get Match for Duplicate Toss Test",
+            "GET",
+            f"player-groups/{self.doubles_group_id}/matches",
+            200
+        )
+        
+        if not success or not matches_response:
+            print("❌ Could not get match for duplicate toss test")
+            return False
+        
+        # Find our match
+        target_match = None
+        for match in matches_response:
+            if match['id'] == self.match_id:
+                target_match = match
+                break
+        
+        if not target_match or not target_match['participants']:
+            print("❌ Could not find target match or participants")
+            return False
+        
+        initiator_id = target_match['participants'][0]
+        
+        toss_request_data = {
+            "match_id": self.match_id
+        }
+        
+        # This should fail with 400 since toss already completed
+        success, response = self.run_test(
+            "Attempt Duplicate Toss (Should Fail)",
+            "POST",
+            f"matches/{self.match_id}/toss",
+            400,  # Expecting 400 error
+            data=toss_request_data,
+            params={"initiated_by": initiator_id}
+        )
+        
+        return success  # Success means we got the expected 400 error
+
+    def test_match_management_workflow(self):
+        """Test complete match management workflow"""
+        print("\n🔍 Testing Complete Match Management Workflow...")
+        
+        workflow_tests = [
+            ("Propose Match Time", self.test_propose_match_time),
+            ("Get Match Time Proposals", self.test_get_match_time_proposals),
+            ("Vote for Time Proposal", self.test_vote_for_time_proposal),
+            ("Confirm Match Participation", self.test_confirm_match_participation),
+            ("Get Match Confirmations", self.test_get_match_confirmations),
+            ("Request Substitute", self.test_request_substitute),
+            ("Get Substitute Requests", self.test_get_substitute_requests),
+            ("Approve Substitute", self.test_approve_substitute),
+            ("Conduct Pre-Match Toss", self.test_conduct_pre_match_toss),
+            ("Get Match Toss Result", self.test_get_match_toss),
+            ("Duplicate Toss Prevention", self.test_duplicate_toss_prevention)
+        ]
+        
+        successful_tests = 0
+        for test_name, test_method in workflow_tests:
+            print(f"\n📋 Running: {test_name}")
+            if test_method():
+                successful_tests += 1
+        
+        print(f"\n✅ Match Management Workflow: {successful_tests}/{len(workflow_tests)} tests passed")
+        return successful_tests == len(workflow_tests)
+
     def run_complete_workflow_test(self):
         """Test the complete 4-tier league workflow including Phase 2 features"""
         print("\n" + "="*60)
