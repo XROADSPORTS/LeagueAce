@@ -725,20 +725,25 @@ function App() {
           <div className="tier-instructions">
             <Card className="glass-card-blue instruction-card">
               <CardContent className="instruction-content">
-                <h4>📋 4-Tier League Setup Guide</h4>
+                <h4>🎾 League Creation Structure</h4>
                 <ol className="setup-steps">
-                  <li><strong>Step 1:</strong> Select a League (Tier 1) to manage</li>
-                  <li><strong>Step 2:</strong> Create Seasons (Tier 2) for your league</li>
-                  <li><strong>Step 3:</strong> Add Formats (Tier 3) - Singles, Doubles, Round Robin</li>
-                  <li><strong>Step 4:</strong> Create Rating Tiers (Tier 4) - 4.0, 4.5, 5.0, etc.</li>
+                  <li><strong>Tier 1:</strong> Select your League</li>
+                  <li><strong>Tier 2:</strong> Add Formats (Singles, Doubles, Round Robin)</li>
+                  <li><strong>Tier 3:</strong> Create Rating Tiers (4.0, 4.5, 5.0) - Each gets unique join code</li>
+                  <li><strong>Tier 4:</strong> System auto-creates player groups (Group A, B, C) when needed</li>
                 </ol>
+                <div className="key-features">
+                  <Badge className="feature-badge">✅ Unique Join Codes</Badge>
+                  <Badge className="feature-badge">✅ Auto Player Groups</Badge>
+                  <Badge className="feature-badge">✅ Competition Systems</Badge>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Tier 1: League Selection */}
           <div className="tier-section">
-            <h3 className="tier-title">Tier 1: Leagues</h3>
+            <h3 className="tier-title">Tier 1: Select League to Configure</h3>
             <div className="leagues-grid">
               {leagues.map((league) => (
                 <Card 
@@ -746,8 +751,7 @@ function App() {
                   className={`glass-card-blue league-card ${selectedLeague?.id === league.id ? 'selected' : ''}`}
                   onClick={() => {
                     setSelectedLeague(league);
-                    loadSeasons(league.id);
-                    setSelectedSeason(null);
+                    loadFormatTiers(league.id);
                     setSelectedFormatTier(null);
                   }}
                 >
@@ -763,81 +767,42 @@ function App() {
             </div>
           </div>
 
-          {/* Tier 2: Season Management */}
+          {/* Tier 2: Format Types (Singles, Doubles, Round Robin) */}
           {selectedLeague && (
             <div className="tier-section">
-              <h3 className="tier-title">Tier 2: Seasons for {selectedLeague.name}</h3>
-              <div className="season-controls">
-                <SeasonCreator 
-                  leagueId={selectedLeague.id}
-                  onSeasonCreated={() => loadSeasons(selectedLeague.id)}
-                />
-              </div>
-              <div className="seasons-grid">
-                {seasons.map((season) => (
-                  <Card 
-                    key={season.id} 
-                    className={`glass-card-blue season-card ${selectedSeason?.id === season.id ? 'selected' : ''}`}
-                    onClick={() => {
-                      setSelectedSeason(season);
-                      loadFormatTiers(season.id);
-                      setSelectedFormatTier(null);
-                    }}
-                  >
-                    <CardHeader>
-                      <CardTitle>{season.name}</CardTitle>
-                      <CardDescription>
-                        {new Date(season.start_date).toLocaleDateString()} - 
-                        {new Date(season.end_date).toLocaleDateString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Badge className="sport-badge-blue">{season.status}</Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-                {seasons.length === 0 && (
-                  <div className="empty-state">
-                    <p>No seasons created yet. Click "Add Season" to get started!</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tier 3: Format Tiers (Singles, Doubles, Round Robin) */}
-          {selectedSeason && (
-            <div className="tier-section">
-              <h3 className="tier-title">Tier 3: Formats for {selectedSeason.name}</h3>
+              <h3 className="tier-title">Tier 2: Add Formats for {selectedLeague.name}</h3>
               <div className="format-controls">
                 <Button 
                   className="leagueace-button"
-                  onClick={() => createFormatTier(selectedSeason.id, {
+                  onClick={() => createFormatTier(selectedLeague.id, {
                     name: "Singles",
                     format_type: "Singles",
-                    description: "Singles format matches"
+                    description: "Singles format matches - individual competition"
                   })}
                 >
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Singles
                 </Button>
                 <Button 
                   className="leagueace-button"
-                  onClick={() => createFormatTier(selectedSeason.id, {
+                  onClick={() => createFormatTier(selectedLeague.id, {
                     name: "Doubles",
                     format_type: "Doubles",
-                    description: "Doubles format matches"
+                    description: "Doubles format matches - team competition"
                   })}
                 >
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Doubles
                 </Button>
                 <Button 
                   className="leagueace-button"
-                  onClick={() => createFormatTier(selectedSeason.id, {
-                    name: "Round Robin",
+                  onClick={() => createFormatTier(selectedLeague.id, {
+                    name: "Round Robin Doubles",
                     format_type: "Doubles",
-                    description: "Advanced Round Robin format"
+                    description: "Round Robin format - partners rotate automatically"
                   })}
                 >
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Round Robin
                 </Button>
               </div>
@@ -862,26 +827,34 @@ function App() {
                 ))}
                 {formatTiers.length === 0 && (
                   <div className="empty-state">
-                    <p>No format types created yet. Click "Add Singles", "Add Doubles", or "Add Round Robin" to create different match formats!</p>
+                    <p>No format types created yet. Click "Add Singles", "Add Doubles", or "Add Round Robin" to create tournament formats!</p>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Tier 4: Rating Tiers (4.0, 4.5, 5.0) */}
+          {/* Tier 3: Rating Tiers (4.0, 4.5, 5.0) with Join Codes */}
           {selectedFormatTier && (
             <div className="tier-section">
-              <h3 className="tier-title">Tier 4: Rating Levels for {selectedFormatTier.name}</h3>
+              <h3 className="tier-title">Tier 3: Create Rating Levels for {selectedFormatTier.name}</h3>
+              <div className="rating-info">
+                <Card className="glass-card-blue info-card">
+                  <CardContent>
+                    <p>Each rating tier will get a <strong>unique 6-character join code</strong> that players use to join. 
+                    You can create as many rating levels as needed (4.0, 4.5, 5.0, etc.).</p>
+                  </CardContent>
+                </Card>
+              </div>
               <div className="rating-controls">
-                <RatingTierCreator 
+                <EnhancedRatingTierCreator 
                   formatTierId={selectedFormatTier.id}
                   onRatingTierCreated={() => loadRatingTiers(selectedFormatTier.id)}
                 />
               </div>
               <div className="rating-tiers-grid">
                 {ratingTiers.map((tier) => (
-                  <RatingTierCard key={tier.id} tier={tier} />
+                  <EnhancedRatingTierCard key={tier.id} tier={tier} />
                 ))}
                 {ratingTiers.length === 0 && (
                   <div className="empty-state">
