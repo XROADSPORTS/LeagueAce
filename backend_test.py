@@ -1403,14 +1403,16 @@ class LeagueAceAPITester:
     
     def test_upload_invalid_file_type(self):
         """Test uploading invalid file type (should fail)"""
-        if not self.player_id:
+        # Use workflow player ID if available, otherwise use regular player ID
+        test_player_id = getattr(self, 'workflow_player_id', None) or self.player_id
+        if not test_player_id:
             print("❌ Skipping - No Player ID available")
             return False
         
         # Test with text file instead of image
         import requests
         
-        url = f"{self.api_url}/users/{self.player_id}/upload-picture"
+        url = f"{self.api_url}/users/{test_player_id}/upload-picture"
         files = {'file': ('test.txt', b'This is not an image', 'text/plain')}
         
         self.tests_run += 1
