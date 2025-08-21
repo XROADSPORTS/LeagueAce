@@ -1166,6 +1166,31 @@ async def create_player_groups(rating_tier_id: str, group_data: PlayerGroupCreat
     }
 
 @api_router.get("/rating-tiers/{rating_tier_id}/groups", response_model=List[PlayerGroup])
+
+# Validate/Resolve Join Code
+@api_router.get("/rating-tiers/by-code/{code}")
+async def get_rating_tier_by_code(code: str):
+    normalized = (code or "").strip().upper()
+    rt = await db.rating_tiers.find_one({"join_code": normalized})
+    if not rt:
+        raise HTTPException(status_code=404, detail="Invalid join code")
+    # Fetch related format tier and league for context
+    fmt = await db.format_tiers.find_one({"id": rt.get("format_tier_id")}) if rt.get("format_tier_id") else None
+    league = await db.leagues.find_one({"id": fmt.get("league_id")}) if fmt and fmt.get("league_id") else None
+    summary = {
+        "id": rt.get("id"),
+        "name": rt.get("name"),
+        "join_code": rt.get("join_code"),
+        "min_rating": rt.get("min_rating"),
+        "max_rating": rt.get("max_rating"),
+        "max_players": rt.get("max_players"),
+        "competition_system": rt.get("competition_system"),
+        "league_id": league.get("id") if league else None,
+        "league_name": league.get("name") if league else None,
+        "sport_type": league.get("sport_type") if league else None,
+    }
+    return summary
+
 async def get_rating_tier_groups(rating_tier_id: str):
     groups = await db.player_groups.find({"rating_tier_id": rating_tier_id}).to_list(100)
     return [PlayerGroup(**parse_from_mongo(group)) for group in groups]
