@@ -971,9 +971,12 @@ function App() {
                 {groups.length > 0 ? (
                   <div className="groups-list">
                     {groups.map((group) => (
-                      <Badge key={group.id} className="group-badge">
-                        {group.name}
-                      </Badge>
+                      <div key={group.id} className="group-item">
+                        <Badge className="group-badge">
+                          {group.name}
+                        </Badge>
+                        <GroupManagement groupId={group.id} tierId={tier.id} />
+                      </div>
                     ))}
                   </div>
                 ) : (
