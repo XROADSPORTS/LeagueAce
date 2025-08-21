@@ -937,6 +937,11 @@ async def update_user_profile(user_id: str, updates: UserProfileUpdate):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     data = {k: v for k, v in updates.dict(exclude_unset=True).items() if v is not None}
+    # Enforce unique email if changing
+    if "email" in data and data["email"] != user.get("email"):
+        existing = await db.users.find_one({"email": data["email"]})
+        if existing and existing["id"] != user_id:
+            raise HTTPException(status_code=400, detail="Email already in use")
     if data:
         await db.users.update_one({"id": user_id}, {"$set": data})
     updated_user = await db.users.find_one({"id": user_id})
