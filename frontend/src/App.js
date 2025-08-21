@@ -1155,9 +1155,7 @@ function App() {
                 <div className="matches-list">
                   <h5>Week {selectedWeek} Matches ({matches.length})</h5>
                   {matches.map((match) => (
-                    <Badge key={match.id} className="match-badge" variant="outline">
-                      {match.format} - {match.status}
-                    </Badge>
+                    <MatchCard key={match.id} match={match} />
                   ))}
                 </div>
               )}
