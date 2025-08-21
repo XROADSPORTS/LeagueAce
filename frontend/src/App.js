@@ -745,7 +745,15 @@ function App() {
           <div className="tier-section">
             <h3 className="tier-title">Tier 1: Select League to Configure</h3>
             <div className="leagues-grid">
-              {leagues.map((league) => (
+              {leagues.length === 0 ? (
+                <Card className="glass-card-blue empty-state-card">
+                  <CardContent className="empty-state">
+                    <div className="empty-icon">🏆</div>
+                    <h4>No leagues yet</h4>
+                    <p>Create your first league to get started. It will persist and appear here after refresh.</p>
+                  </CardContent>
+                </Card>
+              ) : leagues.map((league) => (
                 <Card 
                   key={league.id} 
                   className={`glass-card-blue league-card ${selectedLeague?.id === league.id ? 'selected' : ''}`}
