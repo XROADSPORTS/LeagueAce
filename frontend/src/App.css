@@ -599,7 +599,7 @@ body {
   font-weight: 800;
 }
 
-/* Buttons with blue theme */
+/* Buttons with blue theme - upgraded to iOS glass look */
 .leagueace-button, .btn-primary-ios {
   position: relative;
   background: linear-gradient(180deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.12) 100%);
