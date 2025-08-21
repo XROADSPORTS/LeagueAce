@@ -1270,6 +1270,179 @@ class LeagueAceAPITester:
         
         return success  # Success means we got the expected 400 error
 
+    # CRITICAL BUG FIX TESTS - PLAYER DASHBOARD FUNCTIONALITY
+    
+    def test_get_user_joined_tiers(self):
+        """Test getting user's joined tiers (CRITICAL BUG FIX)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get User Joined Tiers",
+            "GET",
+            f"users/{self.player_id}/joined-tiers",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} joined tiers")
+            for i, tier in enumerate(response):
+                print(f"   Tier {i+1}: {tier.get('name')} - {tier.get('league_name')}")
+                print(f"     - Status: {tier.get('seat_status')}")
+                print(f"     - Players: {tier.get('current_players')}/{tier.get('max_players')}")
+                print(f"     - Sport: {tier.get('sport_type')}")
+        
+        return success
+    
+    def test_get_user_standings(self):
+        """Test getting user's standings (CRITICAL BUG FIX)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get User Standings",
+            "GET",
+            f"users/{self.player_id}/standings",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} standings")
+            for i, standing in enumerate(response):
+                print(f"   Standing {i+1}: {standing.get('league_name')} - {standing.get('tier_name')}")
+                print(f"     - Rank: {standing.get('rank')}")
+                print(f"     - Sets: {standing.get('total_sets_won')}/{standing.get('total_sets_played')}")
+                print(f"     - Win %: {standing.get('set_win_percentage', 0):.1%}")
+        
+        return success
+    
+    def test_get_user_matches(self):
+        """Test getting user's matches (CRITICAL BUG FIX)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get User Matches",
+            "GET",
+            f"users/{self.player_id}/matches",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} matches")
+            for i, match in enumerate(response):
+                print(f"   Match {i+1}: {match.get('league_name')} - Week {match.get('week_number')}")
+                print(f"     - Format: {match.get('format')}")
+                print(f"     - Status: {match.get('status')}")
+                print(f"     - Participants: {len(match.get('participants', []))}")
+        
+        return success
+    
+    def test_upload_profile_picture_with_file(self):
+        """Test uploading profile picture with actual file (NEW FEATURE)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        # Create a small test image (1x1 pixel PNG)
+        import base64
+        import io
+        
+        # Minimal PNG data (1x1 transparent pixel)
+        png_data = base64.b64decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77yQAAAABJRU5ErkJggg=='
+        )
+        
+        # Test with requests multipart file upload
+        import requests
+        
+        url = f"{self.api_url}/users/{self.player_id}/upload-picture"
+        files = {'file': ('test_image.png', png_data, 'image/png')}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Upload Profile Picture with File...")
+        print(f"   URL: POST {url}")
+        
+        try:
+            response = requests.post(url, files=files)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    response_data = response.json()
+                    print(f"   Message: {response_data.get('message')}")
+                    print(f"   Profile picture updated: {'✅' if 'profile_picture' in response_data else '❌'}")
+                    return True
+                except:
+                    return True
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_detail = response.json()
+                    print(f"   Error: {error_detail}")
+                except:
+                    print(f"   Response text: {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+    
+    def test_upload_invalid_file_type(self):
+        """Test uploading invalid file type (should fail)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        # Test with text file instead of image
+        import requests
+        
+        url = f"{self.api_url}/users/{self.player_id}/upload-picture"
+        files = {'file': ('test.txt', b'This is not an image', 'text/plain')}
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing Upload Invalid File Type...")
+        print(f"   URL: POST {url}")
+        
+        try:
+            response = requests.post(url, files=files)
+            success = response.status_code == 400  # Should fail with 400
+            
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Correctly rejected invalid file type with status: {response.status_code}")
+                return True
+            else:
+                print(f"❌ Failed - Expected 400, got {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+    
+    def test_remove_profile_picture(self):
+        """Test removing profile picture (NEW FEATURE)"""
+        if not self.player_id:
+            print("❌ Skipping - No Player ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Remove Profile Picture",
+            "DELETE",
+            f"users/{self.player_id}/remove-picture",
+            200
+        )
+        
+        if success:
+            print(f"   Message: {response.get('message')}")
+        
+        return success
+
     def test_season_creation_workflow_focused(self):
         """Test focused season creation workflow as requested in review"""
         print("\n🔍 Testing Season Creation Workflow (HIGH PRIORITY)...")
