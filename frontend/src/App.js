@@ -802,7 +802,7 @@ function App() {
                     description: "Round Robin format - partners rotate automatically"
                   })}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="icon-glass-container"><Plus className="w-4 h-4 mr-2" /></span>
                   Add Round Robin
                 </Button>
               </div>
