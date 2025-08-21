@@ -780,7 +780,7 @@ function App() {
                     description: "Singles format matches - individual competition"
                   })}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="icon-glass-container"><Plus className="w-4 h-4 mr-2" /></span>
                   Add Singles
                 </Button>
                 <Button 
