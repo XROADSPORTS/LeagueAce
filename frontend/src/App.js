@@ -1127,38 +1127,51 @@ function App() {
                 </Badge>
               </div>
               
-              <div className="week-controls">
-                <Select value={selectedWeek.toString()} onValueChange={(value) => setSelectedWeek(parseInt(value))}>
-                  <SelectTrigger className="blue-input w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[...Array(schedule.total_weeks)].map((_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        Week {i + 1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Tabs defaultValue="matches" className="group-tabs">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="matches">Matches</TabsTrigger>
+                  <TabsTrigger value="standings">Standings</TabsTrigger>
+                </TabsList>
                 
-                <Button 
-                  size="sm" 
-                  className="leagueace-button"
-                  onClick={createWeekMatches}
-                  disabled={loading || matches.length > 0}
-                >
-                  {loading ? "Creating..." : `Create Week ${selectedWeek} Matches`}
-                </Button>
-              </div>
+                <TabsContent value="matches">
+                  <div className="week-controls">
+                    <Select value={selectedWeek.toString()} onValueChange={(value) => setSelectedWeek(parseInt(value))}>
+                      <SelectTrigger className="blue-input w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...Array(schedule.total_weeks)].map((_, i) => (
+                          <SelectItem key={i + 1} value={(i + 1).toString()}>
+                            Week {i + 1}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      size="sm" 
+                      className="leagueace-button"
+                      onClick={createWeekMatches}
+                      disabled={loading || matches.length > 0}
+                    >
+                      {loading ? "Creating..." : `Create Week ${selectedWeek} Matches`}
+                    </Button>
+                  </div>
 
-              {matches.length > 0 && (
-                <div className="matches-list">
-                  <h5>Week {selectedWeek} Matches ({matches.length})</h5>
-                  {matches.map((match) => (
-                    <MatchCard key={match.id} match={match} />
-                  ))}
-                </div>
-              )}
+                  {matches.length > 0 && (
+                    <div className="matches-list">
+                      <h5>Week {selectedWeek} Matches ({matches.length})</h5>
+                      {matches.map((match) => (
+                        <MatchCard key={match.id} match={match} />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="standings">
+                  <StandingsView tierId={tierId} groupId={groupId} />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </div>
