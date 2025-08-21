@@ -1284,6 +1284,34 @@ function App() {
                 </Badge>
               </div>
             </div>
+            <div className="tier-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Button size="sm" variant="outline" className="blue-outline-button" onClick={()=> setShowEditRange(v => !v)}>
+                {showEditRange ? 'Close' : 'Edit Range'}
+              </Button>
+            </div>
+            {showEditRange && (
+              <div className="edit-range" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <div>
+                  <Label>Min</Label>
+                  <Input type="number" step="0.1" min="3.0" max="5.5" className="blue-input" value={minInput} onChange={(e)=> setMinInput(parseFloat(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Max</Label>
+                  <Input type="number" step="0.1" min="3.0" max="5.5" className="blue-input" value={maxInput} onChange={(e)=> setMaxInput(parseFloat(e.target.value))} />
+                </div>
+                <Button className="btn-primary-ios" onClick={async ()=>{
+                  if (isNaN(minInput) || isNaN(maxInput) || minInput > maxInput) { toast({ title: 'Invalid range', description: 'Min must be <= Max', variant: 'destructive' }); return; }
+                  try {
+                    const { data } = await axios.patch(`${API}/rating-tiers/${tier.id}`, { min_rating: minInput, max_rating: maxInput });
+                    setTierState(data);
+                    toast({ title: 'Updated', description: 'Rating range updated' });
+                  } catch (err) {
+                    toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to update range', variant: 'destructive' });
+                  }
+                }}>Save</Button>
+              </div>
+            )}
+
             <CardDescription>
               Rating: {tierState.min_rating} - {tierState.max_rating} | Max Players: {tierState.max_players}
               {tierState.competition_system === "Team League Format" && (
