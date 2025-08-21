@@ -2626,6 +2626,16 @@ function App() {
   const PlayerDashboard = () => {
     const [activePlayerTab, setActivePlayerTab] = useState('home');
     const [showJoinForm, setShowJoinForm] = useState(false);
+  const pendingURLJoinCode = useRef(null);
+
+  useEffect(() => {
+    const code = getPendingJoinCodeFromURL();
+    if (code) {
+      pendingURLJoinCode.current = code;
+      setJoinCode(code);
+      setShowJoinForm(true);
+    }
+  }, []);
     const [joinCode, setJoinCode] = useState("");
     const [upcomingMatches, setUpcomingMatches] = useState([]);
 
