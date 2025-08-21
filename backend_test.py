@@ -1928,6 +1928,281 @@ class LeagueAceAPITester:
         
         return len(format_tier_ids) >= 3 and association_verified >= 2
 
+    def test_complete_player_dashboard_workflow(self):
+        """Test complete player dashboard workflow (CRITICAL BUG FIX)"""
+        print("\n🔍 Testing COMPLETE PLAYER DASHBOARD WORKFLOW (CRITICAL)...")
+        
+        # Reset for focused testing
+        workflow_league_id = None
+        workflow_format_tier_id = None
+        workflow_rating_tier_id = None
+        workflow_join_code = None
+        workflow_player_id = None
+        
+        # Step 1: Create League Manager if needed
+        print("\n📋 Step 1: Ensure League Manager exists")
+        if not self.league_manager_id:
+            if not self.test_create_league_manager():
+                print("❌ Failed to create League Manager")
+                return False
+        
+        # Step 2: Create Test League
+        print("\n📋 Step 2: Create Test League for Player Dashboard")
+        league_data = {
+            "name": "Player Dashboard Test League",
+            "sport_type": "Tennis",
+            "description": "League for testing complete player dashboard workflow"
+        }
+        
+        success, response = self.run_test(
+            "Create Dashboard Test League",
+            "POST",
+            "leagues",
+            200,
+            data=league_data,
+            params={"created_by": self.league_manager_id}
+        )
+        
+        if success and 'id' in response:
+            workflow_league_id = response['id']
+            print(f"   ✅ Created League ID: {workflow_league_id}")
+        else:
+            print("❌ Failed to create test league")
+            return False
+        
+        # Step 3: Create Format Tier (using new 3-tier structure)
+        print("\n📋 Step 3: Create Format Tier")
+        format_data = {
+            "league_id": workflow_league_id,  # Using league_id directly
+            "name": "Singles Dashboard Test",
+            "format_type": "Singles",
+            "description": "Singles format for dashboard testing"
+        }
+        
+        success, response = self.run_test(
+            "Create Dashboard Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=format_data
+        )
+        
+        if success and 'id' in response:
+            workflow_format_tier_id = response['id']
+            print(f"   ✅ Created Format Tier ID: {workflow_format_tier_id}")
+        else:
+            print("❌ Failed to create format tier")
+            return False
+        
+        # Step 4: Create Rating Tier with Join Code
+        print("\n📋 Step 4: Create Rating Tier with Join Code")
+        rating_data = {
+            "format_tier_id": workflow_format_tier_id,
+            "name": "4.0 Dashboard Test",
+            "min_rating": 3.5,
+            "max_rating": 4.5,
+            "max_players": 24,
+            "competition_system": "Team League Format",
+            "playoff_spots": 8,
+            "region": "Dashboard Test Region",
+            "surface": "Hard Court",
+            "rules_md": "Test rules for dashboard workflow"
+        }
+        
+        success, response = self.run_test(
+            "Create Dashboard Rating Tier",
+            "POST",
+            "rating-tiers",
+            200,
+            data=rating_data
+        )
+        
+        if success and 'id' in response:
+            workflow_rating_tier_id = response['id']
+            workflow_join_code = response.get('join_code')
+            print(f"   ✅ Created Rating Tier ID: {workflow_rating_tier_id}")
+            print(f"   ✅ Generated Join Code: {workflow_join_code}")
+        else:
+            print("❌ Failed to create rating tier")
+            return False
+        
+        # Step 5: Create Test Player
+        print("\n📋 Step 5: Create Test Player for Dashboard")
+        player_data = {
+            "name": "Dashboard Test Player",
+            "email": f"dashboard.player_{datetime.now().strftime('%H%M%S')}@testleague.com",
+            "phone": "+1-555-0199",
+            "rating_level": 4.0,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Dashboard Test Player",
+            "POST",
+            "users",
+            200,
+            data=player_data
+        )
+        
+        if success and 'id' in response:
+            workflow_player_id = response['id']
+            print(f"   ✅ Created Player ID: {workflow_player_id}")
+        else:
+            print("❌ Failed to create test player")
+            return False
+        
+        # Step 6: Player Joins Using Code
+        print("\n📋 Step 6: Player Joins League Using Join Code")
+        join_data = {
+            "join_code": workflow_join_code
+        }
+        
+        success, response = self.run_test(
+            "Player Joins via Join Code",
+            "POST",
+            f"join-by-code/{workflow_player_id}",
+            200,
+            data=join_data
+        )
+        
+        if success:
+            print(f"   ✅ Player joined successfully")
+            print(f"   Status: {response.get('status')}")
+            print(f"   Message: {response.get('message')}")
+        else:
+            print("❌ Failed to join via code")
+            return False
+        
+        # Step 7: Test Player Dashboard - Joined Tiers
+        print("\n📋 Step 7: Test Player Dashboard - Joined Tiers")
+        success, response = self.run_test(
+            "Dashboard - Get Joined Tiers",
+            "GET",
+            f"users/{workflow_player_id}/joined-tiers",
+            200
+        )
+        
+        joined_tiers_working = False
+        if success and isinstance(response, list) and len(response) > 0:
+            joined_tiers_working = True
+            print(f"   ✅ Player can see {len(response)} joined league(s)")
+            for tier in response:
+                print(f"     - League: {tier.get('league_name')}")
+                print(f"     - Tier: {tier.get('name')}")
+                print(f"     - Status: {tier.get('seat_status')}")
+        else:
+            print("   ❌ Player cannot see joined leagues in dashboard")
+        
+        # Step 8: Test Player Dashboard - Standings
+        print("\n📋 Step 8: Test Player Dashboard - Standings")
+        success, response = self.run_test(
+            "Dashboard - Get Player Standings",
+            "GET",
+            f"users/{workflow_player_id}/standings",
+            200
+        )
+        
+        standings_working = success  # Even empty list is OK for new player
+        if success:
+            print(f"   ✅ Standings endpoint working (found {len(response) if isinstance(response, list) else 0} standings)")
+        else:
+            print("   ❌ Standings endpoint not working")
+        
+        # Step 9: Test Player Dashboard - Matches
+        print("\n📋 Step 9: Test Player Dashboard - Matches")
+        success, response = self.run_test(
+            "Dashboard - Get Player Matches",
+            "GET",
+            f"users/{workflow_player_id}/matches",
+            200
+        )
+        
+        matches_working = success  # Even empty list is OK for new player
+        if success:
+            print(f"   ✅ Matches endpoint working (found {len(response) if isinstance(response, list) else 0} matches)")
+        else:
+            print("   ❌ Matches endpoint not working")
+        
+        # Step 10: Test Profile Picture Upload
+        print("\n📋 Step 10: Test Profile Picture Upload")
+        picture_upload_working = self.test_upload_profile_picture_with_file_for_workflow(workflow_player_id)
+        
+        # Step 11: Test Profile Picture Removal
+        print("\n📋 Step 11: Test Profile Picture Removal")
+        picture_removal_working = self.test_remove_profile_picture_for_workflow(workflow_player_id)
+        
+        # Summary
+        print(f"\n🎯 COMPLETE PLAYER DASHBOARD WORKFLOW SUMMARY:")
+        print(f"   • League Creation: {'✅' if workflow_league_id else '❌'}")
+        print(f"   • Format Tier Creation: {'✅' if workflow_format_tier_id else '❌'}")
+        print(f"   • Rating Tier with Join Code: {'✅' if workflow_join_code else '❌'}")
+        print(f"   • Player Creation: {'✅' if workflow_player_id else '❌'}")
+        print(f"   • Join by Code: ✅")
+        print(f"   • Dashboard - Joined Tiers: {'✅' if joined_tiers_working else '❌'}")
+        print(f"   • Dashboard - Standings: {'✅' if standings_working else '❌'}")
+        print(f"   • Dashboard - Matches: {'✅' if matches_working else '❌'}")
+        print(f"   • Profile Picture Upload: {'✅' if picture_upload_working else '❌'}")
+        print(f"   • Profile Picture Removal: {'✅' if picture_removal_working else '❌'}")
+        
+        # Store workflow data for potential reuse
+        self.workflow_player_id = workflow_player_id
+        self.workflow_league_id = workflow_league_id
+        self.workflow_join_code = workflow_join_code
+        
+        # Return True if all critical components work
+        critical_components = [
+            workflow_league_id is not None,
+            workflow_join_code is not None,
+            joined_tiers_working,
+            standings_working,
+            matches_working
+        ]
+        
+        return all(critical_components)
+    
+    def test_upload_profile_picture_with_file_for_workflow(self, user_id: str):
+        """Helper method for workflow testing"""
+        import base64
+        import requests
+        
+        # Minimal PNG data (1x1 transparent pixel)
+        png_data = base64.b64decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jU77yQAAAABJRU5ErkJggg=='
+        )
+        
+        url = f"{self.api_url}/users/{user_id}/upload-picture"
+        files = {'file': ('workflow_test.png', png_data, 'image/png')}
+        
+        try:
+            response = requests.post(url, files=files)
+            success = response.status_code == 200
+            if success:
+                print(f"   ✅ Profile picture upload working")
+            else:
+                print(f"   ❌ Profile picture upload failed: {response.status_code}")
+            return success
+        except Exception as e:
+            print(f"   ❌ Profile picture upload error: {str(e)}")
+            return False
+    
+    def test_remove_profile_picture_for_workflow(self, user_id: str):
+        """Helper method for workflow testing"""
+        import requests
+        
+        url = f"{self.api_url}/users/{user_id}/remove-picture"
+        
+        try:
+            response = requests.delete(url)
+            success = response.status_code == 200
+            if success:
+                print(f"   ✅ Profile picture removal working")
+            else:
+                print(f"   ❌ Profile picture removal failed: {response.status_code}")
+            return success
+        except Exception as e:
+            print(f"   ❌ Profile picture removal error: {str(e)}")
+            return False
+
     def run_focused_season_creation_test(self):
         """Run focused season creation workflow test as requested"""
         print("\n" + "="*60)
