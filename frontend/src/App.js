@@ -1022,6 +1022,309 @@ function App() {
         </Card>
       );
     };
+    const EnhancedRatingTierCreator = ({ formatTierId, onRatingTierCreated }) => {
+      const [showForm, setShowForm] = useState(false);
+      const [tierData, setTierData] = useState({
+        name: "",
+        min_rating: 3.0,
+        max_rating: 3.5,
+        max_players: 36,
+        competition_system: "Team League Format",
+        playoff_spots: 8,
+        region: "General",
+        surface: "Hard Court"
+      });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await axios.post(`${API}/rating-tiers`, {
+            format_tier_id: formatTierId,
+            ...tierData
+          });
+          
+          // Show the join code in the success message
+          const joinCode = response.data?.join_code || 'Generated';
+          toast({ 
+            title: "Rating Tier Created!", 
+            description: `"${tierData.name}" created successfully! Join Code: ${joinCode}` 
+          });
+          
+          onRatingTierCreated();
+          setShowForm(false);
+          setTierData({
+            name: "",
+            min_rating: 3.0,
+            max_rating: 3.5,
+            max_players: 36,
+            competition_system: "Team League Format",
+            playoff_spots: 8,
+            region: "General",
+            surface: "Hard Court"
+          });
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create rating tier",
+            variant: "destructive"
+          });
+        }
+      };
+
+      if (!showForm) {
+        return (
+          <Button 
+            className="leagueace-button"
+            onClick={() => setShowForm(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Rating Tier (4.0, 4.5, 5.0, etc.)
+          </Button>
+        );
+      }
+
+      return (
+        <Card className="glass-card-blue rating-creator-form">
+          <CardHeader>
+            <CardTitle>Create New Rating Tier</CardTitle>
+            <CardDescription>Define skill level and competition settings - unique join code will be generated</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="rating-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <Label htmlFor="tier-name">Tier Name (e.g., 4.0, 4.5, 5.0)</Label>
+                  <Input
+                    id="tier-name"
+                    type="text"
+                    placeholder="4.0, 4.5, 5.0, Beginner, Advanced"
+                    value={tierData.name}
+                    onChange={(e) => setTierData({...tierData, name: e.target.value})}
+                    className="blue-input"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <Label htmlFor="max-players">Max Players (Optional)</Label>
+                  <Input
+                    id="max-players"
+                    type="number"
+                    min="4"
+                    max="100"
+                    value={tierData.max_players}
+                    onChange={(e) => setTierData({...tierData, max_players: parseInt(e.target.value)})}
+                    className="blue-input"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <Label htmlFor="min-rating">Minimum Rating</Label>
+                  <Input
+                    id="min-rating"
+                    type="number"
+                    step="0.1"
+                    min="3.0"
+                    max="5.5"
+                    value={tierData.min_rating}
+                    onChange={(e) => setTierData({...tierData, min_rating: parseFloat(e.target.value)})}
+                    className="blue-input"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <Label htmlFor="max-rating">Maximum Rating</Label>
+                  <Input
+                    id="max-rating"
+                    type="number"
+                    step="0.1"
+                    min="3.0"
+                    max="5.5"
+                    value={tierData.max_rating}
+                    onChange={(e) => setTierData({...tierData, max_rating: parseFloat(e.target.value)})}
+                    className="blue-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <Label htmlFor="competition-system">Competition System</Label>
+                <Select 
+                  value={tierData.competition_system} 
+                  onValueChange={(value) => setTierData({...tierData, competition_system: value})}
+                >
+                  <SelectTrigger className="blue-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Team League Format">🏆 Team League Format</SelectItem>
+                    <SelectItem value="Knockout System">⚡ Knockout System</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {tierData.competition_system === "Team League Format" && (
+                <div className="form-group">
+                  <Label htmlFor="playoff-spots">Playoff Spots (Top players advance)</Label>
+                  <Select 
+                    value={tierData.playoff_spots.toString()} 
+                    onValueChange={(value) => setTierData({...tierData, playoff_spots: parseInt(value)})}
+                  >
+                    <SelectTrigger className="blue-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="4">Top 4 players</SelectItem>
+                      <SelectItem value="8">Top 8 players</SelectItem>
+                      <SelectItem value="12">Top 12 players</SelectItem>
+                      <SelectItem value="16">Top 16 players</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              <div className="form-actions">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowForm(false)}
+                  className="blue-outline-button"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="leagueace-button"
+                  disabled={!tierData.name.trim()}
+                >
+                  Create Rating Tier & Generate Join Code
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      );
+    };
+
+    const EnhancedRatingTierCard = ({ tier }) => {
+      const [groups, setGroups] = useState([]);
+      const [showGroupForm, setShowGroupForm] = useState(false);
+
+      useEffect(() => {
+        loadGroups();
+      }, [tier.id]);
+
+      const loadGroups = async () => {
+        try {
+          const response = await axios.get(`${API}/rating-tiers/${tier.id}/player-groups`);
+          setGroups(response.data);
+        } catch (error) {
+          console.error("Error loading groups:", error);
+        }
+      };
+
+      const createGroups = async (groupData) => {
+        try {
+          await axios.post(`${API}/rating-tiers/${tier.id}/create-groups`, groupData);
+          loadGroups();
+          setShowGroupForm(false);
+          toast({ 
+            title: "Player Groups Created!", 
+            description: `Groups created with automatic random assignment` 
+          });
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create groups",
+            variant: "destructive"
+          });
+        }
+      };
+
+      return (
+        <Card className="glass-card-blue rating-tier-card">
+          <CardHeader>
+            <div className="tier-header">
+              <CardTitle className="tier-name">{tier.name}</CardTitle>
+              <div className="tier-badges">
+                <Badge className="join-code-badge">
+                  📋 {tier.join_code}
+                </Badge>
+                <Badge className="competition-badge">
+                  {tier.competition_system === "Team League Format" ? "🏆" : "⚡"} {tier.competition_system}
+                </Badge>
+              </div>
+            </div>
+            <CardDescription>
+              Rating: {tier.min_rating} - {tier.max_rating} | Max Players: {tier.max_players}
+              {tier.competition_system === "Team League Format" && (
+                <><br/>Playoff Spots: Top {tier.playoff_spots}</>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="tier-details">
+              <div className="join-code-section">
+                <h5>📋 Player Join Code</h5>
+                <div className="join-code-display">
+                  <code className="join-code">{tier.join_code}</code>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="blue-outline-button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(tier.join_code);
+                      toast({ title: "Copied!", description: "Join code copied to clipboard" });
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="join-instructions">Share this code with players to join this rating tier</p>
+              </div>
+
+              <div className="groups-section">
+                <h5>Player Groups ({groups.length})</h5>
+                {groups.length > 0 ? (
+                  <div className="groups-list">
+                    {groups.map((group) => (
+                      <div key={group.id} className="group-item">
+                        <Badge className="group-badge">
+                          {group.name}
+                        </Badge>
+                        <span className="group-size">{group.group_size} players</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="no-groups">No groups created yet</p>
+                )}
+                
+                {!showGroupForm ? (
+                  <Button 
+                    size="sm"
+                    className="leagueace-button mt-2"
+                    onClick={() => setShowGroupForm(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Create Player Groups
+                  </Button>
+                ) : (
+                  <GroupCreatorForm 
+                    onCreateGroups={createGroups}
+                    onCancel={() => setShowGroupForm(false)}
+                  />
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    };
 
     const RatingTierCard = ({ tier }) => {
       const [groups, setGroups] = useState([]);
