@@ -930,6 +930,17 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfile(**parse_from_mongo(user))
 
+@api_router.patch("/users/{user_id}", response_model=UserProfile)
+async def update_user_profile(user_id: str, updates: UserProfileUpdate):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    data = {k: v for k, v in updates.dict(exclude_unset=True).items() if v is not None}
+    if data:
+        await db.users.update_one({"id": user_id}, {"$set": data})
+    updated_user = await db.users.find_one({"id": user_id})
+    return UserProfile(**parse_from_mongo(updated_user))
+
 @api_router.patch("/users/{user_id}/sports", response_model=UserProfile)
 async def update_user_sports(user_id: str, preferences: SportPreferenceUpdate):
     user = await db.users.find_one({"id": user_id})
