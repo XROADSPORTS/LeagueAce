@@ -179,7 +179,7 @@ function App() {
       <div className="sport-selection-container">
         <div className="leagueace-logo">
           <img 
-            src="https://customer-assets.emergentagent.com/job_netly-sports/artifacts/92512jvn_AE260291-0518-44D4-AA45-1A273E36B765.png" 
+            src="https://customer-assets.emergentagent.com/job_courtmaster-1/artifacts/kde0l6pr_leagueAce%20combo%20logo%20with%20slogans.png" 
             alt="LeagueAce" 
             className="logo-image"
           />
