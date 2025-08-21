@@ -338,6 +338,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Format Tier Creation Testing"
     - "Season Creation Workflow"
     - "Match Management UI"
   stuck_tasks: []
