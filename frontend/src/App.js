@@ -2458,6 +2458,95 @@ function App() {
       </div>
     );
   };
+  // Profile picture components
+  const ProfilePicture = ({ user, size = "md" }) => {
+    const dim = size === "lg" ? 64 : size === "sm" ? 28 : 40;
+    const initials = (user?.name || "?").trim().charAt(0).toUpperCase();
+    const src = user?.profile_picture;
+    if (src) {
+      return (
+        <img
+          src={src}
+          alt="Profile"
+          width={dim}
+          height={dim}
+          className="profile-picture"
+          style={{ width: dim, height: dim }}
+        />
+      );
+    }
+    return (
+      <div
+        className="profile-picture-placeholder"
+        style={{ width: dim, height: dim }}
+        aria-label="Profile placeholder"
+      >
+        {initials}
+      </div>
+    );
+  };
+
+  const ProfilePictureUpload = ({ onUploadComplete }) => {
+    const [busy, setBusy] = useState(false);
+    const inputRef = useRef(null);
+
+    const pickFile = () => inputRef.current?.click();
+
+    const onFileChange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setBusy(true);
+      try {
+        await handleProfilePictureUpload(file);
+        const res = await axios.get(`${API}/users/${user.id}`);
+        onUploadComplete?.(res.data);
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to upload picture", variant: "destructive" });
+      }
+      setBusy(false);
+    };
+
+    const removePicture = async () => {
+      setBusy(true);
+      try {
+        await axios.post(`${API}/users/${user.id}/remove-picture`);
+        const res = await axios.get(`${API}/users/${user.id}`);
+        onUploadComplete?.(res.data);
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to remove picture", variant: "destructive" });
+      }
+      setBusy(false);
+    };
+
+    return (
+      <div className="profile-picture-upload">
+        <div className="profile-picture-container">
+          <div className="upload-target" onClick={pickFile} role="button" tabIndex={0}>
+            <ProfilePicture user={user} size="lg" />
+          </div>
+          <div className="upload-overlay" onClick={pickFile}>
+            {busy ? (
+              <span className="upload-spinner">⏳</span>
+            ) : (
+              <>
+                <Camera className="w-5 h-5 mr-1" /> Upload
+              </>
+            )}
+          </div>
+        </div>
+        <input ref={inputRef} type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} />
+        <div className="upload-actions">
+          <Button variant="outline" className="blue-outline-button" type="button" onClick={pickFile} disabled={busy}>
+            <Upload className="w-4 h-4 mr-1" /> Choose Image
+          </Button>
+          <Button variant="outline" className="blue-outline-button" type="button" onClick={removePicture} disabled={busy}>
+            Remove
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
 
   // Continue with Player Dashboard and other components...
   // (Player Dashboard, Navigation, etc. remain similar but updated for new structure)
