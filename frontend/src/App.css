@@ -353,7 +353,7 @@ body {
   gap: 1rem;
 }
 
-.social-login-button {
+.social-login-button, .btn-translucent-ios {
   display: flex;
   align-items: center;
   justify-content: center;
