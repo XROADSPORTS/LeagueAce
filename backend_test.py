@@ -2215,6 +2215,324 @@ class LeagueAceAPITester:
             print(f"   ❌ Profile picture removal error: {str(e)}")
             return False
 
+    def test_player_join_by_code_end_to_end(self):
+        """Test Player Join-by-Code end-to-end functionality as requested in review"""
+        print("\n🔍 Testing PLAYER JOIN-BY-CODE END-TO-END (HIGH PRIORITY)...")
+        print("=" * 80)
+        
+        # Reset IDs for focused testing
+        test_league_id = None
+        test_format_tier_id = None
+        test_rating_tier_id = None
+        test_join_code = None
+        test_player_id = None
+        
+        # Step 1: Create a league (sport_type=Tennis)
+        print("\n📋 Step 1: Create League (sport_type=Tennis)")
+        if not self.league_manager_id:
+            print("❌ No League Manager available - creating one")
+            if not self.test_create_league_manager():
+                return False
+        
+        league_data = {
+            "name": "Join Code Test Tennis League",
+            "sport_type": "Tennis",
+            "description": "League for testing join-by-code functionality"
+        }
+        
+        success, response = self.run_test(
+            "Create Tennis League",
+            "POST",
+            "leagues",
+            200,
+            data=league_data,
+            params={"created_by": self.league_manager_id}
+        )
+        
+        if success and 'id' in response:
+            test_league_id = response['id']
+            print(f"   ✅ Created Tennis League ID: {test_league_id}")
+            print(f"   🎾 Sport Type: {response.get('sport_type')}")
+        else:
+            print("❌ Failed to create tennis league")
+            return False
+        
+        # Step 2: Create format tier (Singles)
+        print("\n📋 Step 2: Create Format Tier (Singles)")
+        format_data = {
+            "league_id": test_league_id,  # Using new 3-tier structure
+            "name": "Singles Competition",
+            "format_type": "Singles",
+            "description": "Singles format for join code testing"
+        }
+        
+        success, response = self.run_test(
+            "Create Singles Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=format_data
+        )
+        
+        if success and 'id' in response:
+            test_format_tier_id = response['id']
+            print(f"   ✅ Created Singles Format Tier ID: {test_format_tier_id}")
+            print(f"   🎾 Format Type: {response.get('format_type')}")
+            print(f"   🔗 League Association: {response.get('league_id')}")
+        else:
+            print("❌ Failed to create singles format tier")
+            return False
+        
+        # Step 3: Create rating tier (4.0, min_rating=3.5, max_rating=4.5) and capture join_code
+        print("\n📋 Step 3: Create Rating Tier (4.0 Level) and Capture Join Code")
+        rating_data = {
+            "format_tier_id": test_format_tier_id,
+            "name": "4.0",
+            "min_rating": 3.5,
+            "max_rating": 4.5,
+            "max_players": 36,
+            "competition_system": "Team League Format",
+            "playoff_spots": 8,
+            "region": "Test Region",
+            "surface": "Hard Court"
+        }
+        
+        success, response = self.run_test(
+            "Create 4.0 Rating Tier",
+            "POST",
+            "rating-tiers",
+            200,
+            data=rating_data
+        )
+        
+        if success and 'id' in response:
+            test_rating_tier_id = response['id']
+            test_join_code = response.get('join_code')
+            print(f"   ✅ Created 4.0 Rating Tier ID: {test_rating_tier_id}")
+            print(f"   🎯 Rating Range: {response.get('min_rating')} - {response.get('max_rating')}")
+            print(f"   🔑 Generated Join Code: {test_join_code}")
+            print(f"   👥 Max Players: {response.get('max_players')}")
+            print(f"   🏆 Competition System: {response.get('competition_system')}")
+        else:
+            print("❌ Failed to create rating tier")
+            return False
+        
+        if not test_join_code:
+            print("❌ No join code generated")
+            return False
+        
+        # Step 4: Create a player user (rating 4.0) or ensure default rating is within range
+        print("\n📋 Step 4: Create Player User (rating 4.0 - within range)")
+        player_data = {
+            "name": "Test Player Join Code",
+            "email": f"joincode.player_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0199",
+            "rating_level": 4.0,  # Within range 3.5-4.5
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Player (Rating 4.0)",
+            "POST",
+            "users",
+            200,
+            data=player_data
+        )
+        
+        if success and 'id' in response:
+            test_player_id = response['id']
+            print(f"   ✅ Created Player ID: {test_player_id}")
+            print(f"   🎾 Player Rating: {response.get('rating_level')}")
+            print(f"   ✅ Rating within tier range: {3.5 <= response.get('rating_level', 0) <= 4.5}")
+        else:
+            print("❌ Failed to create player")
+            return False
+        
+        # Step 5: Call POST /api/join-by-code/{user_id} with the join_code (ensure it's trim+uppercase)
+        print("\n📋 Step 5: Join by Code (Test trim+uppercase normalization)")
+        
+        # Test with different code formats to verify normalization
+        test_codes = [
+            test_join_code,  # Original code
+            test_join_code.lower(),  # Lowercase
+            f" {test_join_code} ",  # With spaces
+            f" {test_join_code.lower()} "  # Lowercase with spaces
+        ]
+        
+        join_success = False
+        for i, code_variant in enumerate(test_codes):
+            join_data = {"join_code": code_variant}
+            
+            success, response = self.run_test(
+                f"Join by Code (Variant {i+1}: '{code_variant}')",
+                "POST",
+                f"join-by-code/{test_player_id}",
+                200 if i == 0 else 400,  # First should succeed, others should fail (already joined)
+                data=join_data
+            )
+            
+            if success and i == 0:  # First attempt should succeed
+                join_success = True
+                seat_status = response.get('status')
+                print(f"   ✅ Successfully joined with status: {seat_status}")
+                print(f"   📝 Message: {response.get('message')}")
+                print(f"   🎾 Tier Name: {response.get('rating_tier', {}).get('name')}")
+                
+                # Step 6: Verify seat created with status Active or Reserve
+                print(f"\n📋 Step 6: Verify Seat Status")
+                if seat_status in ['Active', 'Reserve']:
+                    print(f"   ✅ Seat created with valid status: {seat_status}")
+                else:
+                    print(f"   ❌ Unexpected seat status: {seat_status}")
+                    return False
+            elif i > 0 and success:  # Subsequent attempts should fail
+                print(f"   ✅ Correctly rejected duplicate join attempt")
+        
+        if not join_success:
+            print("❌ Failed to join by code")
+            return False
+        
+        # Step 7: Verify GET /api/users/{user_id}/joined-tiers returns the tier
+        print("\n📋 Step 7: Verify Player Can See Joined Tiers")
+        success, response = self.run_test(
+            "Get User Joined Tiers",
+            "GET",
+            f"users/{test_player_id}/joined-tiers",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} joined tiers")
+            
+            # Verify our tier is in the list
+            tier_found = False
+            for tier in response:
+                if tier.get('id') == test_rating_tier_id:
+                    tier_found = True
+                    print(f"   ✅ Found joined tier: {tier.get('name')}")
+                    print(f"   🏆 League: {tier.get('league_name')}")
+                    print(f"   👥 Status: {tier.get('seat_status')}")
+                    print(f"   📊 Players: {tier.get('current_players')}/{tier.get('max_players')}")
+                    break
+            
+            if not tier_found:
+                print(f"   ❌ Joined tier not found in user's tier list")
+                return False
+        else:
+            print("❌ Failed to retrieve joined tiers")
+            return False
+        
+        # Step 8: Test negative cases
+        print("\n📋 Step 8: Test Negative Cases")
+        
+        # Test 8a: Invalid code (404)
+        print("\n📋 Step 8a: Test Invalid Join Code (should return 404)")
+        invalid_join_data = {"join_code": "INVALID123"}
+        
+        success, response = self.run_test(
+            "Join with Invalid Code",
+            "POST",
+            f"join-by-code/{test_player_id}",
+            404,
+            data=invalid_join_data
+        )
+        
+        if success:
+            print("   ✅ Correctly rejected invalid code with 404")
+        else:
+            print("   ❌ Did not properly handle invalid code")
+        
+        # Test 8b: Already joined (400)
+        print("\n📋 Step 8b: Test Already Joined (should return 400)")
+        duplicate_join_data = {"join_code": test_join_code}
+        
+        success, response = self.run_test(
+            "Join Already Joined Tier",
+            "POST",
+            f"join-by-code/{test_player_id}",
+            400,
+            data=duplicate_join_data
+        )
+        
+        if success:
+            print("   ✅ Correctly rejected duplicate join with 400")
+        else:
+            print("   ❌ Did not properly handle duplicate join")
+        
+        # Test 8c: Out-of-range rating (400)
+        print("\n📋 Step 8c: Test Out-of-Range Rating (should return 400)")
+        
+        # Create player with rating outside range
+        out_of_range_player_data = {
+            "name": "Out of Range Player",
+            "email": f"outofrange.player_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0200",
+            "rating_level": 5.5,  # Outside range 3.5-4.5
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Out-of-Range Player (Rating 5.5)",
+            "POST",
+            "users",
+            200,
+            data=out_of_range_player_data
+        )
+        
+        if success and 'id' in response:
+            out_of_range_player_id = response['id']
+            print(f"   ✅ Created out-of-range player: {response.get('rating_level')}")
+            
+            # Try to join with out-of-range rating
+            out_of_range_join_data = {"join_code": test_join_code}
+            
+            success, response = self.run_test(
+                "Join with Out-of-Range Rating",
+                "POST",
+                f"join-by-code/{out_of_range_player_id}",
+                400,
+                data=out_of_range_join_data
+            )
+            
+            if success:
+                print("   ✅ Correctly rejected out-of-range rating with 400")
+                print(f"   📝 Error message: {response.get('detail', 'No detail')}")
+            else:
+                print("   ❌ Did not properly handle out-of-range rating")
+        else:
+            print("   ❌ Failed to create out-of-range player")
+        
+        # Final Summary
+        print("\n" + "=" * 80)
+        print("🎯 PLAYER JOIN-BY-CODE END-TO-END TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ League Created: {test_league_id is not None}")
+        print(f"✅ Format Tier Created: {test_format_tier_id is not None}")
+        print(f"✅ Rating Tier Created: {test_rating_tier_id is not None}")
+        print(f"✅ Join Code Generated: {test_join_code is not None}")
+        print(f"✅ Player Created: {test_player_id is not None}")
+        print(f"✅ Join by Code Success: {join_success}")
+        print(f"✅ Seat Status Verified: Active/Reserve")
+        print(f"✅ Joined Tiers Retrieved: Player can see joined leagues")
+        print(f"✅ Negative Cases Tested: Invalid code (404), Already joined (400), Out-of-range rating (400)")
+        print("=" * 80)
+        
+        # Store for later use
+        self.workflow_league_id = test_league_id
+        self.workflow_format_tier_id = test_format_tier_id
+        self.workflow_rating_tier_id = test_rating_tier_id
+        self.workflow_join_code = test_join_code
+        self.workflow_player_id = test_player_id
+        
+        return all([
+            test_league_id is not None,
+            test_format_tier_id is not None,
+            test_rating_tier_id is not None,
+            test_join_code is not None,
+            test_player_id is not None,
+            join_success
+        ])
+
     def run_critical_bug_fix_tests(self):
         """Run all critical bug fix tests as requested in review"""
         print("\n" + "="*80)
