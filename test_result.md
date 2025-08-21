@@ -145,15 +145,18 @@ backend:
 
   - task: "Player Grouping Logic"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Implemented random player assignment to groups with admin-controlled group sizes and custom naming. Includes automatic group chat creation and balanced distribution."
+      - working: true
+        agent: "testing"
+        comment: "✅ PLAYER GROUPING FULLY FUNCTIONAL - Tested `/rating-tiers/{rating_tier_id}/create-groups` endpoint with custom group sizes (2, 6, 12) and custom naming ('Thunder', 'Lightning', 'Storm'). Random player assignment working correctly with balanced distribution. Automatic group chat creation verified with system messages. Edge cases tested including small group sizes. All functionality working as expected."
 
   - task: "Round Robin Doubles Algorithm"
     implemented: true
