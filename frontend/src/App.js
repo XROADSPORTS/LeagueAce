@@ -664,6 +664,79 @@ function App() {
       );
     };
 
+
+    const JoinRequestsPanel = () => {
+      const [items, setItems] = useState([]);
+      const [loadingReq, setLoadingReq] = useState(false);
+
+      const load = async () => {
+        if (!user || user.role !== "League Manager") return;
+        setLoadingReq(true);
+        try {
+          const { data } = await axios.get(`${API}/join-requests`, { params: { manager_id: user.id } });
+          setItems(data?.requests || []);
+        } catch (err) {
+          console.error('Error loading join requests', err);
+        }
+        setLoadingReq(false);
+      };
+
+      useEffect(() => { load(); }, [user?.id]);
+
+      const approve = async (id) => {
+        try {
+          await axios.post(`${API}/join-requests/${id}/approve`);
+          toast({ title: 'Approved', description: 'Player added and tier range updated if needed' });
+          load();
+        } catch (err) {
+          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to approve', variant: 'destructive' });
+        }
+      };
+
+      const reject = async (id) => {
+        try {
+          await axios.post(`${API}/join-requests/${id}/reject`);
+          toast({ title: 'Rejected', description: 'Request rejected' });
+          load();
+        } catch (err) {
+          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to reject', variant: 'destructive' });
+        }
+      };
+
+      if (!user || user.role !== 'League Manager') return null;
+
+      return (
+        <div className="join-requests">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <p style={{ opacity: 0.85 }}>{items.length} pending</p>
+            <Button variant="outline" className="blue-outline-button" onClick={load} disabled={loadingReq}>{loadingReq ? 'Refreshing…' : 'Refresh'}</Button>
+          </div>
+          {items.length === 0 ? (
+            <div className="empty-state">No pending join requests.</div>
+          ) : (
+            <div className="requests-list" style={{ display: 'grid', gap: 12 }}>
+              {items.map((r) => (
+                <div key={r.id} className="request-item glass-layer-1" style={{ padding: 12, borderRadius: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{r.user_name || r.user_email}</div>
+                      <div style={{ fontSize: 13, opacity: 0.8 }}>{r.user_email} • Rating {r.user_rating ?? 'n/a'}</div>
+                      <div style={{ fontSize: 13, opacity: 0.8 }}>{r.league_name} • {r.rating_tier_name} • Code {r.join_code}</div>
+                      {r.message && (<div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>“{r.message}”</div>)}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Button className="btn-primary-ios" onClick={() => approve(r.id)}>Approve</Button>
+                      <Button variant="outline" className="blue-outline-button" onClick={() => reject(r.id)}>Reject</Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    };
+
     const FourTierManagement = () => {
       const [formatTiers, setFormatTiers] = useState([]);
       const [ratingTiers, setRatingTiers] = useState([]);
