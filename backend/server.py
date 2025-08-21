@@ -969,6 +969,162 @@ async def join_by_code(user_id: str, request: JoinByCodeRequest):
 # Continue with existing routes but updated for new structure...
 # (Chat routes, match routes, etc. would continue here)
 
+# Round Robin Doubles Match Generation Routes
+@api_router.post("/player-groups/{group_id}/generate-schedule")
+async def generate_group_schedule(group_id: str):
+    """Generate a complete round robin doubles schedule for a player group"""
+    group = await db.player_groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Player group not found")
+    
+    # Get all active players in the group
+    players = await db.player_seats.find({
+        "player_group_id": group_id,
+        "status": PlayerSeatStatus.ACTIVE
+    }).to_list(100)
+    
+    if len(players) < 4:
+        raise HTTPException(status_code=400, detail="Need at least 4 players to generate doubles schedule")
+    
+    if len(players) % 2 != 0:
+        raise HTTPException(status_code=400, detail="Need even number of players for doubles")
+    
+    player_ids = [player["user_id"] for player in players]
+    
+    # Generate the schedule
+    try:
+        schedule_data = generate_round_robin_doubles_schedule(player_ids)
+        
+        # Store the schedule
+        schedule_obj = RoundRobinSchedule(
+            player_group_id=group_id,
+            total_weeks=schedule_data["total_weeks"],
+            matches_per_week=len([m for m in schedule_data["schedule"] if m["week"] == 1]),
+            partner_rotation=schedule_data["schedule"]
+        )
+        schedule_mongo = prepare_for_mongo(schedule_obj.dict())
+        await db.round_robin_schedules.insert_one(schedule_mongo)
+        
+        return {
+            "message": f"Generated {schedule_data['total_matches']} matches over {schedule_data['total_weeks']} weeks",
+            "schedule": schedule_data,
+            "schedule_id": schedule_obj.id
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.get("/player-groups/{group_id}/schedule")
+async def get_group_schedule(group_id: str):
+    """Get the round robin schedule for a player group"""
+    schedule = await db.round_robin_schedules.find_one({"player_group_id": group_id})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="No schedule found for this group")
+    
+    return RoundRobinSchedule(**parse_from_mongo(schedule))
+
+@api_router.post("/player-groups/{group_id}/create-matches")
+async def create_week_matches(group_id: str, request: MatchGenerationRequest):
+    """Create actual match records for a specific week based on the round robin schedule"""
+    schedule = await db.round_robin_schedules.find_one({"player_group_id": group_id})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="No schedule found. Generate schedule first.")
+    
+    # Get player group info
+    group = await db.player_groups.find_one({"id": group_id})
+    rating_tier_id = group["rating_tier_id"]
+    
+    # Filter matches for the requested week
+    week_matches = [m for m in schedule["partner_rotation"] if m["week"] == request.week_number]
+    
+    if not week_matches:
+        raise HTTPException(status_code=404, detail=f"No matches scheduled for week {request.week_number}")
+    
+    created_matches = []
+    
+    for match_data in week_matches:
+        # Create match record
+        participants = match_data["team_a"] + match_data["team_b"]
+        
+        match_obj = Match(
+            rating_tier_id=rating_tier_id,
+            player_group_id=group_id,
+            week_number=request.week_number,
+            format=LeagueFormat.DOUBLES,
+            participants=participants,
+            status=MatchStatus.PENDING
+        )
+        match_mongo = prepare_for_mongo(match_obj.dict())
+        await db.matches.insert_one(match_mongo)
+        
+        # Create match chat thread
+        thread_data = ChatThreadCreate(
+            type=ChatThreadType.MATCH,
+            name=f"Week {request.week_number} Match Chat",
+            scope={
+                "match_id": match_obj.id,
+                "group_id": group_id
+            },
+            member_ids=participants
+        )
+        chat_thread = await create_chat_thread(thread_data, participants[0])
+        
+        # Update match with chat thread ID
+        await db.matches.update_one(
+            {"id": match_obj.id},
+            {"$set": {"chat_thread_id": chat_thread.id}}
+        )
+        
+        # Add system message with match details
+        team_a_names = []
+        team_b_names = []
+        
+        for user_id in match_data["team_a"]:
+            user = await db.users.find_one({"id": user_id})
+            if user:
+                team_a_names.append(user["name"])
+                
+        for user_id in match_data["team_b"]:
+            user = await db.users.find_one({"id": user_id})
+            if user:
+                team_b_names.append(user["name"])
+        
+        await create_system_message(
+            chat_thread.id,
+            f"🎾 Week {request.week_number} Doubles Match\n" +
+            f"Team A: {' & '.join(team_a_names)}\n" +
+            f"Team B: {' & '.join(team_b_names)}\n\n" +
+            f"Use /when to propose match times, /where for location, /lineup for confirmations!"
+        )
+        
+        created_matches.append(match_obj)
+        
+        # Notify players
+        for player_id in participants:
+            notification = NotificationCreate(
+                user_id=player_id,
+                title=f"Week {request.week_number} Match Scheduled",
+                message=f"Your doubles match has been created. Check the match chat for details!",
+                type=NotificationType.MATCH_SCHEDULED,
+                related_entity_id=match_obj.id
+            )
+            await create_notification(notification)
+    
+    return {
+        "message": f"Created {len(created_matches)} matches for week {request.week_number}",
+        "matches": created_matches
+    }
+
+@api_router.get("/player-groups/{group_id}/matches")
+async def get_group_matches(group_id: str, week_number: Optional[int] = None):
+    """Get all matches for a player group, optionally filtered by week"""
+    query = {"player_group_id": group_id}
+    if week_number:
+        query["week_number"] = week_number
+    
+    matches = await db.matches.find(query).to_list(100)
+    return [Match(**parse_from_mongo(match)) for match in matches]
+
 # Include the router in the main app
 app.include_router(api_router)
 
