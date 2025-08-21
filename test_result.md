@@ -308,7 +308,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Group Management UI"
+    - "Match Scheduling System"
+    - "Player Confirmation System"
+    - "Substitute Management"
+    - "Match Management UI"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
