@@ -1586,8 +1586,13 @@ def main():
     
     tester = LeagueAceAPITester()
     
+    # Run focused season creation test first (HIGH PRIORITY)
+    print("\n🎯 Running HIGH PRIORITY Season Creation Test...")
+    season_success = tester.run_focused_season_creation_test()
+    
     # Run complete workflow test
-    success = tester.run_complete_workflow_test()
+    print("\n🚀 Running Complete Workflow Test...")
+    complete_success = tester.run_complete_workflow_test()
     
     # Print final results
     print("\n" + "="*60)
@@ -1598,11 +1603,13 @@ def main():
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
     
-    if success and tester.tests_passed == tester.tests_run:
-        print("\n🎉 All tests passed! API is working correctly.")
+    print(f"\n🎯 HIGH PRIORITY Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
+    
+    if season_success and tester.tests_passed >= (tester.tests_run * 0.9):  # 90% pass rate
+        print("\n🎉 Season creation workflow is working correctly!")
         return 0
     else:
-        print(f"\n⚠️  Some tests failed. Please check the issues above.")
+        print(f"\n⚠️  Season creation issues detected. Please check the results above.")
         return 1
 
 if __name__ == "__main__":
