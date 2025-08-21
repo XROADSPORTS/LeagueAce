@@ -2203,6 +2203,49 @@ class LeagueAceAPITester:
             print(f"   ❌ Profile picture removal error: {str(e)}")
             return False
 
+    def run_critical_bug_fix_tests(self):
+        """Run all critical bug fix tests as requested in review"""
+        print("\n" + "="*80)
+        print("🚨 CRITICAL BUG FIX TESTING - PLAYER DASHBOARD FUNCTIONALITY")
+        print("="*80)
+        
+        critical_tests = [
+            ("Complete Player Dashboard Workflow", self.test_complete_player_dashboard_workflow),
+            ("Get User Joined Tiers", self.test_get_user_joined_tiers),
+            ("Get User Standings", self.test_get_user_standings),
+            ("Get User Matches", self.test_get_user_matches),
+            ("Upload Profile Picture with File", self.test_upload_profile_picture_with_file),
+            ("Upload Invalid File Type", self.test_upload_invalid_file_type),
+            ("Remove Profile Picture", self.test_remove_profile_picture)
+        ]
+        
+        successful_tests = 0
+        total_tests = len(critical_tests)
+        
+        for test_name, test_method in critical_tests:
+            print(f"\n🔍 Running Critical Test: {test_name}")
+            try:
+                if test_method():
+                    successful_tests += 1
+                    print(f"✅ {test_name}: PASSED")
+                else:
+                    print(f"❌ {test_name}: FAILED")
+            except Exception as e:
+                print(f"❌ {test_name}: ERROR - {str(e)}")
+        
+        print(f"\n🎯 CRITICAL BUG FIX TEST SUMMARY:")
+        print(f"   Tests Passed: {successful_tests}/{total_tests}")
+        print(f"   Success Rate: {(successful_tests/total_tests)*100:.1f}%")
+        
+        if successful_tests == total_tests:
+            print("   🎉 ALL CRITICAL BUG FIXES WORKING!")
+        elif successful_tests >= total_tests * 0.8:
+            print("   ⚠️  Most critical features working, minor issues remain")
+        else:
+            print("   🚨 CRITICAL ISSUES FOUND - Immediate attention required")
+        
+        return successful_tests, total_tests
+
     def run_focused_season_creation_test(self):
         """Run focused season creation workflow test as requested"""
         print("\n" + "="*60)
