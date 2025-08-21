@@ -2727,22 +2727,122 @@ function App() {
       </div>
     );
 
-    const PlayerChat = () => (
-      <div className="player-chat">
-        <Card className="glass-card-blue">
-          <CardHeader>
-            <CardTitle>League Chat</CardTitle>
-            <CardDescription>Messages from your leagues</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="chat-placeholder">
-              <p>Chat system coming soon! 💬</p>
-              <p>This will show messages from all your joined leagues.</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    const PlayerChat = () => {
+      const [threads, setThreads] = useState([]);
+      const [activeThread, setActiveThread] = useState(null);
+      const [messages, setMessages] = useState([]);
+      const [chatInput, setChatInput] = useState("");
+      const [loadingChat, setLoadingChat] = useState(false);
+
+      useEffect(() => {
+        loadThreads();
+      }, []);
+
+      useEffect(() => {
+        if (activeThread) {
+          loadMessages(activeThread.id);
+        }
+      }, [activeThread]);
+
+      const loadThreads = async () => {
+        try {
+          // Heuristic: show a synthetic thread for each joined tier until dedicated endpoint exists
+          const syntheticThreads = (userJoinedTiers || []).map(t => ({
+            id: t.chat_thread_id || t.id, // fall back to tier id
+            name: `${t.league_name || "League"} • ${t.name}`,
+            type: 'league'
+          }));
+          setThreads(syntheticThreads);
+          if (syntheticThreads[0]) setActiveThread(syntheticThreads[0]);
+        } catch (e) {
+          console.error('Error loading chat threads', e);
+        }
+      };
+
+      const loadMessages = async (threadId) => {
+        setLoadingChat(true);
+        try {
+          const res = await axios.get(`${API}/chat/threads/${threadId}/messages`, { params: { user_id: user?.id, limit: 50 } });
+          setMessages(res.data || []);
+        } catch (e) {
+          // If backend denies due to membership check, present empty feed gracefully
+          setMessages([]);
+        }
+        setLoadingChat(false);
+      };
+
+      const sendMessage = async (e) => {
+        e.preventDefault();
+        if (!chatInput.trim() || !activeThread) return;
+        const text = chatInput.trim();
+        setChatInput("");
+        try {
+          await axios.post(`${API}/chat/messages`, {
+            thread_id: activeThread.id,
+            text
+          }, { params: { sender_id: user?.id } });
+          await loadMessages(activeThread.id);
+        } catch (e) {
+          toast({ title: 'Error', description: e.response?.data?.detail || 'Failed to send message', variant: 'destructive' });
+        }
+      };
+
+      return (
+        <div className="player-chat">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>League Chat</CardTitle>
+              <CardDescription>Messages from your leagues</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {threads.length === 0 ? (
+                <div className="empty-state">
+                  <p>No chat threads yet. Join a league to start chatting.</p>
+                </div>
+              ) : (
+                <div className="chat-panel">
+                  <div>
+                    <Label>Thread</Label>
+                    <Select value={activeThread?.id || ''} onValueChange={(id) => setActiveThread(threads.find(t => t.id === id))}>
+                      <SelectTrigger className="blue-input">
+                        <SelectValue placeholder="Select a thread" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {threads.map(t => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="chat-feed">
+                    {loadingChat ? (
+                      <div className="loading-message">Loading messages…</div>
+                    ) : messages.length === 0 ? (
+                      <div className="empty-state">No messages yet.</div>
+                    ) : (
+                      messages.map(m => (
+                        <div key={m.id} className="chat-message">
+                          <div>
+                            <div>{m.text}</div>
+                            <div className="chat-meta">{new Date(m.created_at).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <form onSubmit={sendMessage} className="chat-input-row">
+                    <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Type a message…" className="blue-input" />
+                    <Button className="btn-primary-ios" type="submit">
+                      <span className="icon-glass-container"><Send className="w-4 h-4" /></span>
+                    </Button>
+                  </form>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      );
+    };
 
     const PlayerProfile = () => (
       <div className="player-profile">
