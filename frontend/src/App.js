@@ -2633,6 +2633,29 @@ function App() {
       }
     };
 
+    const [joinPreview, setJoinPreview] = useState(null);
+    const [joinPreviewError, setJoinPreviewError] = useState("");
+
+    useEffect(() => {
+      const lookup = async () => {
+        const code = (joinCode || '').trim().toUpperCase();
+        if (code.length === 6) {
+          try {
+            const { data } = await axios.get(`${API}/rating-tiers/by-code/${code}`);
+            setJoinPreview(data);
+            setJoinPreviewError("");
+          } catch (err) {
+            setJoinPreview(null);
+            setJoinPreviewError("Invalid join code");
+          }
+        } else {
+          setJoinPreview(null);
+          setJoinPreviewError("");
+        }
+      };
+      lookup();
+    }, [joinCode]);
+
     const handleJoinByCode = async (e) => {
       e.preventDefault();
       setLoading(true);
@@ -2656,6 +2679,7 @@ function App() {
         await loadPlayerData();
         setShowJoinForm(false);
         setJoinCode("");
+        setJoinPreview(null);
         toast({ title: "Success", description: "Successfully joined league!" });
       } catch (error) {
         console.error("Error joining by code:", error);
