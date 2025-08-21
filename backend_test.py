@@ -2973,8 +2973,12 @@ def main():
     
     tester = LeagueAceAPITester()
     
-    # Run CRITICAL BUG FIX TESTS FIRST (HIGHEST PRIORITY as requested in review)
-    print("\n🚨 Running CRITICAL BUG FIX TESTS (HIGHEST PRIORITY)...")
+    # Run PLAYER JOIN-BY-CODE END-TO-END TEST (HIGHEST PRIORITY as requested in review)
+    print("\n🚨 Running PLAYER JOIN-BY-CODE END-TO-END TEST (HIGHEST PRIORITY)...")
+    join_code_success = tester.test_player_join_by_code_end_to_end()
+    
+    # Run CRITICAL BUG FIX TESTS (HIGH PRIORITY as requested in review)
+    print("\n🚨 Running CRITICAL BUG FIX TESTS (HIGH PRIORITY)...")
     critical_passed, critical_total = tester.run_critical_bug_fix_tests()
     
     # Run NEW 3-TIER STRUCTURE TEST (HIGH PRIORITY as requested in review)
@@ -2998,20 +3002,22 @@ def main():
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
     
-    print(f"\n🚨 CRITICAL BUG FIX Tests: {critical_passed}/{critical_total} ({'✅ PASSED' if critical_passed == critical_total else '❌ ISSUES FOUND'})")
+    print(f"\n🎯 PLAYER JOIN-BY-CODE Test: {'✅ PASSED' if join_code_success else '❌ FAILED'}")
+    print(f"🚨 CRITICAL BUG FIX Tests: {critical_passed}/{critical_total} ({'✅ PASSED' if critical_passed == critical_total else '❌ ISSUES FOUND'})")
     print(f"🎯 NEW 3-TIER STRUCTURE Test: {'✅ PASSED' if new_structure_success else '❌ FAILED'}")
     print(f"🎯 Format Tier Creation Test: {'✅ PASSED' if format_tier_success else '❌ FAILED'}")
     print(f"🎯 Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
     
-    # Success criteria: Critical bug fixes must work + good overall pass rate
+    # Success criteria: Join-by-code test must work + Critical bug fixes must work + good overall pass rate
+    join_code_working = join_code_success
     critical_success = critical_passed >= critical_total * 0.8  # 80% of critical tests must pass
     overall_success = tester.tests_passed >= (tester.tests_run * 0.85)  # 85% overall pass rate
     
-    if critical_success and overall_success:
-        print("\n🎉 CRITICAL BUG FIXES are working! Player dashboard functionality restored!")
+    if join_code_working and critical_success and overall_success:
+        print("\n🎉 PLAYER JOIN-BY-CODE functionality is working! Critical bug fixes are working! Player dashboard functionality restored!")
         return 0
     else:
-        print(f"\n⚠️  Issues detected. Critical bug fixes need attention.")
+        print(f"\n⚠️  Issues detected. Player join-by-code or critical bug fixes need attention.")
         return 1
 
 if __name__ == "__main__":
