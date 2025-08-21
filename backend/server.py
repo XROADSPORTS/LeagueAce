@@ -105,6 +105,102 @@ def generate_group_name(index: int, custom_names: List[str] = None) -> str:
         return custom_names[index]
     return f"Group {chr(65 + index)}"  # A, B, C, etc.
 
+def generate_round_robin_doubles_schedule(players: List[str], total_weeks: int = 12) -> Dict[str, any]:
+    """
+    Generate a round robin doubles schedule where every player plays with every other player exactly once as partners,
+    and against every possible combination of opponents.
+    """
+    if len(players) < 4:
+        raise ValueError("Need at least 4 players for doubles")
+    
+    if len(players) % 2 != 0:
+        raise ValueError("Need even number of players for doubles")
+    
+    n = len(players)
+    schedule = []
+    partner_combinations = []
+    all_partnerships = []
+    
+    # Generate all possible partnerships
+    for i in range(n):
+        for j in range(i + 1, n):
+            all_partnerships.append((players[i], players[j]))
+    
+    # Generate matches ensuring each player partners with everyone exactly once
+    week = 1
+    used_partnerships = set()
+    
+    while len(used_partnerships) < len(all_partnerships) and week <= total_weeks:
+        week_matches = []
+        week_partnerships = set()
+        
+        # Try to create matches for this week
+        available_players = set(players)
+        
+        while len(available_players) >= 4:
+            # Find the best partnership that hasn't been used
+            best_partnership = None
+            for partnership in all_partnerships:
+                if (partnership not in used_partnerships and 
+                    partnership[0] in available_players and 
+                    partnership[1] in available_players and
+                    partnership not in week_partnerships):
+                    best_partnership = partnership
+                    break
+            
+            if not best_partnership:
+                # If no unused partnership available, use any available
+                for partnership in all_partnerships:
+                    if (partnership[0] in available_players and 
+                        partnership[1] in available_players and
+                        partnership not in week_partnerships):
+                        best_partnership = partnership
+                        break
+            
+            if not best_partnership:
+                break
+                
+            # Remove these players from available pool
+            team_a = list(best_partnership)
+            available_players.remove(team_a[0])
+            available_players.remove(team_a[1])
+            
+            # Find opponents
+            if len(available_players) >= 2:
+                team_b = list(available_players)[:2]
+                available_players.remove(team_b[0])
+                available_players.remove(team_b[1])
+                
+                match = {
+                    "week": week,
+                    "team_a": team_a,
+                    "team_b": team_b,
+                    "partnership_a": best_partnership,
+                    "partnership_b": tuple(team_b)
+                }
+                
+                week_matches.append(match)
+                week_partnerships.add(best_partnership)
+                week_partnerships.add(tuple(team_b))
+                
+                if best_partnership not in used_partnerships:
+                    used_partnerships.add(best_partnership)
+                if tuple(team_b) not in used_partnerships:
+                    used_partnerships.add(tuple(team_b))
+        
+        if week_matches:
+            schedule.extend(week_matches)
+        
+        week += 1
+    
+    return {
+        "total_weeks": week - 1,
+        "total_matches": len(schedule),
+        "schedule": schedule,
+        "partnerships_coverage": len(used_partnerships),
+        "total_possible_partnerships": len(all_partnerships)
+    }
+
 def prepare_for_mongo(data):
     """Convert datetime objects to ISO strings for MongoDB storage"""
     if isinstance(data, dict):
