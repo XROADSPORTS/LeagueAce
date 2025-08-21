@@ -1812,7 +1812,7 @@ async def get_user_joined_tiers(user_id: str, sport_type: Optional[str] = None):
                 league = await db.leagues.find_one({"id": format_tier["league_id"]})
                 if league and (not sport_type or league["sport_type"] == sport_type):
                     # Add seat status and group info
-                    tier_data = rating_tier.copy()
+                    tier_data = parse_from_mongo(rating_tier.copy())
                     tier_data["seat_status"] = seat["status"]
                     tier_data["player_group_id"] = seat.get("player_group_id")
                     tier_data["joined_at"] = seat["joined_at"]
