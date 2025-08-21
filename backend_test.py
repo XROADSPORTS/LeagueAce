@@ -1342,6 +1342,9 @@ class LeagueAceAPITester:
             ("Player Grouping Edge Cases", self.test_player_grouping_edge_cases),
             ("Doubles Schedule Edge Cases", self.test_doubles_schedule_edge_cases),
             
+            # PHASE 3 TESTS - MATCH MANAGEMENT FEATURES
+            ("Match Management Workflow", self.test_match_management_workflow),
+            
             # EXISTING VALIDATION TESTS
             ("Invalid Join Code", self.test_invalid_join_code),
             ("Unauthorized League Creation", self.test_unauthorized_league_creation)
