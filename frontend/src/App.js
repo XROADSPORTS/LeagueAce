@@ -1295,13 +1295,25 @@ function App() {
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="blue-outline-button"
+                    className="blue-outline-button" 
                     onClick={() => {
                       navigator.clipboard.writeText(tier.join_code);
                       toast({ title: "Copied!", description: "Join code copied to clipboard" });
                     }}
                   >
-                    Copy
+                    Copy Code
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="blue-outline-button" 
+                    onClick={() => {
+                      const url = `${window.location.origin}/?join=${tier.join_code}`;
+                      navigator.clipboard.writeText(url);
+                      toast({ title: "Share link copied!", description: url });
+                    }}
+                  >
+                    Copy Join Link
                   </Button>
                 </div>
                 <p className="join-instructions">Share this code with players to join this rating tier</p>
