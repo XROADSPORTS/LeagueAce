@@ -320,9 +320,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Match Scheduling System"
-    - "Player Confirmation System"
-    - "Substitute Management"
     - "Match Management UI"
   stuck_tasks: []
   test_all: false
