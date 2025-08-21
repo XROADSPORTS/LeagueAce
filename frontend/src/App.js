@@ -1366,6 +1366,21 @@ function App() {
           </CardHeader>
           <CardContent>
             <div className="tier-details">
+                <div className="join-code-section">
+                  <h5>📋 Player Join Code</h5>
+                  <div className="join-code-display">
+                    <code className="join-code">{tier.join_code}</code>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="blue-outline-button" 
+                      onClick={() => { navigator.clipboard.writeText(tier.join_code); toast({ title: 'Copied!', description: 'Join code copied to clipboard' }); }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="join-instructions">Share this code with players to let them join this tier later anytime.</p>
+                </div>
               <div className="join-code-display">
                 <Code className="w-4 h-4" />
                 <span>{tier.join_code}</span>
