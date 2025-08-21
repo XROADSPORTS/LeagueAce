@@ -575,7 +575,7 @@ function App() {
       if (!showForm) {
         return (
           <Button 
-            className="leagueace-button"
+            className="btn-primary-ios"
             onClick={() => setShowForm(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
