@@ -773,7 +773,7 @@ function App() {
               <h3 className="tier-title">Tier 2: Add Formats for {selectedLeague.name}</h3>
               <div className="format-controls">
                 <Button 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   onClick={() => createFormatTier(selectedLeague.id, {
                     name: "Singles",
                     format_type: "Singles",
@@ -784,7 +784,7 @@ function App() {
                   Add Singles
                 </Button>
                 <Button 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   onClick={() => createFormatTier(selectedLeague.id, {
                     name: "Doubles",
                     format_type: "Doubles",
@@ -795,7 +795,7 @@ function App() {
                   Add Doubles
                 </Button>
                 <Button 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   onClick={() => createFormatTier(selectedLeague.id, {
                     name: "Round Robin Doubles",
                     format_type: "Doubles",
@@ -908,7 +908,7 @@ function App() {
       if (!showForm) {
         return (
           <Button 
-            className="leagueace-button"
+            className="btn-primary-ios"
             onClick={() => setShowForm(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -1014,7 +1014,7 @@ function App() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="leagueace-button">
+              <Button type="submit" className="btn-primary-ios">
                 Create Tier
               </Button>
             </CardFooter>
@@ -1074,7 +1074,7 @@ function App() {
       if (!showForm) {
         return (
           <Button 
-            className="leagueace-button"
+            className="btn-primary-ios"
             onClick={() => setShowForm(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -1198,7 +1198,7 @@ function App() {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   disabled={!tierData.name.trim()}
                 >
                   Create Rating Tier & Generate Join Code
@@ -1307,7 +1307,7 @@ function App() {
                 {!showGroupForm ? (
                   <Button 
                     size="sm"
-                    className="leagueace-button mt-2"
+                    className="btn-primary-ios mt-2"
                     onClick={() => setShowGroupForm(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -1404,7 +1404,7 @@ function App() {
                 
                 {!showGroupForm ? (
                   <Button 
-                    className="leagueace-button mt-2"
+                    className="btn-primary-ios mt-2"
                     onClick={() => setShowGroupForm(true)}
                   >
                     Create Groups
@@ -1461,7 +1461,7 @@ function App() {
             <Button type="button" variant="outline" onClick={onCancel} className="blue-outline-button">
               Cancel
             </Button>
-            <Button type="submit" className="leagueace-button">
+            <Button type="submit" className="btn-primary-ios">
               Create Groups
             </Button>
           </div>
@@ -1531,7 +1531,7 @@ function App() {
           {!schedule ? (
             <Button 
               size="sm" 
-              className="leagueace-button"
+              className="btn-primary-ios"
               onClick={generateSchedule}
               disabled={loading}
             >
@@ -1568,7 +1568,7 @@ function App() {
                     
                     <Button 
                       size="sm" 
-                      className="leagueace-button"
+                      className="btn-primary-ios"
                       onClick={createWeekMatches}
                       disabled={loading || matches.length > 0}
                     >
@@ -1700,7 +1700,7 @@ function App() {
                 <>
                   <Button 
                     size="sm" 
-                    className="leagueace-button"
+                    className="btn-primary-ios"
                     onClick={() => setShowConfirmation(true)}
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
@@ -1837,7 +1837,7 @@ function App() {
             <Button type="button" variant="outline" onClick={onCancel} className="blue-outline-button">
               Cancel
             </Button>
-            <Button type="submit" className="leagueace-button">
+            <Button type="submit" className="btn-primary-ios">
               Propose Time
             </Button>
           </div>
@@ -1899,7 +1899,7 @@ function App() {
             <Button type="button" variant="outline" onClick={onCancel} className="blue-outline-button">
               Cancel
             </Button>
-            <Button type="submit" className="leagueace-button">
+            <Button type="submit" className="btn-primary-ios">
               Submit Confirmation
             </Button>
           </div>
@@ -2116,7 +2116,7 @@ function App() {
               </div>
 
               <Button 
-                className="leagueace-button" 
+                className="btn-primary-ios" 
                 onClick={updateScore}
                 disabled={loading}
               >
@@ -2146,7 +2146,7 @@ function App() {
                     </Select>
                     
                     <Button 
-                      className="leagueace-button mt-2" 
+                      className="btn-primary-ios mt-2" 
                       onClick={submitFinalResult}
                       disabled={loading || matchWinner.length === 0}
                     >
@@ -2245,7 +2245,7 @@ function App() {
               </div>
 
               <Button 
-                className="leagueace-button" 
+                className="btn-primary-ios" 
                 onClick={updateScore}
                 disabled={loading}
               >
@@ -2275,7 +2275,7 @@ function App() {
                     </Select>
                     
                     <Button 
-                      className="leagueace-button mt-2" 
+                      className="btn-primary-ios mt-2" 
                       onClick={submitFinalResult}
                       disabled={loading || !matchWinner}
                     >
@@ -2382,7 +2382,7 @@ function App() {
                     </div>
                     
                     <Button 
-                      className="leagueace-button mt-3"
+                      className="btn-primary-ios mt-3"
                       onClick={createPlayoffBracket}
                     >
                       Create Playoff Bracket
@@ -2427,7 +2427,7 @@ function App() {
                     <h3>Ready to Create Your {activeSport} League?</h3>
                     <p>Build comprehensive {activeSport} leagues with 4-tier structure. Tennis. Organized.</p>
                     <Button 
-                      className="leagueace-button"
+                      className="btn-primary-ios"
                       onClick={() => setShowCreateLeague(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -2539,14 +2539,14 @@ function App() {
             <CardContent>
               <div className="action-buttons">
                 <Button 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   onClick={() => setActivePlayerTab('leagues')}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   View My Leagues
                 </Button>
                 <Button 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   onClick={() => setActivePlayerTab('schedule')}
                 >
                   <Calendar className="w-4 h-4 mr-2" />
@@ -2592,7 +2592,7 @@ function App() {
         <div className="leagues-header">
           <h3>My {activeSport} Leagues</h3>
           <Button 
-            className="leagueace-button"
+            className="btn-primary-ios"
             onClick={() => setShowJoinForm(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -2630,7 +2630,7 @@ function App() {
                     </Button>
                     <Button 
                       size="sm"
-                      className="leagueace-button"
+                      className="btn-primary-ios"
                       onClick={() => setActivePlayerTab('chat')}
                     >
                       League Chat
@@ -2647,7 +2647,7 @@ function App() {
               <h4>No Leagues Joined Yet</h4>
               <p>Join a league using a 6-character code from your league manager</p>
               <Button 
-                className="leagueace-button"
+                className="btn-primary-ios"
                 onClick={() => setShowJoinForm(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -2887,7 +2887,7 @@ function App() {
                     </Button>
                     <Button 
                       type="submit" 
-                      className="leagueace-button"
+                      className="btn-primary-ios"
                       disabled={loading || joinCode.length !== 6}
                     >
                       {loading ? "Joining..." : "Join League"}
