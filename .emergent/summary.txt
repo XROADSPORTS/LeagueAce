@@ -1,23 +1,29 @@
 <analysis>
-The previous AI engineer successfully developed the LeagueAce application from its initial MVP to a production-ready state, iteratively implementing complex features and resolving critical bugs. The development began with core user, league, match, and scoring functionalities, evolving through several phases. Key milestones included a robust role-based signup, a dynamic 4-tier league structure which was later adapted to a 3-tier structure based on user feedback, dual-sport selection (Tennis/Pickleball), and a complete rebranding to LeagueAce with an enhanced glassmorphism UI.
-
-The trajectory shows a systematic approach to feature development, covering advanced league formats, player grouping, competing systems (Team League/Knockout), and comprehensive match management (scheduling, confirmations, substitutes, pre-match toss). Critical bugs, such as a broken 4-tier league creation UX due to a browser prompt and issues with players viewing joined leagues post-sign-in, were meticulously identified and resolved. Additionally, player profile picture functionality was fully integrated. The work concluded with a comprehensive summary, declaring the system production-ready, having addressed all explicitly requested features and bug fixes within the provided scope.
+The previous AI engineer successfully brought the LeagueAce application from MVP to a production-ready state, as initially summarized. The subsequent trajectory, under the current engineer, showcases a highly iterative and responsive development cycle. This involved implementing a modern iOS-style glassmorphism UI, a PWA baseline for mobile, and resolving several critical bugs related to player dashboard visibility and profile picture loading. Significant effort was also put into enhancing the league joining experience, making join codes persistent, shareable via links and QR codes, and hardening the player join-by-code logic with detailed validation and error feedback. Furthermore, player profile editing and a manager-side join request approval system were introduced. The work consistently involved frontend (React, CSS) and backend (FastAPI) modifications, with frequent re-verification and immediate adaptation to user feedback. The current state is a functional LeagueAce application with comprehensive league management and player interaction features, now pivoting to implement a complex Doubles Coordinator system.
 </analysis>
 
 <product_requirements>
-The user requested a Netly (rebranded LeagueAce) tennis & pickleball league management application with a Glassmorphism UI (iOS 26-inspired, initially orange, then blue).
-Initial MVP features included: User Management (player profiles, skill ratings, role-based access), League & Season Management (Singles/Doubles, 9-week, 36 players), Match Scheduling, and Score Tracking.
-Subsequent enhancements involved: role-based signup (Player/League Manager), a 3-tier league structure (Season → Format → Skill Tiers), dual-sport selection, rebranding to LeagueAce, enhanced Glassmorphism (32px blur), Google/Apple Sign-In, and profile picture functionality.
-A comprehensive request for advanced league formats led to the implementation of: a 3-tier structure (League Name → Singles/Doubles/Round Robin → Skill Levels/Round Robin), player grouping (automated random subdivision, custom group names, optional player limit), competing systems (Team League Format with playoff stage or Knockout system), detailed match formats, match scheduling (automated/manual, calendar, player confirmation, substitutes, pre-match toss), set-by-set scoring (1 point per set, individual standings, tie-breakers, playoffs), and a comprehensive chat system (multiple chat surfaces, real-time features, slash commands).
-Critical bug fixes addressed: inability to add Tier2 (Seasons) due to UX issues, players not seeing joined leagues after sign-in, and  component scope errors.
+The core requirement was to build LeagueAce, a tennis & pickleball league management application, initially with basic user, league, match, and scoring functionalities, styled with a Glassmorphism UI (iOS 26-inspired, evolving from orange to blue).
+
+Key enhancements and bug fixes requested/implemented throughout the trajectory:
+-   **UI/UX Modernization**: Implement modern iOS-style glassmorphism effects for buttons, icons, and containers, including semi-transparent backgrounds with blur, rounded shapes, subtle shadows, depth, smooth animations, and a modern color palette.
+-   **Mobile App Readiness**: Establish a Progressive Web App (PWA) baseline for mobile functionality.
+-   **Dashboard/Feature Visibility Fixes**: Resolve critical bugs where players could not see joined leagues, chat functionality, or scoring system after signing in, and address a ProfilePicture component scope error causing crashes.
+-   **League Join Code Persistence & Sharing**: Ensure generated league joining codes for rating tiers remain visible for managers, are easily shareable, and are reliably usable by players. Implement join-by-link and QR code sharing.
+-   **Robust Player Join Flow**: Enhance the player-side join-by-code process with robust normalization, live previews of league/tier details, clear inline error messages for invalid codes or out-of-range ratings, and a disabled join button if conditions are not met.
+-   **Player Profile Editing**: Allow players to edit their Name and Mobile number from their profile, with proper save/cancel functionality and validation.
+-   **Manager-Side Tier Management & Join Requests**: Enable league managers to edit rating tier min/max ranges. Implement a Request to Join flow for players with out-of-range ratings, allowing managers to approve/reject these requests (auto-adjusting tier range on approval).
+-   **Homepage Refinement**: Simplify duplicate Find Your Match headings on the homepage to a single instance.
+-   **Doubles Coordinator System**: A new, comprehensive feature request to manage verified doubles teams end-to-end. This includes account verification, partner link invites, team record creation, shared availability/venue preferences, team placement in rankings, schedule generation, dual-confirmation score capture, standings updates, and handling of various edge cases (duplicates, subs, disputes).
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Architecture**: React.js (frontend), FastAPI (backend), MongoDB (database).
--   **UI/UX**: Tailwind CSS, Shadcn UI, Glassmorphism design.
--   **Backend Data Handling**: Pydantic models, Motor for async MongoDB, UUIDs for IDs.
+-   **UI/UX**: Tailwind CSS, Shadcn UI, Glassmorphism design, PWA.
+-   **Backend Data Handling**: Pydantic models, Motor for async MongoDB, UUIDs.
 -   **Authentication**: JWT-based, Google/Apple OAuth.
--   **Deployment**: Kubernetes container, Supervisor for process management.
+-   **Deployment**: Kubernetes container, Supervisor.
+-   **Frontend Libraries**:  for QR generation.
 </key_technical_concepts>
 
 <code_architecture>
@@ -26,43 +32,76 @@ The application follows a standard full-stack architecture with distinct fronten
 
 
 -   ****:
-    -   **Summary of importance**: This is the core FastAPI backend, defining API routes, business logic, and MongoDB interactions. It manages user authentication, league creation (now 3-tier), player grouping, match scheduling, scoring, and a comprehensive chat system.
-    -   **Summary of changes**: Extensively rewritten to support 3-tier league structure (League, Format, Rating Tier), player grouping (random assignment), competition systems (Team League/Knockout), Round Robin Doubles logic, advanced match management (scheduling, player confirmations, substitutes, pre-match toss), set-by-set scoring, ranking calculations, and comprehensive chat features. Crucially, missing endpoints for players to view joined leagues and profile picture upload/management were added. Pydantic models and Motor for async operations are heavily used.
+    -   **Summary of importance**: This is the core FastAPI backend, defining API routes, business logic, and MongoDB interactions. It manages user authentication, league creation (3-tier), player grouping, match scheduling, scoring, and a comprehensive chat system.
+    -   **Summary of changes**: Extensively modified throughout the trajectory. Key changes include:
+        -   Addition of endpoints for players to view joined leagues (), standings, and matches (, ).
+        -   API endpoints for profile picture upload () and removal.
+        -   Endpoints for chat functionalities (, ).
+        -   Hardened  logic with robust normalization.
+        -   New endpoint  for previewing league/tier details by join code.
+        -    added/updated to allow updating  and  fields for player profiles.
+        -    added to allow managers to edit tier properties like , .
+        -   New  endpoints: , , ,  for managing out-of-range player join requests.
 -   ****:
     -   **Summary of importance**: The main React component, managing overall UI structure, routing, and integrating components. It handles user flows from signup to dashboard, league creation, match interactions, and chat.
-    -   **Summary of changes**: Underwent multiple full rewrites to implement dual signup, 3-tier league structure UI (initially 4-tier, then adjusted), sport selection, LeagueAce rebranding, Google/Apple sign-in, and profile picture display/upload. It now includes forms and interfaces for creating multi-tiered leagues, match generation, a comprehensive  (fixed to show joined leagues and full navigation), and a . Critical JSX errors and component scoping issues (e.g.,  component not found) were identified and fixed.
+    -   **Summary of changes**: Underwent continuous significant modifications:
+        -   Implemented modern iOS-style glassmorphism by migrating existing classes to new glass tokens (, , , , ) and wrapping icons with glass containers.
+        -   Fixed  and  component scope errors by moving their definitions to the top-level.
+        -   Updated  to correctly display joined leagues, chat interface (), and scoring panel () for matches.
+        -   Modified  to show a persistent Your Leagues section for created leagues.
+        -   Enhanced  and  to prominently display and copy join codes, including Copy Join Link and Share Join Link (native share/clipboard fallback) buttons.
+        -   Integrated  to add QR code popovers for join links on both manager and player sides.
+        -   Updated player join dialog to validate codes, show live previews from the new backend endpoint, provide inline error messages for out-of-range ratings, and disable the join button conditionally.
+        -   Implemented player profile editing (Name, Mobile) with Save/Cancel buttons and validation, integrated into  component.
+        -   Added manager-side Edit Range UI to  for adjusting min/max ratings.
+        -   Integrated Request to Join button in the player join modal for out-of-range players.
+        -   Implemented the manager-side  to list pending join requests with Approve/Reject actions.
+        -   Simplified homepage headings by removing duplicates.
 -   ****:
     -   **Summary of importance**: Contains global CSS styles for the Glassmorphism design and overall aesthetic.
-    -   **Summary of changes**: Heavily modified to integrate enhanced glassmorphism effects (32px blur), the new sporty blue color scheme for LeagueAce, and styles for new UI elements introduced, such as social login buttons, profile picture displays, group management, match management, scoring, and chat components.
--   ** and **:
-    -   **Summary of importance**: Store critical environment variables (, ).
-    -   **Summary of changes**: Variables are consistently accessed, but the files themselves were not modified as per strict instructions.
+    -   **Summary of changes**: Heavily modified to integrate extensive iOS 26 glass styles, animations, fallbacks, and specific styles for new UI elements like QR code popovers and new button classes. Also included fixes for previously introduced CSS compile errors.
 -   ****:
-    -   **Summary of importance**: Contains mandatory Shadcn UI components for consistent, modern, and accessible UI.
-    -   **Summary of changes**: Components are extensively imported and utilized; no direct modifications to component files were explicitly made.
+    -   **Summary of importance**: The main HTML file for the React application.
+    -   **Summary of changes**: Linked  and added iOS web-app meta tags to support PWA functionality for better mobile behavior.
+-   ****:
+    -   **Summary of importance**: PWA manifest file, enabling Add to Home Screen functionality and defining app metadata for mobile.
+    -   **Summary of changes**: Newly created to scaffold PWA capabilities.
+-   ****:
+    -   **Summary of importance**: Manages frontend dependencies.
+    -   **Summary of changes**:  dependency was added.
 </code_architecture>
 
 <pending_tasks>
-All explicitly requested features and bug fixes within the trajectory have been implemented and verified by the previous AI engineer, who declared the system PRODUCTION-READY in the final summary. There are no pending tasks outlined.
+-   Add a My Join Requests view for players to see the status of their join requests (user explicitly requested this).
 </pending_tasks>
 
 <current_work>
-Immediately before the final comprehensive summary, the AI engineer was actively engaged in resolving a critical frontend bug: players could sign in but not see their joined leagues or access dashboard functions (Home, My Leagues, Dashboard, Schedule, Standing, Chat), and there was an associated  component error.
+Immediately before this summary request, the AI engineer was presented with a new, comprehensive feature request: to implement a Doubles Coordinator system. This is a large-scale feature requiring significant additions and modifications across both the frontend and backend.
 
-The AI engineer's precise actions and the current state are:
-1.  **Resolved Player Join-by-Code Visibility Bug**: Discovered the  endpoint was missing on the backend. Implemented this and other crucial player data endpoints (, ) in  to enable players to see their joined leagues and related data.
-2.  **Implemented Profile Picture Functionality**:
-    *   Verified the  model in  already had  fields.
-    *   Added backend API endpoints in  for uploading () and removing profile pictures.
-    *   Implemented frontend  component in .
-    *   Updated the  component in  to include a profile settings section ( component), allowing upload/management.
-    *   Modified  and the dashboard header to display circular profile pictures.
-    *   Added necessary CSS styling in  for the new profile picture components.
-3.  **Fixed  Component Scope Error**: A critical frontend error () was identified. The  and  components were incorrectly defined within a function scope. The AI engineer moved these component definitions to the global scope in  (before the  component) and removed duplicate definitions, resolving the rendering issue.
+The detailed requirements for the Doubles Coordinator system include:
+-   **Role**: LeagueAce’s Doubles Coordinator.
+-   **Goal**: Create or link a verified doubles partnership for a specific league, ensuring both players are authenticated and eligible, placing the team into the league’s rankings/ladder, scheduling matches, and recording results with dual confirmation.
+-   **Inputs to collect**: League details (name, tier, format, scoring), Player A details (name, ID, email, mobile, venue, rating, verification status), Player B details (same as Player A), Team preferences (home venue(s), availability, max subs, ladder/seeding notes).
+-   **Constraints & Checks**: Both players must have verified accounts, accept the same Partner Link Invite, not belong to another active doubles team in the same league division (unless allowed), and meet league eligibility (rating, residency, age, dues). Admin overrides require logging.
+-   **Actions (in order)**:
+    A) Search players; offer account creation/verification if not found.
+    B) Send Partner Link Invites; create Team record upon dual acceptance.
+    C) Collect and store shared availability and venue preferences.
+    D) Place team into rankings/ladder (provisional by rating, seeding by rating); log rationale.
+    E) Generate schedule (auto or on-demand), propose slots, lock on dual confirmation, send ICS.
+    F) After matches, capture score from one side, require co-sign from partner and one opponent; flag discrepancies.
+    G) Update standings (team W-L, sets %, games %, rating delta) and individual stats.
+-   **Edge cases to handle**: Duplicate accounts, name collisions, expired invites, partner swaps, substitutes, walkovers, partial matches, rainouts, no-shows, disputes.
+-   **Authentication & Partner Linking**: Account verification (email/SMS OTP, device trust), league eligibility gate, Partner Link flow (Player A invites, Player B accepts/signs up if new), anti-duplication checks.
+-   **Ranking/Seeding Logic**: Provisional ladder placement or seeding for round-robin/brackets. Points table with tiebreakers.
+-   **Scheduling Workflow**: Availability capture, proposal engine, ICS delivery, rescheduling rules, rainout/no-show rules.
+-   **Score Entry & Validation**: Structured set scores, dual confirmation, auto-checks, stats updates.
+-   **Substitutes & Partner Changes**: Team subs, permanent partner swaps.
+-   **Anti-abuse & Fairness**: One verified person per profile, prevent self-pairing, lock roster changes, transparent audit trail.
 
-As of the last interaction, all these critical issues were confirmed resolved, and the application's backend and frontend were fully functional, as indicated by 100% success rates in targeted backend tests and successful UI screenshots. The system was then declared PRODUCTION-READY.
+The AI engineer has just received this massive new requirement and has responded by asking the user to fill out a detailed template to gather all necessary information before starting the implementation.
 </current_work>
 
 <optional_next_step>
-The previous AI engineer has declared the application PRODUCTION-READY after implementing all requested features and resolving reported bugs. No explicit next steps or new tasks have been requested by the user since the system was finalized.
+Gather the detailed league, player, and team information from the user via the provided template to begin implementing the Doubles Coordinator functionality.
 </optional_next_step>
