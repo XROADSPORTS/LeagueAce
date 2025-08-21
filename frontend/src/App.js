@@ -655,20 +655,13 @@ function App() {
     };
 
     const FourTierManagement = () => {
-      const [seasons, setSeasons] = useState([]);
+      const [formatTiers, setFormatTiers] = useState([]);
+      const [ratingTiers, setRatingTiers] = useState([]);
 
-      const loadSeasons = async (leagueId) => {
+      const loadFormatTiers = async (leagueId) => {
         try {
-          const response = await axios.get(`${API}/leagues/${leagueId}/seasons`);
-          setSeasons(response.data);
-        } catch (error) {
-          console.error("Error loading seasons:", error);
-        }
-      };
-
-      const loadFormatTiers = async (seasonId) => {
-        try {
-          const response = await axios.get(`${API}/seasons/${seasonId}/format-tiers`);
+          // Modified to load format tiers directly from league
+          const response = await axios.get(`${API}/leagues/${leagueId}/format-tiers`);
           setFormatTiers(response.data);
         } catch (error) {
           console.error("Error loading format tiers:", error);
@@ -684,30 +677,25 @@ function App() {
         }
       };
 
-      const createSeason = async (leagueId, seasonName) => {
+      const createFormatTier = async (leagueId, formatData) => {
         try {
-          const seasonData = {
-            league_id: leagueId,
-            name: seasonName,
-            start_date: new Date().toISOString().split('T')[0],
-            end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          };
-          await axios.post(`${API}/seasons`, seasonData);
-          loadSeasons(leagueId);
-        } catch (error) {
-          console.error("Error creating season:", error);
-        }
-      };
-
-      const createFormatTier = async (seasonId, formatData) => {
-        try {
+          // Modified to create format tier directly under league
           await axios.post(`${API}/format-tiers`, {
-            season_id: seasonId,
+            league_id: leagueId,  // Changed from season_id to league_id
             ...formatData
           });
-          loadFormatTiers(seasonId);
+          loadFormatTiers(leagueId);
+          toast({ 
+            title: "Success", 
+            description: `${formatData.name} format created successfully!` 
+          });
         } catch (error) {
           console.error("Error creating format tier:", error);
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create format tier",
+            variant: "destructive"
+          });
         }
       };
 
@@ -718,8 +706,17 @@ function App() {
             ...ratingData
           });
           loadRatingTiers(formatTierId);
+          toast({ 
+            title: "Success", 
+            description: `Rating tier "${ratingData.name}" created with join code!` 
+          });
         } catch (error) {
           console.error("Error creating rating tier:", error);
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create rating tier",
+            variant: "destructive"
+          });
         }
       };
 
