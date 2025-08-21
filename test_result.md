@@ -235,15 +235,18 @@ backend:
 
   - task: "Pre-Match Toss"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Digital coin toss for serve/court selection with random winner and choice selection, stored in database with match updates."
+      - working: true
+        agent: "testing"
+        comment: "✅ PRE-MATCH TOSS FULLY FUNCTIONAL - Comprehensive testing completed: 1) `/matches/{match_id}/toss` endpoint working perfectly with random winner selection and toss choice logic, 2) Random winner selection verified (Player F won toss), 3) Toss choice logic working correctly (Court Side A selected), 4) Toss result storage verified with proper database persistence, 5) Chat integration working with detailed toss result messages, 6) Duplicate toss prevention working correctly (400 error returned for second attempt as expected). All toss functionality verified and working perfectly."
 
 frontend:
   - task: "4-Tier League Format UI"
