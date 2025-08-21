@@ -2936,7 +2936,7 @@ function App() {
               <Button
                 variant={activeTab === "home" ? "default" : "ghost"}
                 onClick={() => setActiveTab("home")}
-                className="nav-button-blue"
+                className="btn-nav-ios"
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Dashboard
