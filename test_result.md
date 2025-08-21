@@ -190,15 +190,18 @@ backend:
 
   - task: "Match Scheduling System"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Added comprehensive match scheduling with time proposals, voting system, and automatic confirmation. Includes venue management and notification system."
+      - working: true
+        agent: "testing"
+        comment: "✅ MATCH SCHEDULING SYSTEM FULLY FUNCTIONAL - Comprehensive testing completed: 1) `/matches/{match_id}/propose-time` endpoint working perfectly with venue and notes support, 2) `/matches/{match_id}/vote-time/{proposal_id}` endpoint with majority voting logic working correctly (2/4 votes triggered automatic match confirmation as expected), 3) Automatic match confirmation when majority vote reached ✅, 4) Time proposal notifications and chat integration working with system messages. All core functionality verified and working as designed."
 
   - task: "Player Confirmation System"
     implemented: true
