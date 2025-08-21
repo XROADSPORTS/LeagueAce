@@ -1049,9 +1049,9 @@ async def get_league_seasons(league_id: str):
 # Format Tier Routes (Tier 2: Singles, Doubles, Round Robin)
 @api_router.post("/format-tiers", response_model=FormatTier)
 async def create_format_tier(tier_data: FormatTierCreate):
-    season = await db.seasons.find_one({"id": tier_data.season_id})
-    if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
+    league = await db.leagues.find_one({"id": tier_data.league_id})
+    if not league:
+        raise HTTPException(status_code=404, detail="League not found")
     
     tier_dict = tier_data.dict()
     tier_obj = FormatTier(**tier_dict)
@@ -1060,6 +1060,12 @@ async def create_format_tier(tier_data: FormatTierCreate):
     
     return tier_obj
 
+@api_router.get("/leagues/{league_id}/format-tiers", response_model=List[FormatTier])
+async def get_league_format_tiers(league_id: str):
+    tiers = await db.format_tiers.find({"league_id": league_id}).to_list(100)
+    return [FormatTier(**parse_from_mongo(tier)) for tier in tiers]
+
+# Keep the old season endpoint for backward compatibility
 @api_router.get("/seasons/{season_id}/format-tiers", response_model=List[FormatTier])
 async def get_season_format_tiers(season_id: str):
     tiers = await db.format_tiers.find({"season_id": season_id}).to_list(100)
