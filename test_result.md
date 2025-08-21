@@ -188,6 +188,54 @@ backend:
         agent: "testing"
         comment: "✅ COMPETITION SYSTEM SELECTION WORKING - Tested rating tier creation with both competition systems: 1) 'Team League Format' with configurable playoff spots (tested with 4 spots), 2) 'Knockout System' with null playoff spots (not applicable). Both systems properly stored and retrieved. Competition system field correctly validates and persists the selected format type."
 
+  - task: "Match Scheduling System"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added comprehensive match scheduling with time proposals, voting system, and automatic confirmation. Includes venue management and notification system."
+
+  - task: "Player Confirmation System"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Players can accept/decline matches, request substitutes, and add notes. Includes confirmation tracking and chat integration."
+
+  - task: "Substitute Management"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Complete substitute system with request creation, approval process, and automatic match participant updates with chat integration."
+
+  - task: "Pre-Match Toss"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Digital coin toss for serve/court selection with random winner and choice selection, stored in database with match updates."
+
 frontend:
   - task: "4-Tier League Format UI"
     implemented: true
