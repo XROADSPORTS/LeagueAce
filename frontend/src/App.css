@@ -616,15 +616,6 @@ body {
     inset 0 1px 0 rgba(255,255,255,0.4),
     0 0 0 1px rgba(255,255,255,0.08);
 }
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border: none;
-  color: white;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
-}
 
 .leagueace-button:hover, .btn-primary-ios:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
