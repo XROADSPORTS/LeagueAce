@@ -2595,7 +2595,7 @@ function App() {
             className="btn-primary-ios"
             onClick={() => setShowJoinForm(true)}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <span className="icon-glass-container"><Plus className="w-4 h-4 mr-2" /></span>
             Join New League
           </Button>
         </div>
