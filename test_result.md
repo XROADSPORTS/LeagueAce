@@ -288,6 +288,18 @@ frontend:
         agent: "main"
         comment: "UI includes dropdown for Team League Format vs Knockout System with conditional playoff spots input."
 
+  - task: "Match Management UI"
+    implemented: true
+    working: "unknown"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added comprehensive MatchCard component with time proposals, player confirmations, toss functionality, and substitute management. Includes TimeProposalForm, ConfirmationForm, and TossButton components."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
