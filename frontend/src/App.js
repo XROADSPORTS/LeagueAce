@@ -2460,69 +2460,387 @@ function App() {
   // (Player Dashboard, Navigation, etc. remain similar but updated for new structure)
 
   const PlayerDashboard = () => {
+    const [activePlayerTab, setActivePlayerTab] = useState('home');
     const [showJoinForm, setShowJoinForm] = useState(false);
     const [joinCode, setJoinCode] = useState("");
+    const [upcomingMatches, setUpcomingMatches] = useState([]);
+
+    useEffect(() => {
+      loadUpcomingMatches();
+    }, [user, activeSport]);
+
+    const loadUpcomingMatches = async () => {
+      if (user) {
+        try {
+          // This would load matches for the player - simplified for now
+          const response = await axios.get(`${API}/users/${user.id}/matches?sport_type=${activeSport}`);
+          setUpcomingMatches(response.data || []);
+        } catch (error) {
+          console.error("Error loading matches:", error);
+        }
+      }
+    };
 
     const handleJoinByCode = async (e) => {
       e.preventDefault();
       setLoading(true);
       try {
         await axios.post(`${API}/join-by-code/${user.id}`, { join_code: joinCode });
-        loadPlayerData();
+        await loadPlayerData();
         setShowJoinForm(false);
         setJoinCode("");
+        toast({ title: "Success", description: "Successfully joined league!" });
       } catch (error) {
         console.error("Error joining by code:", error);
-        alert(error.response?.data?.detail || "Failed to join league");
+        toast({ 
+          title: "Error", 
+          description: error.response?.data?.detail || "Failed to join league",
+          variant: "destructive"
+        });
       }
       setLoading(false);
     };
 
-    return (
-      <div className="player-dashboard">
-        <Card className="glass-card-blue">
-          <CardHeader>
-            <CardTitle>Join a {activeSport} League</CardTitle>
-            <CardDescription>
-              Enter a 6-character join code to join a specific rating tier
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!showJoinForm ? (
+    const PlayerHome = () => (
+      <div className="player-home">
+        <div className="welcome-section">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>Welcome back, {user.name}!</CardTitle>
+              <CardDescription>Your {activeSport} league activity at a glance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <h4>{userJoinedTiers.length}</h4>
+                  <p>Leagues Joined</p>
+                </div>
+                <div className="stat-item">
+                  <h4>{upcomingMatches.length}</h4>
+                  <p>Upcoming Matches</p>
+                </div>
+                <div className="stat-item">
+                  <h4>{userStandings.length}</h4>
+                  <p>Active Tournaments</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="action-buttons">
+                <Button 
+                  className="leagueace-button"
+                  onClick={() => setActivePlayerTab('leagues')}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  View My Leagues
+                </Button>
+                <Button 
+                  className="leagueace-button"
+                  onClick={() => setActivePlayerTab('schedule')}
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  View Schedule
+                </Button>
+                <Button 
+                  className="blue-outline-button"
+                  onClick={() => setShowJoinForm(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Join New League
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity */}
+        {notifications.length > 0 && (
+          <div className="recent-activity">
+            <Card className="glass-card-blue">
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notifications.slice(0, 3).map((notification) => (
+                  <div key={notification.id} className="notification-item">
+                    <p>{notification.message}</p>
+                    <span className="notification-time">
+                      {new Date(notification.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    );
+
+    const PlayerLeagues = () => (
+      <div className="player-leagues">
+        <div className="leagues-header">
+          <h3>My {activeSport} Leagues</h3>
+          <Button 
+            className="leagueace-button"
+            onClick={() => setShowJoinForm(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Join New League
+          </Button>
+        </div>
+
+        {userJoinedTiers.length > 0 ? (
+          <div className="joined-leagues-grid">
+            {userJoinedTiers.map((tier) => (
+              <Card key={tier.id} className="glass-card-blue league-card">
+                <CardHeader>
+                  <CardTitle>{tier.name}</CardTitle>
+                  <CardDescription>
+                    Rating: {tier.min_rating} - {tier.max_rating}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="league-info">
+                    <Badge className="competition-badge">
+                      {tier.competition_system}
+                    </Badge>
+                    <div className="league-stats">
+                      <p>Join Code: <code>{tier.join_code}</code></p>
+                      <p>Players: {tier.current_players || 0}/{tier.max_players}</p>
+                    </div>
+                  </div>
+                  <div className="league-actions">
+                    <Button 
+                      size="sm"
+                      className="blue-outline-button"
+                      onClick={() => setActivePlayerTab('standings')}
+                    >
+                      View Standings
+                    </Button>
+                    <Button 
+                      size="sm"
+                      className="leagueace-button"
+                      onClick={() => setActivePlayerTab('chat')}
+                    >
+                      League Chat
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="glass-card-blue empty-state-card">
+            <CardContent className="empty-state">
+              <div className="empty-icon">🎾</div>
+              <h4>No Leagues Joined Yet</h4>
+              <p>Join a league using a 6-character code from your league manager</p>
               <Button 
                 className="leagueace-button"
                 onClick={() => setShowJoinForm(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Join New {activeSport} League
+                Join Your First League
               </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+
+    const PlayerSchedule = () => (
+      <div className="player-schedule">
+        <Card className="glass-card-blue">
+          <CardHeader>
+            <CardTitle>Match Schedule</CardTitle>
+            <CardDescription>Your upcoming {activeSport} matches</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {upcomingMatches.length > 0 ? (
+              <div className="matches-list">
+                {upcomingMatches.map((match) => (
+                  <div key={match.id} className="match-item">
+                    <div className="match-info">
+                      <h5>{match.format} Match - Week {match.week_number}</h5>
+                      <p>{match.scheduled_at ? new Date(match.scheduled_at).toLocaleString() : 'Time TBD'}</p>
+                      <Badge className={getMatchStatusColor(match.status)}>
+                        {match.status}
+                      </Badge>
+                    </div>
+                    <div className="match-actions">
+                      <Button size="sm" className="blue-outline-button">
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <form onSubmit={handleJoinByCode} className="join-form">
-                <div className="join-input-group">
-                  <Input
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="Enter 6-character join code"
-                    maxLength={6}
-                    className="join-code-input-blue"
-                    required
-                  />
-                  <Button type="submit" className="leagueace-button" disabled={loading}>
-                    {loading ? "Joining..." : "Join"}
-                  </Button>
-                </div>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  onClick={() => setShowJoinForm(false)}
-                  className="cancel-join-blue"
-                >
-                  Cancel
-                </Button>
-              </form>
+              <div className="empty-state">
+                <p>No upcoming matches scheduled</p>
+              </div>
             )}
           </CardContent>
         </Card>
+      </div>
+    );
+
+    const PlayerStandings = () => (
+      <div className="player-standings">
+        <Card className="glass-card-blue">
+          <CardHeader>
+            <CardTitle>League Standings</CardTitle>
+            <CardDescription>Your ranking in joined leagues</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {userStandings.length > 0 ? (
+              <div className="standings-list">
+                {userStandings.map((standing, index) => (
+                  <div key={index} className="standing-item">
+                    <div className="standing-rank">#{standing.rank || 'N/A'}</div>
+                    <div className="standing-info">
+                      <h5>{standing.league_name}</h5>
+                      <p>Sets Won: {standing.total_sets_won || 0}/{standing.total_sets_played || 0}</p>
+                      <p>Win Rate: {(standing.set_win_percentage * 100 || 0).toFixed(1)}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>No standings available yet. Join a league to see your rankings!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+
+    const PlayerChat = () => (
+      <div className="player-chat">
+        <Card className="glass-card-blue">
+          <CardHeader>
+            <CardTitle>League Chat</CardTitle>
+            <CardDescription>Messages from your leagues</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="chat-placeholder">
+              <p>Chat system coming soon! 💬</p>
+              <p>This will show messages from all your joined leagues.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+
+    const getMatchStatusColor = (status) => {
+      switch (status) {
+        case 'Pending': return 'bg-yellow-500/20 text-yellow-200';
+        case 'Confirmed': return 'bg-green-500/20 text-green-200';
+        case 'Played': return 'bg-blue-500/20 text-blue-200';
+        default: return 'bg-gray-500/20 text-gray-200';
+      }
+    };
+
+    return (
+      <div className="player-dashboard">
+        <div className="dashboard-header">
+          <h2 className="section-title-blue">{activeSport} Player Dashboard</h2>
+          <div className="dashboard-user-info">
+            <span>Rating: {user.rating_level}</span>
+            <Badge className="role-badge-blue">Player</Badge>
+          </div>
+        </div>
+
+        <Tabs value={activePlayerTab} onValueChange={setActivePlayerTab} className="dashboard-tabs">
+          <TabsList className="tabs-list">
+            <TabsTrigger value="home">Home</TabsTrigger>
+            <TabsTrigger value="leagues">My Leagues</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="standings">Standings</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="home" className="tab-content">
+            <PlayerHome />
+          </TabsContent>
+
+          <TabsContent value="leagues" className="tab-content">
+            <PlayerLeagues />
+          </TabsContent>
+
+          <TabsContent value="schedule" className="tab-content">
+            <PlayerSchedule />
+          </TabsContent>
+
+          <TabsContent value="standings" className="tab-content">
+            <PlayerStandings />
+          </TabsContent>
+
+          <TabsContent value="chat" className="tab-content">
+            <PlayerChat />
+          </TabsContent>
+        </Tabs>
+
+        {/* Join League Modal */}
+        {showJoinForm && (
+          <div className="modal-overlay">
+            <Card className="glass-card-blue join-modal">
+              <CardHeader>
+                <CardTitle>Join a {activeSport} League</CardTitle>
+                <CardDescription>
+                  Enter the 6-character join code provided by your league manager
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleJoinByCode} className="join-form">
+                  <div className="form-group">
+                    <Label htmlFor="join-code">League Join Code</Label>
+                    <Input
+                      id="join-code"
+                      type="text"
+                      placeholder="Enter 6-character code"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                      className="blue-input"
+                      maxLength="6"
+                      required
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowJoinForm(false);
+                        setJoinCode("");
+                      }}
+                      className="blue-outline-button"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="leagueace-button"
+                      disabled={loading || joinCode.length !== 6}
+                    >
+                      {loading ? "Joining..." : "Join League"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     );
   };
