@@ -220,7 +220,7 @@ function App() {
             onClick={() => toggleSport('Pickleball')}
           >
             <CardContent className="sport-option-content">
-              <Zap className="sport-option-icon pickleball-icon-blue" />
+              <Zap className="sport-option-icon pickleball-icon-blue glass-icon" />
               <h3>Pickleball Leagues</h3>
               <p>Fast-paced pickleball leagues for all skill levels</p>
               <ul className="sport-benefits">
