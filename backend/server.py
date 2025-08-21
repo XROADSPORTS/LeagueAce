@@ -638,6 +638,37 @@ class StandingsRequest(BaseModel):
     player_group_id: Optional[str] = None
     week_number: Optional[int] = None
 
+# Advanced Chat Request Models
+class MessageReactionRequest(BaseModel):
+    message_id: str
+    reaction_type: ReactionType
+
+class EditMessageRequest(BaseModel):
+    message_id: str
+    new_text: str
+
+class PinMessageRequest(BaseModel):
+    message_id: str
+    pin: bool = True
+
+class SlashCommandRequest(BaseModel):
+    thread_id: str
+    command: SlashCommand
+    parameters: Optional[Dict[str, str]] = None
+
+class MentionNotification(BaseModel):
+    mentioned_user_id: str
+    message_id: str
+    thread_id: str
+    sender_name: str
+    message_preview: str
+
+class ThreadModerationRequest(BaseModel):
+    thread_id: str
+    action: Literal["mute_user", "unmute_user", "kick_user", "archive_thread", "unarchive_thread"]
+    target_user_id: Optional[str] = None
+    reason: Optional[str] = None
+
 # Chat System Models
 class ChatThread(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
