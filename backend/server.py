@@ -48,6 +48,23 @@ class MatchStatus(str, Enum):
     PLAYED = "Played"
     CANCELLED = "Cancelled"
 
+class PlayerConfirmationStatus(str, Enum):
+    PENDING = "Pending"
+    ACCEPTED = "Accepted"
+    DECLINED = "Declined"
+    SUBSTITUTE_REQUESTED = "Substitute Requested"
+
+class SubstituteRequestStatus(str, Enum):
+    OPEN = "Open"
+    FILLED = "Filled"
+    CANCELLED = "Cancelled"
+
+class TossResult(str, Enum):
+    SERVE = "Serve"
+    RETURN = "Return"
+    COURT_SIDE_A = "Court Side A"
+    COURT_SIDE_B = "Court Side B"
+
 class PlayerSeatStatus(str, Enum):
     ACTIVE = "Active"
     RESERVE = "Reserve"
