@@ -1847,13 +1847,13 @@ def main():
     
     tester = LeagueAceAPITester()
     
-    # Run focused season creation test first (HIGH PRIORITY)
-    print("\n🎯 Running HIGH PRIORITY Season Creation Test...")
-    season_success = tester.run_focused_season_creation_test()
+    # Run focused format tier creation test (HIGH PRIORITY as requested in review)
+    print("\n🎯 Running HIGH PRIORITY Format Tier Creation Test...")
+    format_tier_success = tester.run_focused_format_tier_test()
     
-    # Run complete workflow test
-    print("\n🚀 Running Complete Workflow Test...")
-    complete_success = tester.run_complete_workflow_test()
+    # Run focused season creation test 
+    print("\n🎯 Running Season Creation Test...")
+    season_success = tester.run_focused_season_creation_test()
     
     # Print final results
     print("\n" + "="*60)
@@ -1864,13 +1864,14 @@ def main():
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
     
-    print(f"\n🎯 HIGH PRIORITY Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
+    print(f"\n🎯 HIGH PRIORITY Format Tier Creation Test: {'✅ PASSED' if format_tier_success else '❌ FAILED'}")
+    print(f"🎯 Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
     
-    if season_success and tester.tests_passed >= (tester.tests_run * 0.9):  # 90% pass rate
-        print("\n🎉 Season creation workflow is working correctly!")
+    if format_tier_success and season_success and tester.tests_passed >= (tester.tests_run * 0.9):  # 90% pass rate
+        print("\n🎉 Format tier creation and season workflows are working correctly!")
         return 0
     else:
-        print(f"\n⚠️  Season creation issues detected. Please check the results above.")
+        print(f"\n⚠️  Issues detected. Please check the results above.")
         return 1
 
 if __name__ == "__main__":
