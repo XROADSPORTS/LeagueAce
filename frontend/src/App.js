@@ -2947,7 +2947,7 @@ function App() {
               <Button
                 variant={activeTab === "home" ? "default" : "ghost"}
                 onClick={() => setActiveTab("home")}
-                className="nav-button-blue"
+                className="btn-nav-ios"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Home
