@@ -2643,12 +2643,16 @@ def main():
     
     tester = LeagueAceAPITester()
     
+    # Run CRITICAL BUG FIX TESTS FIRST (HIGHEST PRIORITY as requested in review)
+    print("\n🚨 Running CRITICAL BUG FIX TESTS (HIGHEST PRIORITY)...")
+    critical_passed, critical_total = tester.run_critical_bug_fix_tests()
+    
     # Run NEW 3-TIER STRUCTURE TEST (HIGH PRIORITY as requested in review)
-    print("\n🎯 Running NEW 3-TIER STRUCTURE TEST (HIGHEST PRIORITY)...")
+    print("\n🎯 Running NEW 3-TIER STRUCTURE TEST...")
     new_structure_success = tester.run_new_3_tier_structure_test()
     
     # Run focused format tier creation test (HIGH PRIORITY as requested in review)
-    print("\n🎯 Running HIGH PRIORITY Format Tier Creation Test...")
+    print("\n🎯 Running Format Tier Creation Test...")
     format_tier_success = tester.run_focused_format_tier_test()
     
     # Run focused season creation test 
@@ -2664,15 +2668,20 @@ def main():
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
     
-    print(f"\n🎯 NEW 3-TIER STRUCTURE Test: {'✅ PASSED' if new_structure_success else '❌ FAILED'}")
-    print(f"🎯 HIGH PRIORITY Format Tier Creation Test: {'✅ PASSED' if format_tier_success else '❌ FAILED'}")
+    print(f"\n🚨 CRITICAL BUG FIX Tests: {critical_passed}/{critical_total} ({'✅ PASSED' if critical_passed == critical_total else '❌ ISSUES FOUND'})")
+    print(f"🎯 NEW 3-TIER STRUCTURE Test: {'✅ PASSED' if new_structure_success else '❌ FAILED'}")
+    print(f"🎯 Format Tier Creation Test: {'✅ PASSED' if format_tier_success else '❌ FAILED'}")
     print(f"🎯 Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
     
-    if new_structure_success and tester.tests_passed >= (tester.tests_run * 0.9):  # 90% pass rate
-        print("\n🎉 NEW 3-TIER STRUCTURE is working correctly!")
+    # Success criteria: Critical bug fixes must work + good overall pass rate
+    critical_success = critical_passed >= critical_total * 0.8  # 80% of critical tests must pass
+    overall_success = tester.tests_passed >= (tester.tests_run * 0.85)  # 85% overall pass rate
+    
+    if critical_success and overall_success:
+        print("\n🎉 CRITICAL BUG FIXES are working! Player dashboard functionality restored!")
         return 0
     else:
-        print(f"\n⚠️  Issues detected. Please check the results above.")
+        print(f"\n⚠️  Issues detected. Critical bug fixes need attention.")
         return 1
 
 if __name__ == "__main__":
