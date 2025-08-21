@@ -518,7 +518,7 @@ body {
   transition: all 0.3s ease;
 }
 
-.nav-button-blue:hover {
+.nav-button-blue:hover, .btn-nav-ios:hover {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
