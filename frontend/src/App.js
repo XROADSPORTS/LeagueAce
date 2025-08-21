@@ -2957,7 +2957,7 @@ function App() {
           
           <div className="nav-user">
             <div className="notification-bell-blue">
-              <Bell className="w-5 h-5" />
+              <span className="icon-glass-container"><Bell className="w-5 h-5" /></span>
               {unreadNotifications > 0 && (
                 <Badge className="notification-badge-blue">{unreadNotifications}</Badge>
               )}
