@@ -2877,6 +2877,22 @@ function App() {
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
+                        <div className="qr-popover">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="blue-outline-button"
+                            onClick={(e) => {
+                              const el = e.currentTarget.nextSibling;
+                              if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+                            }}
+                          >
+                            QR
+                          </Button>
+                          <div className="qr-card" style={{ display: 'none' }}>
+                            <QRCode value={`${window.location.origin}/?join=${tier.join_code}`} size={128} bgColor="transparent" fgColor="#ffffff" />
+                          </div>
+                        </div>
                         <Button
                           size="sm"
                           variant="outline"
