@@ -1052,6 +1052,64 @@ body {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* Glass Icons */
+.glass-icon {
+  background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    0 8px 24px rgba(0,0,0,0.25);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* iOS-style Glass Buttons */
+.glass-button {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  color: white;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 14px;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow:
+    0 8px 20px rgba(59,130,246,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.10));
+}
+
+.glass-button:active {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+/* Depth Layers */
+.glass-layer-1 { background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); }
+.glass-layer-2 { background: rgba(255,255,255,0.10); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.20); }
+.glass-layer-3 { background: rgba(255,255,255,0.14); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.22); }
+
+/* Motion settings */
+@media (prefers-reduced-motion: reduce) {
+  .glass-card-blue, .leagueace-button, .nav-button-blue, .sport-option-card, .signup-option-card, .glass-button {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Fallback when backdrop-filter unsupported */
+@supports not ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+  .glass-card-blue, .nav-glass-blue, .sport-tabs-blue, .user-badge-blue, .blue-input, .blue-textarea, .glass-button, .glass-icon {
+    background: rgba(255,255,255,0.12);
+  }
+}
+
 /* Enhanced hover effects for iOS 26 feel */
 .glass-card-blue:hover,
 .sport-option-card:hover,
