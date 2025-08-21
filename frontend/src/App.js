@@ -2949,7 +2949,7 @@ function App() {
                 onClick={() => setActiveTab("home")}
                 className="btn-nav-ios"
               >
-                <Calendar className="w-4 h-4 mr-2" />
+                <span className="icon-glass-container"><Calendar className="w-4 h-4 mr-2" /></span>
                 Home
               </Button>
             </div>
