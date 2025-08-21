@@ -438,7 +438,7 @@ function App() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button type="submit" className="leagueace-button w-full" disabled={loading}>
+                <Button type="submit" className="btn-primary-ios w-full" disabled={loading}>
                   {loading ? "Creating Account..." : `Create ${role} Account`}
                 </Button>
               </CardFooter>
