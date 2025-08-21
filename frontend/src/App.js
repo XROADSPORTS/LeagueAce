@@ -2430,7 +2430,7 @@ function App() {
                       className="btn-primary-ios"
                       onClick={() => setShowCreateLeague(true)}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <span className="icon-glass-container"><Plus className="w-4 h-4 mr-2" /></span>
                       Create New {activeSport} League
                     </Button>
                   </CardContent>
