@@ -239,9 +239,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "4-Tier League Format API"
-    - "User Authentication & Profiles"
-    - "User Authentication UI"
+    - "Player Grouping Logic"
+    - "Round Robin Doubles Algorithm"
+    - "Group Management UI"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
