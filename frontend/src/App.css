@@ -1533,3 +1533,144 @@ body {
 .setup-steps strong {
   color: rgba(255, 255, 255, 0.95);
 }
+
+/* Enhanced Rating Tier Styles */
+.rating-creator-form,
+.rating-tier-card {
+  margin-bottom: 1.5rem;
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tier-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.join-code-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.competition-badge {
+  background: rgba(147, 51, 234, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.tier-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.join-code-section {
+  background: rgba(34, 197, 94, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.join-code-section h5 {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.join-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.join-code {
+  background: rgba(34, 197, 94, 0.2);
+  color: rgba(255, 255, 255, 0.95);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.join-instructions {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.groups-section h5 {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.group-size {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.feature-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.key-features {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rating-info {
+  margin-bottom: 1rem;
+}
+
+.info-card {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.info-card p {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
