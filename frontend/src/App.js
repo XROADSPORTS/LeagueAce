@@ -2911,6 +2911,50 @@ function App() {
       </div>
     );
 
+    const PlayerProfile = () => (
+      <div className="player-profile">
+        <Card className="glass-card-blue">
+          <CardHeader>
+            <CardTitle>Player Profile</CardTitle>
+            <CardDescription>Manage your profile information and picture</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="profile-content">
+              <div className="profile-picture-section">
+                <h5>Profile Picture</h5>
+                <ProfilePictureUpload onUploadComplete={(updatedUser) => setUser(updatedUser)} />
+              </div>
+
+              <div className="profile-info">
+                <div className="info-grid">
+                  <div className="info-item">
+                    <Label>Name</Label>
+                    <p>{user.name}</p>
+                  </div>
+                  <div className="info-item">
+                    <Label>Email</Label>
+                    <p>{user.email}</p>
+                  </div>
+                  <div className="info-item">
+                    <Label>Phone</Label>
+                    <p>{user.phone || 'Not provided'}</p>
+                  </div>
+                  <div className="info-item">
+                    <Label>Rating Level</Label>
+                    <p>{user.rating_level}</p>
+                  </div>
+                  <div className="info-item">
+                    <Label>Sport Preferences</Label>
+                    <p>{user.sports_preferences?.join(', ') || 'None set'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+
     const getMatchStatusColor = (status) => {
       switch (status) {
         case 'Pending': return 'bg-yellow-500/20 text-yellow-200';
