@@ -220,15 +220,18 @@ backend:
 
   - task: "Substitute Management"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Complete substitute system with request creation, approval process, and automatic match participant updates with chat integration."
+      - working: true
+        agent: "testing"
+        comment: "✅ SUBSTITUTE MANAGEMENT FULLY FUNCTIONAL - Comprehensive testing completed: 1) `/matches/{match_id}/request-substitute` endpoint working perfectly with reason tracking and proper permissions, 2) `/substitute-requests/{request_id}/approve` endpoint working correctly with league manager approval, 3) Automatic match participant updates verified - substitute player successfully replaced original player in match, 4) Chat integration working with system messages for substitute requests and approvals, 5) Substitute permissions and chat thread membership automatically updated. Complete substitute workflow verified and working perfectly."
 
   - task: "Pre-Match Toss"
     implemented: true
