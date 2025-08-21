@@ -24,6 +24,9 @@ class LeagueAceAPITester:
         self.doubles_group_id = None
         self.doubles_join_code = None
         self.additional_players = []
+        self.match_id = None
+        self.time_proposal_id = None
+        self.substitute_request_id = None
 
     def run_test(self, name: str, method: str, endpoint: str, expected_status: int, data: Dict[Any, Any] = None, params: Dict[str, Any] = None) -> tuple[bool, Dict[Any, Any]]:
         """Run a single API test"""
