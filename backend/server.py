@@ -361,6 +361,10 @@ class SportPreferenceUpdate(BaseModel):
 class ProfilePictureUpdate(BaseModel):
     profile_picture: str
 
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+
 class SocialLoginRequest(BaseModel):
     provider: AuthProvider
     token: str
