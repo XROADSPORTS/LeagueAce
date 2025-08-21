@@ -1304,13 +1304,22 @@ function App() {
                     size="sm" 
                     variant="outline" 
                     className="blue-outline-button" 
-                    onClick={() => {
+                    onClick={async () => {
                       const url = `${window.location.origin}/?join=${tier.join_code}`;
-                      navigator.clipboard.writeText(url);
-                      toast({ title: "Share link copied!", description: url });
+                      try {
+                        if (navigator.share) {
+                          await navigator.share({ title: 'Join my League', text: `Join ${tier.name} on LeagueAce`, url });
+                        } else {
+                          await navigator.clipboard.writeText(url);
+                          toast({ title: "Share link copied!", description: url });
+                        }
+                      } catch (err) {
+                        await navigator.clipboard.writeText(url);
+                        toast({ title: "Share link copied!", description: url });
+                      }
                     }}
                   >
-                    Copy Join Link
+                    Share Join Link
                   </Button>
                 </div>
                 <p className="join-instructions">Share this code with players to join this rating tier</p>
