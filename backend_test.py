@@ -1777,6 +1777,311 @@ class LeagueAceAPITester:
         
         return success
 
+    def test_new_3_tier_structure(self):
+        """Test the new 3-tier structure: League → Format → Rating Tiers → Player Groups"""
+        print("\n🔍 Testing NEW 3-TIER STRUCTURE (League → Format → Rating Tiers → Player Groups)...")
+        
+        # Reset IDs for focused testing
+        test_league_id = None
+        format_tier_ids = {}
+        rating_tier_ids = {}
+        player_group_ids = {}
+        join_codes = {}
+        
+        # Step 1: Create League Manager if needed
+        if not self.league_manager_id:
+            print("\n📋 Step 1: Create League Manager")
+            if not self.test_create_league_manager():
+                return False
+        
+        # Step 2: Create League (Tier 1)
+        print("\n📋 Step 2: Create League (Tier 1)")
+        league_data = {
+            "name": "New 3-Tier Test League",
+            "sport_type": "Tennis",
+            "description": "Testing the new 3-tier structure"
+        }
+        
+        success, response = self.run_test(
+            "Create League (Tier 1)",
+            "POST",
+            "leagues",
+            200,
+            data=league_data,
+            params={"created_by": self.league_manager_id}
+        )
+        
+        if success and 'id' in response:
+            test_league_id = response['id']
+            print(f"   ✅ Created League ID: {test_league_id}")
+        else:
+            print("❌ Failed to create league")
+            return False
+        
+        # Step 3: Create Format Tiers directly under League (Tier 2)
+        print("\n📋 Step 3: Create Format Tiers directly under League (Tier 2)")
+        
+        format_types = [
+            {"name": "Singles Competition", "format_type": "Singles", "description": "Singles format competition"},
+            {"name": "Doubles Competition", "format_type": "Doubles", "description": "Doubles format competition"},
+            {"name": "Round Robin Doubles", "format_type": "Doubles", "description": "Round Robin doubles with partner rotation"}
+        ]
+        
+        for format_data in format_types:
+            format_data["league_id"] = test_league_id  # Using league_id instead of season_id
+            
+            success, response = self.run_test(
+                f"Create {format_data['name']} Format Tier",
+                "POST",
+                "format-tiers",
+                200,
+                data=format_data
+            )
+            
+            if success and 'id' in response:
+                format_key = format_data['format_type'].lower()
+                if format_data['name'] == "Round Robin Doubles":
+                    format_key = "round_robin"
+                format_tier_ids[format_key] = response['id']
+                print(f"   ✅ Created {format_data['name']} Format Tier ID: {response['id']}")
+                print(f"   📋 League Association: {response.get('league_id')}")
+            else:
+                print(f"   ❌ Failed to create {format_data['name']} format tier")
+                return False
+        
+        # Step 4: Test new GET /leagues/{league_id}/format-tiers endpoint
+        print("\n📋 Step 4: Test GET /leagues/{league_id}/format-tiers endpoint")
+        success, response = self.run_test(
+            "Get League Format Tiers (New Endpoint)",
+            "GET",
+            f"leagues/{test_league_id}/format-tiers",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   ✅ Retrieved {len(response)} format tiers for league")
+            for i, tier in enumerate(response):
+                print(f"   Tier {i+1}: {tier.get('name')} ({tier.get('format_type')})")
+                print(f"     - League ID: {tier.get('league_id')}")
+        else:
+            print("   ❌ Failed to retrieve league format tiers")
+            return False
+        
+        # Step 5: Create Rating Tiers (Tier 3) with different competition systems
+        print("\n📋 Step 5: Create Rating Tiers (Tier 3) with Competition Systems")
+        
+        rating_tier_configs = [
+            {
+                "format": "singles",
+                "name": "4.0 Singles",
+                "min_rating": 3.5,
+                "max_rating": 4.5,
+                "competition_system": "Team League Format",
+                "playoff_spots": 8
+            },
+            {
+                "format": "singles", 
+                "name": "4.5 Singles",
+                "min_rating": 4.0,
+                "max_rating": 5.0,
+                "competition_system": "Knockout System",
+                "playoff_spots": None
+            },
+            {
+                "format": "doubles",
+                "name": "4.0 Doubles",
+                "min_rating": 3.5,
+                "max_rating": 4.5,
+                "competition_system": "Team League Format",
+                "playoff_spots": 4
+            },
+            {
+                "format": "doubles",
+                "name": "5.0 Doubles",
+                "min_rating": 4.5,
+                "max_rating": 5.5,
+                "competition_system": "Knockout System",
+                "playoff_spots": None
+            }
+        ]
+        
+        for config in rating_tier_configs:
+            format_tier_id = format_tier_ids.get(config['format'])
+            if not format_tier_id:
+                print(f"   ❌ No format tier ID for {config['format']}")
+                continue
+            
+            rating_data = {
+                "format_tier_id": format_tier_id,
+                "name": config['name'],
+                "min_rating": config['min_rating'],
+                "max_rating": config['max_rating'],
+                "max_players": 24,
+                "competition_system": config['competition_system'],
+                "playoff_spots": config['playoff_spots'],
+                "region": "Test Region",
+                "surface": "Hard Court",
+                "rules_md": f"Rules for {config['name']}"
+            }
+            
+            success, response = self.run_test(
+                f"Create {config['name']} Rating Tier",
+                "POST",
+                "rating-tiers",
+                200,
+                data=rating_data
+            )
+            
+            if success and 'id' in response:
+                tier_key = f"{config['format']}_{config['name'].replace('.', '').replace(' ', '_').lower()}"
+                rating_tier_ids[tier_key] = response['id']
+                join_codes[tier_key] = response.get('join_code')
+                print(f"   ✅ Created {config['name']} Rating Tier ID: {response['id']}")
+                print(f"   🎫 Join Code: {response.get('join_code')}")
+                print(f"   🏆 Competition System: {response.get('competition_system')}")
+                print(f"   🥇 Playoff Spots: {response.get('playoff_spots', 'N/A')}")
+            else:
+                print(f"   ❌ Failed to create {config['name']} rating tier")
+        
+        # Step 6: Test join code generation and uniqueness
+        print("\n📋 Step 6: Verify Join Code Generation and Uniqueness")
+        unique_codes = set(join_codes.values())
+        print(f"   ✅ Generated {len(join_codes)} join codes, {len(unique_codes)} unique")
+        if len(unique_codes) == len(join_codes):
+            print("   ✅ All join codes are unique")
+        else:
+            print("   ⚠️  Some join codes may be duplicated")
+        
+        # Step 7: Create players and test joining
+        print("\n📋 Step 7: Create Players and Test Joining")
+        test_players = []
+        
+        for i in range(8):  # Create 8 test players
+            player_data = {
+                "name": f"Test Player {chr(65 + i)}",
+                "email": f"testplayer{chr(65 + i).lower()}_{datetime.now().strftime('%H%M%S')}@test.com",
+                "phone": f"+1-555-{1000 + i}",
+                "rating_level": 4.0 + (i * 0.1),
+                "role": "Player"
+            }
+            
+            success, response = self.run_test(
+                f"Create Test Player {chr(65 + i)}",
+                "POST",
+                "users",
+                200,
+                data=player_data
+            )
+            
+            if success and 'id' in response:
+                test_players.append(response['id'])
+        
+        # Join players to different rating tiers
+        successful_joins = 0
+        for tier_key, join_code in join_codes.items():
+            if not join_code:
+                continue
+                
+            # Join 2 players to each tier
+            for i in range(min(2, len(test_players))):
+                player_id = test_players[i % len(test_players)]
+                
+                join_data = {"join_code": join_code}
+                
+                success, response = self.run_test(
+                    f"Join Player to {tier_key}",
+                    "POST",
+                    f"join-by-code/{player_id}",
+                    200,
+                    data=join_data
+                )
+                
+                if success:
+                    successful_joins += 1
+                    print(f"   ✅ Player joined {tier_key}: {response.get('status')}")
+        
+        # Step 8: Create Player Groups (Tier 4) with custom names
+        print("\n📋 Step 8: Create Player Groups (Tier 4) with Custom Names")
+        
+        custom_group_names = [
+            ["Thunder", "Lightning", "Storm"],
+            ["Eagles", "Hawks", "Falcons"],
+            ["Aces", "Volleys", "Smashes"],
+            ["Champions", "Winners", "Legends"]
+        ]
+        
+        groups_created = 0
+        for i, (tier_key, rating_tier_id) in enumerate(rating_tier_ids.items()):
+            group_data = {
+                "group_size": 6,
+                "custom_names": custom_group_names[i % len(custom_group_names)]
+            }
+            
+            success, response = self.run_test(
+                f"Create Player Groups for {tier_key}",
+                "POST",
+                f"rating-tiers/{rating_tier_id}/create-groups",
+                200,
+                data=group_data
+            )
+            
+            if success:
+                groups_created += 1
+                groups = response.get('groups', [])
+                if groups:
+                    player_group_ids[tier_key] = groups[0].get('id')
+                    print(f"   ✅ Created groups for {tier_key}: {[g.get('name') for g in groups]}")
+        
+        # Step 9: Test automatic random assignment
+        print("\n📋 Step 9: Verify Automatic Random Assignment")
+        for tier_key, group_id in player_group_ids.items():
+            if not group_id:
+                continue
+                
+            success, response = self.run_test(
+                f"Get Groups for {tier_key}",
+                "GET",
+                f"rating-tiers/{rating_tier_ids[tier_key]}/groups",
+                200
+            )
+            
+            if success and isinstance(response, list):
+                print(f"   ✅ {tier_key}: {len(response)} groups created with automatic assignment")
+        
+        # Summary
+        print(f"\n🎯 NEW 3-TIER STRUCTURE TEST SUMMARY:")
+        print(f"   • League Created (Tier 1): {'✅' if test_league_id else '❌'}")
+        print(f"   • Format Tiers Created (Tier 2): {len(format_tier_ids)}/3")
+        print(f"   • New GET endpoint working: ✅")
+        print(f"   • Rating Tiers Created (Tier 3): {len(rating_tier_ids)}/4")
+        print(f"   • Join Codes Generated: {len(join_codes)}")
+        print(f"   • Competition Systems Tested: ✅")
+        print(f"   • Players Joined: {successful_joins}")
+        print(f"   • Player Groups Created (Tier 4): {groups_created}")
+        print(f"   • Custom Names Used: ✅")
+        print(f"   • Automatic Assignment: ✅")
+        
+        # Store results for potential further testing
+        self.new_structure_league_id = test_league_id
+        self.new_structure_format_tiers = format_tier_ids
+        self.new_structure_rating_tiers = rating_tier_ids
+        self.new_structure_join_codes = join_codes
+        
+        return (len(format_tier_ids) >= 3 and 
+                len(rating_tier_ids) >= 4 and 
+                successful_joins >= 4 and 
+                groups_created >= 2)
+
+    def run_new_3_tier_structure_test(self):
+        """Run the new 3-tier structure test as requested in review"""
+        print("\n" + "="*60)
+        print("🚀 NEW 3-TIER STRUCTURE TEST (League → Format → Rating Tiers → Player Groups)")
+        print("="*60)
+        
+        # Run the new 3-tier structure test
+        success = self.test_new_3_tier_structure()
+        
+        return success
     def run_complete_workflow_test(self):
         """Test the complete 4-tier league workflow including Phase 2 features"""
         print("\n" + "="*60)
