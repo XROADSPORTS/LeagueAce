@@ -3144,71 +3144,97 @@ function App() {
       );
     };
 
-    const PlayerProfile = () => (
-      <div className="player-profile">
-        <Card className="glass-card-blue">
-          <CardHeader>
-            <CardTitle>Player Profile</CardTitle>
-            <CardDescription>Manage your profile information and picture</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="profile-content">
-              <div className="profile-picture-section">
-                <h5>Profile Picture</h5>
-                <ProfilePictureUpload onUploadComplete={(updatedUser) => setUser(updatedUser)} />
-              </div>
+    const PlayerProfile = () => {
+      const [editName, setEditName] = useState(user.name || "");
+      const [editPhone, setEditPhone] = useState(user.phone || "");
+      const [saving, setSaving] = useState(false);
 
-              <div className="profile-info">
-                <div className="info-grid">
-                  <div className="info-item">
-                    <Label htmlFor="edit-name">Name</Label>
-                    <Input id="edit-name" defaultValue={user.name} className="blue-input" onBlur={async (e)=>{
-                      const name = e.target.value.trim();
-                      if (name && name !== user.name) {
-                        try {
-                          const { data } = await axios.patch(`${API}/users/${user.id}`, { name });
-                          setUser(data);
-                          toast({ title: 'Updated', description: 'Name updated' });
-                        } catch (err) {
-                          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to update name', variant: 'destructive' });
-                        }
-                      }
-                    }} />
+      useEffect(() => {
+        setEditName(user.name || "");
+        setEditPhone(user.phone || "");
+      }, [user]);
+
+      const sanitizePhone = (val) => {
+        // Allow only + and digits
+        return (val || "").replace(/[^+0-9]/g, "");
+      };
+      const phoneDigits = editPhone.replace(/\D/g, "");
+      const phoneValid = editPhone.length === 0 || phoneDigits.length >= 7; // optional, but if present >=7 digits
+      const changed = (editName.trim() !== (user.name || "")) || (editPhone !== (user.phone || ""));
+
+      const saveProfile = async () => {
+        if (!changed || !phoneValid) return;
+        setSaving(true);
+        try {
+          const payload = {};
+          if (editName.trim() !== (user.name || "")) payload.name = editName.trim();
+          if (editPhone !== (user.phone || "")) payload.phone = editPhone;
+          const { data } = await axios.patch(`${API}/users/${user.id}`, payload);
+          setUser(data);
+          toast({ title: 'Saved', description: 'Profile updated successfully' });
+        } catch (err) {
+          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to save profile', variant: 'destructive' });
+        }
+        setSaving(false);
+      };
+
+      const resetChanges = () => {
+        setEditName(user.name || "");
+        setEditPhone(user.phone || "");
+      };
+
+      return (
+        <div className="player-profile">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>Player Profile</CardTitle>
+              <CardDescription>Manage your profile information and picture</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="profile-content">
+                <div className="profile-picture-section">
+                  <h5>Profile Picture</h5>
+                  <ProfilePictureUpload onUploadComplete={(updatedUser) => setUser(updatedUser)} />
+                </div>
+
+                <div className="profile-info">
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <Label htmlFor="edit-name">Name</Label>
+                      <Input id="edit-name" value={editName} className="blue-input" onChange={(e)=> setEditName(e.target.value)} />
+                    </div>
+                    <div className="info-item">
+                      <Label>Email</Label>
+                      <p>{user.email}</p>
+                    </div>
+                    <div className="info-item">
+                      <Label htmlFor="edit-phone">Mobile</Label>
+                      <Input id="edit-phone" value={editPhone} className="blue-input" onChange={(e)=> setEditPhone(sanitizePhone(e.target.value))} />
+                      {!phoneValid && (<div className="join-error">Please enter at least 7 digits (digits and + only)</div>)}
+                    </div>
+                    <div className="info-item">
+                      <Label>Rating Level</Label>
+                      <p>{user.rating_level}</p>
+                    </div>
+                    <div className="info-item">
+                      <Label>Sport Preferences</Label>
+                      <p>{user.sports_preferences?.join(', ') || 'None set'}</p>
+                    </div>
                   </div>
-                  <div className="info-item">
-                    <Label>Email</Label>
-                    <p>{user.email}</p>
-                  </div>
-                  <div className="info-item">
-                    <Label htmlFor="edit-phone">Mobile</Label>
-                    <Input id="edit-phone" defaultValue={user.phone || ''} className="blue-input" onBlur={async (e)=>{
-                      const phone = e.target.value.trim();
-                      if (phone !== (user.phone || '')) {
-                        try {
-                          const { data } = await axios.patch(`${API}/users/${user.id}`, { phone });
-                          setUser(data);
-                          toast({ title: 'Updated', description: 'Mobile updated' });
-                        } catch (err) {
-                          toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to update mobile', variant: 'destructive' });
-                        }
-                      }
-                    }} />
-                  </div>
-                  <div className="info-item">
-                    <Label>Rating Level</Label>
-                    <p>{user.rating_level}</p>
-                  </div>
-                  <div className="info-item">
-                    <Label>Sport Preferences</Label>
-                    <p>{user.sports_preferences?.join(', ') || 'None set'}</p>
+
+                  <div className="profile-actions" style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                    <Button className="btn-primary-ios" disabled={!changed || !phoneValid || saving} onClick={saveProfile}>
+                      {saving ? 'Saving…' : 'Save'}
+                    </Button>
+                    <Button variant="outline" className="blue-outline-button" disabled={!changed || saving} onClick={resetChanges}>Cancel</Button>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+            </CardContent>
+          </Card>
+        </div>
+      );
+    };
 
     const getMatchStatusColor = (status) => {
       switch (status) {
