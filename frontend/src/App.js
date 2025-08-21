@@ -1285,9 +1285,9 @@ function App() {
               </div>
             </div>
             <CardDescription>
-              Rating: {tier.min_rating} - {tier.max_rating} | Max Players: {tier.max_players}
-              {tier.competition_system === "Team League Format" && (
-                <><br/>Playoff Spots: Top {tier.playoff_spots}</>
+              Rating: {tierState.min_rating} - {tierState.max_rating} | Max Players: {tierState.max_players}
+              {tierState.competition_system === "Team League Format" && (
+                <><br/>Playoff Spots: Top {tierState.playoff_spots}</>
               )}
             </CardDescription>
           </CardHeader>
