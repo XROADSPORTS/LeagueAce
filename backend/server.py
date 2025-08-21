@@ -535,6 +535,27 @@ class SubstituteApproval(BaseModel):
 class TossRequest(BaseModel):
     match_id: str
 
+class SetScoreUpdate(BaseModel):
+    match_id: str
+    set_number: int
+    # For singles
+    player1_score: Optional[int] = None
+    player2_score: Optional[int] = None
+    # For doubles
+    team_a_score: Optional[int] = None
+    team_b_score: Optional[int] = None
+    is_set_complete: bool = False
+
+class MatchScoreSubmission(BaseModel):
+    match_id: str
+    sets: List[SetScoreUpdate]
+    match_winner_ids: List[str]
+
+class StandingsRequest(BaseModel):
+    rating_tier_id: str
+    player_group_id: Optional[str] = None
+    week_number: Optional[int] = None
+
 # Chat System Models
 class ChatThread(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
