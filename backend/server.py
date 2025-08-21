@@ -1199,7 +1199,9 @@ async def get_rating_tier_groups(rating_tier_id: str):
 @api_router.post("/join-by-code/{user_id}")
 async def join_by_code(user_id: str, request: JoinByCodeRequest):
     # Normalize incoming code: trim + uppercase for case-insensitive matching
-    code = (request.join_code or "").strip().upper()
+    import re
+    raw = (request.join_code or "")
+    code = re.sub(r"[^A-Z0-9]", "", raw.strip().upper())
     rating_tier = await db.rating_tiers.find_one({"join_code": code})
     if not rating_tier:
         raise HTTPException(status_code=404, detail="Invalid join code")
