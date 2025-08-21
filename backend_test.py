@@ -1367,7 +1367,7 @@ class LeagueAceAPITester:
         # Test with requests multipart file upload
         import requests
         
-        url = f"{self.api_url}/users/{self.player_id}/upload-picture"
+        url = f"{self.api_url}/users/{test_player_id}/upload-picture"
         files = {'file': ('test_image.png', png_data, 'image/png')}
         
         self.tests_run += 1
