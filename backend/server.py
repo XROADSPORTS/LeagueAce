@@ -439,19 +439,64 @@ class SetResult(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     match_id: str
     set_number: int
-    player1_score: int = Field(ge=0)
-    player2_score: int = Field(ge=0)
-    # For doubles
-    team_a_score: int = Field(ge=0)
-    team_b_score: int = Field(ge=0)
+    # For singles
+    player1_score: int = Field(ge=0, le=7)  # Tennis scores typically max at 7
+    player2_score: int = Field(ge=0, le=7)
+    player1_id: Optional[str] = None
+    player2_id: Optional[str] = None
+    # For doubles  
+    team_a_score: int = Field(ge=0, le=7)
+    team_b_score: int = Field(ge=0, le=7)
     team_a_players: Optional[List[str]] = None
     team_b_players: Optional[List[str]] = None
+    # Set winner tracking
+    set_winner_ids: List[str] = Field(default_factory=list)
+    is_completed: bool = False
+    completed_at: Optional[datetime] = None
 
 class MatchResult(BaseModel):
     match_id: str
     sets: List[SetResult]
     winner_ids: List[str]
     submitted_by: str
+    total_sets_played: int
+    match_completed: bool = False
+    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PlayerSetStats(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    player_id: str
+    rating_tier_id: str
+    player_group_id: Optional[str] = None
+    total_sets_won: int = 0
+    total_sets_played: int = 0
+    matches_played: int = 0
+    matches_won: int = 0
+    win_percentage: float = 0.0
+    set_win_percentage: float = 0.0
+    rank: int = 0
+    tie_breaker_points: int = 0  # For tie-breaking logic
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class LeagueStandings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_tier_id: str
+    player_group_id: Optional[str] = None
+    season_week: int
+    player_stats: List[PlayerSetStats]
+    playoff_qualification: List[str] = Field(default_factory=list)  # Top 8 player IDs
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PlayoffBracket(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_tier_id: str
+    bracket_type: Literal["single_elimination", "double_elimination"] = "single_elimination"
+    qualified_players: List[str]  # Top 8 players from regular season
+    bracket_matches: List[str] = Field(default_factory=list)  # Match IDs in bracket order
+    current_round: str = "quarterfinals"  # quarterfinals, semifinals, finals
+    champion_id: Optional[str] = None
+    completed: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class RoundRobinSchedule(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
