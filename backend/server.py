@@ -218,6 +218,68 @@ def generate_round_robin_doubles_schedule(players: List[str], total_weeks: int =
         "total_possible_partnerships": len(all_partnerships)
     }
 
+def calculate_player_rankings(player_stats: List[PlayerSetStats]) -> List[PlayerSetStats]:
+    """
+    Calculate player rankings based on:
+    1. Total sets won (primary)
+    2. Set win percentage (tie-breaker 1) 
+    3. Head-to-head record (tie-breaker 2)
+    4. Matches won (tie-breaker 3)
+    """
+    # Sort players by ranking criteria
+    sorted_players = sorted(player_stats, key=lambda p: (
+        -p.total_sets_won,           # More sets won = higher rank
+        -p.set_win_percentage,       # Better set win % = higher rank
+        -p.matches_won,              # More matches won = higher rank
+        -p.tie_breaker_points        # Tie breaker points
+    ))
+    
+    # Assign ranks
+    for i, player in enumerate(sorted_players):
+        player.rank = i + 1
+        player.last_updated = datetime.now(timezone.utc)
+    
+    return sorted_players
+
+def update_player_stats_from_match(match: Dict, match_result: MatchResult) -> List[PlayerSetStats]:
+    """Update player statistics based on a completed match"""
+    updated_stats = []
+    
+    for participant_id in match["participants"]:
+        # Calculate sets won and played for this participant
+        sets_won = 0
+        sets_played = len(match_result.sets)
+        
+        for set_result in match_result.sets:
+            if participant_id in set_result.set_winner_ids:
+                sets_won += 1
+        
+        # Check if player won the match
+        match_won = 1 if participant_id in match_result.winner_ids else 0
+        
+        # Create or update player stats
+        stats = PlayerSetStats(
+            player_id=participant_id,
+            rating_tier_id=match["rating_tier_id"],
+            player_group_id=match.get("player_group_id"),
+            total_sets_won=sets_won,
+            total_sets_played=sets_played,
+            matches_played=1,
+            matches_won=match_won,
+            set_win_percentage=sets_won / sets_played if sets_played > 0 else 0.0,
+            win_percentage=match_won
+        )
+        
+        updated_stats.append(stats)
+    
+    return updated_stats
+
+def determine_playoff_qualifiers(player_stats: List[PlayerSetStats], playoff_spots: int = 8) -> List[str]:
+    """Determine which players qualify for playoffs (default top 8)"""
+    ranked_players = calculate_player_rankings(player_stats)
+    qualifiers = [player.player_id for player in ranked_players[:playoff_spots]]
+    return qualifiers
+
 def prepare_for_mongo(data):
     """Convert datetime objects to ISO strings for MongoDB storage"""
     if isinstance(data, dict):
