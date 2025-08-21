@@ -2956,6 +2956,10 @@ function App() {
             <PlayerStandings />
           </TabsContent>
 
+          <TabsContent value="profile" className="tab-content">
+            <PlayerProfile />
+          </TabsContent>
+
           <TabsContent value="chat" className="tab-content">
             <PlayerChat />
           </TabsContent>
