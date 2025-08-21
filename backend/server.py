@@ -1708,6 +1708,318 @@ async def get_match_toss(match_id: str):
     
     return PreMatchToss(**parse_from_mongo(toss))
 
+# Set-by-Set Scoring Routes  
+@api_router.post("/matches/{match_id}/score-set")
+async def update_set_score(match_id: str, set_score: SetScoreUpdate, updated_by: str):
+    """Update score for a specific set"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if updated_by not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can update scores")
+    
+    # Create or update the set result
+    existing_set = await db.set_results.find_one({
+        "match_id": match_id,
+        "set_number": set_score.set_number
+    })
+    
+    set_data = set_score.dict()
+    set_data["match_id"] = match_id
+    
+    # Determine set winner if set is complete
+    if set_score.is_set_complete:
+        set_winner_ids = []
+        
+        if match["format"] == LeagueFormat.SINGLES:
+            if set_score.player1_score and set_score.player2_score:
+                if set_score.player1_score > set_score.player2_score:
+                    # Need to map to actual player IDs
+                    set_winner_ids = [match["participants"][0]]  # Assuming first participant is player1
+                else:
+                    set_winner_ids = [match["participants"][1]]
+        
+        elif match["format"] == LeagueFormat.DOUBLES:
+            if set_score.team_a_score and set_score.team_b_score:
+                if set_score.team_a_score > set_score.team_b_score:
+                    set_winner_ids = match["participants"][:2]  # First two are team A
+                else:
+                    set_winner_ids = match["participants"][2:]  # Last two are team B
+        
+        set_data["set_winner_ids"] = set_winner_ids
+        set_data["completed_at"] = datetime.now(timezone.utc)
+    
+    if existing_set:
+        await db.set_results.update_one(
+            {"match_id": match_id, "set_number": set_score.set_number},
+            {"$set": set_data}
+        )
+    else:
+        set_obj = SetResult(**set_data)
+        set_mongo = prepare_for_mongo(set_obj.dict())
+        await db.set_results.insert_one(set_mongo)
+    
+    # Add system message to match chat
+    if match["chat_thread_id"]:
+        score_text = ""
+        if match["format"] == LeagueFormat.SINGLES:
+            score_text = f"Set {set_score.set_number}: {set_score.player1_score}-{set_score.player2_score}"
+        else:
+            score_text = f"Set {set_score.set_number}: Team A {set_score.team_a_score}-{set_score.team_b_score} Team B"
+        
+        status_text = " ✅ SET COMPLETE" if set_score.is_set_complete else " (in progress)"
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"🎾 Score Update\n{score_text}{status_text}"
+        )
+    
+    return {"message": "Set score updated successfully"}
+
+@api_router.post("/matches/{match_id}/submit-final-score")
+async def submit_match_result(match_id: str, result: MatchScoreSubmission, submitted_by: str):
+    """Submit final match result with all set scores"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if submitted_by not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can submit results")
+    
+    # Process each set result
+    processed_sets = []
+    for set_update in result.sets:
+        set_data = set_update.dict()
+        set_data["match_id"] = match_id
+        
+        # Determine set winner
+        if set_update.is_set_complete:
+            set_winner_ids = []
+            
+            if match["format"] == LeagueFormat.SINGLES:
+                if set_update.player1_score > set_update.player2_score:
+                    set_winner_ids = [match["participants"][0]]
+                else:
+                    set_winner_ids = [match["participants"][1]]
+            
+            elif match["format"] == LeagueFormat.DOUBLES:
+                if set_update.team_a_score > set_update.team_b_score:
+                    set_winner_ids = match["participants"][:2]
+                else:
+                    set_winner_ids = match["participants"][2:]
+            
+            set_data["set_winner_ids"] = set_winner_ids
+            set_data["completed_at"] = datetime.now(timezone.utc)
+        
+        set_obj = SetResult(**set_data)
+        processed_sets.append(set_obj)
+        
+        # Save set result
+        set_mongo = prepare_for_mongo(set_obj.dict())
+        await db.set_results.update_one(
+            {"match_id": match_id, "set_number": set_update.set_number},
+            {"$set": set_mongo},
+            upsert=True
+        )
+    
+    # Create match result record
+    match_result = MatchResult(
+        match_id=match_id,
+        sets=processed_sets,
+        winner_ids=result.match_winner_ids,
+        submitted_by=submitted_by,
+        total_sets_played=len(processed_sets),
+        match_completed=True
+    )
+    
+    match_result_mongo = prepare_for_mongo(match_result.dict())
+    await db.match_results.insert_one(match_result_mongo)
+    
+    # Update match status to PLAYED
+    await db.matches.update_one(
+        {"id": match_id},
+        {"$set": {"status": MatchStatus.PLAYED}}
+    )
+    
+    # Update player statistics
+    updated_stats = update_player_stats_from_match(match, match_result)
+    
+    for stats in updated_stats:
+        # Get existing stats for this player
+        existing_stats = await db.player_set_stats.find_one({
+            "player_id": stats.player_id,
+            "rating_tier_id": stats.rating_tier_id
+        })
+        
+        if existing_stats:
+            # Update cumulative stats
+            await db.player_set_stats.update_one(
+                {"player_id": stats.player_id, "rating_tier_id": stats.rating_tier_id},
+                {
+                    "$inc": {
+                        "total_sets_won": stats.total_sets_won,
+                        "total_sets_played": stats.total_sets_played,
+                        "matches_played": stats.matches_played,
+                        "matches_won": stats.matches_won
+                    },
+                    "$set": {"last_updated": stats.last_updated}
+                }
+            )
+            
+            # Recalculate percentages
+            updated_record = await db.player_set_stats.find_one({
+                "player_id": stats.player_id,
+                "rating_tier_id": stats.rating_tier_id
+            })
+            
+            new_set_win_pct = updated_record["total_sets_won"] / updated_record["total_sets_played"] if updated_record["total_sets_played"] > 0 else 0.0
+            new_match_win_pct = updated_record["matches_won"] / updated_record["matches_played"] if updated_record["matches_played"] > 0 else 0.0
+            
+            await db.player_set_stats.update_one(
+                {"player_id": stats.player_id, "rating_tier_id": stats.rating_tier_id},
+                {
+                    "$set": {
+                        "set_win_percentage": new_set_win_pct,
+                        "win_percentage": new_match_win_pct
+                    }
+                }
+            )
+        else:
+            # Create new stats record
+            stats.set_win_percentage = stats.total_sets_won / stats.total_sets_played if stats.total_sets_played > 0 else 0.0
+            stats_mongo = prepare_for_mongo(stats.dict())
+            await db.player_set_stats.insert_one(stats_mongo)
+    
+    # Add final score to match chat
+    if match["chat_thread_id"]:
+        winner_names = []
+        for winner_id in result.match_winner_ids:
+            user = await db.users.find_one({"id": winner_id})
+            if user:
+                winner_names.append(user["name"])
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"🏆 **Match Complete!**\n" +
+            f"🎉 Winner(s): {', '.join(winner_names)}\n" +
+            f"📊 Total sets played: {len(processed_sets)}\n\n" +
+            f"Great match everyone! 🎾"
+        )
+    
+    return {
+        "message": "Match result submitted successfully",
+        "match_result": match_result
+    }
+
+@api_router.get("/matches/{match_id}/score")
+async def get_match_score(match_id: str):
+    """Get current score for a match"""
+    sets = await db.set_results.find({"match_id": match_id}).sort("set_number", 1).to_list(100)
+    
+    if not sets:
+        return {"message": "No scores recorded yet", "sets": []}
+    
+    return {
+        "sets": [SetResult(**parse_from_mongo(set_result)) for set_result in sets],
+        "total_sets": len(sets)
+    }
+
+# Rankings and Standings Routes
+@api_router.get("/rating-tiers/{tier_id}/standings")
+async def get_tier_standings(tier_id: str, group_id: Optional[str] = None):
+    """Get current standings for a rating tier"""
+    query = {"rating_tier_id": tier_id}
+    if group_id:
+        query["player_group_id"] = group_id
+    
+    stats = await db.player_set_stats.find(query).to_list(100)
+    
+    if not stats:
+        return {"message": "No standings available yet", "standings": []}
+    
+    # Convert to PlayerSetStats objects and calculate rankings
+    player_stats = [PlayerSetStats(**parse_from_mongo(stat)) for stat in stats]
+    ranked_players = calculate_player_rankings(player_stats)
+    
+    return {
+        "standings": ranked_players,
+        "total_players": len(ranked_players),
+        "last_updated": datetime.now(timezone.utc)
+    }
+
+@api_router.get("/rating-tiers/{tier_id}/playoff-qualifiers")
+async def get_playoff_qualifiers(tier_id: str, playoff_spots: int = 8):
+    """Get players qualified for playoffs"""
+    stats = await db.player_set_stats.find({"rating_tier_id": tier_id}).to_list(100)
+    
+    if len(stats) < playoff_spots:
+        raise HTTPException(status_code=400, detail=f"Not enough players for playoffs. Need {playoff_spots}, have {len(stats)}")
+    
+    player_stats = [PlayerSetStats(**parse_from_mongo(stat)) for stat in stats]
+    qualifiers = determine_playoff_qualifiers(player_stats, playoff_spots)
+    
+    # Get qualifier details
+    qualifier_details = []
+    for player_id in qualifiers:
+        user = await db.users.find_one({"id": player_id})
+        stats = next((s for s in player_stats if s.player_id == player_id), None)
+        
+        if user and stats:
+            qualifier_details.append({
+                "player_id": player_id,
+                "player_name": user["name"],
+                "rank": stats.rank,
+                "total_sets_won": stats.total_sets_won,
+                "set_win_percentage": stats.set_win_percentage,
+                "matches_played": stats.matches_played
+            })
+    
+    return {
+        "qualifiers": qualifier_details,
+        "playoff_spots": playoff_spots,
+        "total_eligible_players": len(stats)
+    }
+
+@api_router.post("/rating-tiers/{tier_id}/create-playoff-bracket")
+async def create_playoff_bracket(tier_id: str, playoff_spots: int = 8, created_by: str = None):
+    """Create playoff bracket for top players"""
+    # Get tier info to verify it uses Team League Format
+    tier = await db.rating_tiers.find_one({"id": tier_id})
+    if not tier:
+        raise HTTPException(status_code=404, detail="Rating tier not found")
+    
+    if tier["competition_system"] != CompetitionSystem.TEAM_LEAGUE:
+        raise HTTPException(status_code=400, detail="Playoffs only available for Team League Format")
+    
+    # Check if bracket already exists
+    existing_bracket = await db.playoff_brackets.find_one({"rating_tier_id": tier_id})
+    if existing_bracket:
+        return PlayoffBracket(**parse_from_mongo(existing_bracket))
+    
+    # Get qualifiers
+    stats = await db.player_set_stats.find({"rating_tier_id": tier_id}).to_list(100)
+    if len(stats) < playoff_spots:
+        raise HTTPException(status_code=400, detail=f"Not enough players for playoffs. Need {playoff_spots}, have {len(stats)}")
+    
+    player_stats = [PlayerSetStats(**parse_from_mongo(stat)) for stat in stats]
+    qualifiers = determine_playoff_qualifiers(player_stats, playoff_spots)
+    
+    # Create bracket
+    bracket = PlayoffBracket(
+        rating_tier_id=tier_id,
+        qualified_players=qualifiers
+    )
+    
+    bracket_mongo = prepare_for_mongo(bracket.dict())
+    await db.playoff_brackets.insert_one(bracket_mongo)
+    
+    return {
+        "message": "Playoff bracket created successfully",
+        "bracket": bracket,
+        "qualifiers_count": len(qualifiers)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
