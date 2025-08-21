@@ -635,16 +635,10 @@ function App() {
             <div className="tier-section">
               <h3 className="tier-title">Tier 2: Seasons for {selectedLeague.name}</h3>
               <div className="season-controls">
-                <Button 
-                  className="leagueace-button"
-                  onClick={() => {
-                    const seasonName = prompt("Enter season name:");
-                    if (seasonName) createSeason(selectedLeague.id, seasonName);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Season
-                </Button>
+                <SeasonCreator 
+                  leagueId={selectedLeague.id}
+                  onSeasonCreated={() => loadSeasons(selectedLeague.id)}
+                />
               </div>
               <div className="seasons-grid">
                 {seasons.map((season) => (
@@ -669,6 +663,11 @@ function App() {
                     </CardContent>
                   </Card>
                 ))}
+                {seasons.length === 0 && (
+                  <div className="empty-state">
+                    <p>No seasons created yet. Click "Add Season" to get started!</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
