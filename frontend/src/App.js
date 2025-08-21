@@ -2643,6 +2643,15 @@ function App() {
           setLoading(false);
           return;
         }
+        // Optional: pre-validate code so we can show league name before joining
+        try {
+          const { data: tierSummary } = await axios.get(`${API}/rating-tiers/by-code/${code}`);
+          if (tierSummary?.league_name) {
+            toast({ title: `Joining ${tierSummary.league_name}`, description: `${tierSummary.name} • Rating ${tierSummary.min_rating}-${tierSummary.max_rating}` });
+          }
+        } catch (err) {
+          /* no-op, backend will give exact reason on join */
+        }
         await axios.post(`${API}/join-by-code/${user.id}`, { join_code: code });
         await loadPlayerData();
         setShowJoinForm(false);
