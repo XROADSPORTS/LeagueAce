@@ -1423,6 +1423,7 @@ function App() {
                 >
                   <Copy className="w-3 h-3" />
                 </Button>
+                <span className="join-share-link">Share link: {`${window.location.origin}/?join=${tier.join_code}`}</span>
               </div>
               
               <div className="competition-info">
