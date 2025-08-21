@@ -1789,6 +1789,102 @@ async def get_match_toss(match_id: str):
     
     return PreMatchToss(**parse_from_mongo(toss))
 
+# Player Dashboard Data Routes
+@api_router.get("/users/{user_id}/joined-tiers")
+async def get_user_joined_tiers(user_id: str, sport_type: Optional[str] = None):
+    """Get all rating tiers the user has joined"""
+    # Find all player seats for this user
+    player_seats = await db.player_seats.find({"user_id": user_id}).to_list(100)
+    
+    if not player_seats:
+        return []
+    
+    joined_tiers = []
+    for seat in player_seats:
+        # Get the rating tier information
+        rating_tier = await db.rating_tiers.find_one({"id": seat["rating_tier_id"]})
+        if rating_tier:
+            # Get format tier to check sport type
+            format_tier = await db.format_tiers.find_one({"id": rating_tier["format_tier_id"]})
+            if format_tier:
+                # Get league information
+                league = await db.leagues.find_one({"id": format_tier["league_id"]})
+                if league and (not sport_type or league["sport_type"] == sport_type):
+                    # Add seat status and group info
+                    tier_data = rating_tier.copy()
+                    tier_data["seat_status"] = seat["status"]
+                    tier_data["player_group_id"] = seat.get("player_group_id")
+                    tier_data["joined_at"] = seat["joined_at"]
+                    tier_data["league_name"] = league["name"]
+                    tier_data["format_name"] = format_tier["name"]
+                    tier_data["sport_type"] = league["sport_type"]
+                    
+                    # Get current player count
+                    current_players = await db.player_seats.count_documents({
+                        "rating_tier_id": rating_tier["id"],
+                        "status": PlayerSeatStatus.ACTIVE
+                    })
+                    tier_data["current_players"] = current_players
+                    
+                    joined_tiers.append(tier_data)
+    
+    return joined_tiers
+
+@api_router.get("/users/{user_id}/standings")
+async def get_user_standings(user_id: str, sport_type: Optional[str] = None):
+    """Get user's standings across all joined leagues"""
+    # Get user's player stats
+    player_stats = await db.player_set_stats.find({"player_id": user_id}).to_list(100)
+    
+    standings = []
+    for stats in player_stats:
+        # Get rating tier info
+        rating_tier = await db.rating_tiers.find_one({"id": stats["rating_tier_id"]})
+        if rating_tier:
+            # Get format and league info
+            format_tier = await db.format_tiers.find_one({"id": rating_tier["format_tier_id"]})
+            if format_tier:
+                league = await db.leagues.find_one({"id": format_tier["league_id"]})
+                if league and (not sport_type or league["sport_type"] == sport_type):
+                    standing_data = {
+                        "league_name": league["name"],
+                        "format_name": format_tier["name"],
+                        "tier_name": rating_tier["name"],
+                        "rank": stats["rank"],
+                        "total_sets_won": stats["total_sets_won"],
+                        "total_sets_played": stats["total_sets_played"],
+                        "set_win_percentage": stats["set_win_percentage"],
+                        "matches_played": stats["matches_played"],
+                        "matches_won": stats["matches_won"],
+                        "win_percentage": stats["win_percentage"]
+                    }
+                    standings.append(standing_data)
+    
+    return standings
+
+@api_router.get("/users/{user_id}/matches")
+async def get_user_matches(user_id: str, sport_type: Optional[str] = None):
+    """Get user's upcoming matches"""
+    # Find matches where user is a participant
+    matches = await db.matches.find({"participants": user_id}).to_list(100)
+    
+    user_matches = []
+    for match in matches:
+        # Get rating tier and league info
+        rating_tier = await db.rating_tiers.find_one({"id": match["rating_tier_id"]})
+        if rating_tier:
+            format_tier = await db.format_tiers.find_one({"id": rating_tier["format_tier_id"]})
+            if format_tier:
+                league = await db.leagues.find_one({"id": format_tier["league_id"]})
+                if league and (not sport_type or league["sport_type"] == sport_type):
+                    match_data = match.copy()
+                    match_data["league_name"] = league["name"]
+                    match_data["format_name"] = format_tier["name"]
+                    match_data["tier_name"] = rating_tier["name"]
+                    user_matches.append(match_data)
+    
+    return user_matches
+
 # Set-by-Set Scoring Routes  
 @api_router.post("/matches/{match_id}/score-set")
 async def update_set_score(match_id: str, set_score: SetScoreUpdate, updated_by: str):
