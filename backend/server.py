@@ -1332,6 +1332,59 @@ async def join_by_code(user_id: str, request: JoinByCodeRequest):
         "rating_tier": RatingTier(**parse_from_mongo(rating_tier))
     }
 
+@api_router.post("/join-requests", response_model=JoinRequest)
+async def create_join_request(req: JoinRequestCreate):
+    # Prevent duplicates
+    existing = await db.join_requests.find_one({"user_id": req.user_id, "rating_tier_id": req.rating_tier_id, "status": JoinRequestStatus.PENDING})
+    if existing:
+        return JoinRequest(**parse_from_mongo(existing))
+    jr = JoinRequest(**req.dict())
+    await db.join_requests.insert_one(prepare_for_mongo(jr.dict()))
+    return jr
+
+@api_router.get("/join-requests")
+async def list_join_requests(manager_id: str):
+    # Collect all rating tiers managed by this manager
+    leagues = await db.leagues.find({"created_by": manager_id}).to_list(1000)
+    league_ids = [l["id"] for l in leagues]
+    format_tiers = await db.format_tiers.find({"league_id": {"$in": league_ids}}).to_list(1000)
+    format_ids = [f["id"] for f in format_tiers]
+    rating_tiers = await db.rating_tiers.find({"format_tier_id": {"$in": format_ids}}).to_list(1000)
+    rating_tier_ids = [rt["id"] for rt in rating_tiers]
+    tier_by_id = {rt["id"]: rt for rt in rating_tiers}
+
+    requests = await db.join_requests.find({
+        "rating_tier_id": {"$in": rating_tier_ids},
+        "status": JoinRequestStatus.PENDING
+    }).to_list(1000)
+
+    results = []
+    for r in requests:
+        user = await db.users.find_one({"id": r["user_id"]})
+        tier = tier_by_id.get(r["rating_tier_id"]) or await db.rating_tiers.find_one({"id": r["rating_tier_id"]})
+        league_name = None
+        if tier:
+            fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")})
+            if fmt:
+                league = await db.leagues.find_one({"id": fmt.get("league_id")})
+                league_name = league.get("name") if league else None
+        results.append({
+            "id": r["id"],
+            "user_id": r["user_id"],
+            "user_name": user.get("name") if user else None,
+            "user_email": user.get("email") if user else None,
+            "user_rating": user.get("rating_level") if user else None,
+            "rating_tier_id": r["rating_tier_id"],
+            "rating_tier_name": tier.get("name") if tier else None,
+            "join_code": tier.get("join_code") if tier else None,
+            "league_name": league_name,
+            "status": r.get("status"),
+            "message": r.get("message"),
+            "created_at": r.get("created_at"),
+        })
+
+    return {"requests": results}
+
 # Continue with existing routes but updated for new structure...
 # (Chat routes, match routes, etc. would continue here)
 
