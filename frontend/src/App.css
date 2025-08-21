@@ -1497,3 +1497,39 @@ body {
   color: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
+
+/* Instruction Card Styles */
+.tier-instructions {
+  margin-bottom: 2rem;
+}
+
+.instruction-card {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.instruction-content {
+  padding: 1.5rem;
+}
+
+.instruction-content h4 {
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.setup-steps {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.setup-steps li {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.setup-steps strong {
+  color: rgba(255, 255, 255, 0.95);
+}
