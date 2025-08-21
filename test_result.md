@@ -136,11 +136,11 @@ backend:
 
   - task: "Player Join-by-Code Functionality"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
@@ -151,6 +151,9 @@ backend:
       - working: false
         agent: "main"
         comment: "Front-end normalizes code to uppercase and validates length; backend normalizes too. Need to retest end-to-end and inspect backend logs for POST /api/join-by-code/{user_id}."
+      - working: true
+        agent: "testing"
+        comment: "🎉 PLAYER JOIN-BY-CODE END-TO-END TESTING COMPLETE - Comprehensive testing confirms functionality is working perfectly! Complete workflow tested: ✅ League creation (Tennis) → ✅ Format tier creation (Singles) → ✅ Rating tier creation (4.0, min_rating=3.5, max_rating=4.5) with join code generation → ✅ Player creation (rating 4.0) → ✅ Join by code with trim+uppercase normalization working → ✅ Seat created with Active status → ✅ GET /users/{user_id}/joined-tiers returns the tier correctly. Negative cases tested: ✅ Invalid code returns 404, ✅ Already joined returns 400, ✅ Out-of-range rating (5.5) returns 400 with proper error message. All 12 test cases passed (100% success rate). The join-by-code functionality is fully operational and ready for production use."
 
   - task: "Profile Picture Management"
     implemented: true
