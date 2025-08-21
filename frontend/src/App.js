@@ -1290,39 +1290,57 @@ function App() {
                 <h5>📋 Player Join Code</h5>
                 <div className="join-code-display">
                   <code className="join-code">{tier.join_code}</code>
-                  <Button 
-                    size="icon" 
-                    variant="outline" 
-                    className="blue-outline-button" 
-                    title="Copy Code"
-                    onClick={() => {
-                      navigator.clipboard.writeText(tier.join_code);
-                      toast({ title: "Copied!", description: "Join code copied to clipboard" });
-                    }}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="blue-outline-button" 
-                    onClick={async () => {
-                      const url = `${window.location.origin}/?join=${tier.join_code}`;
-                      try {
-                        if (navigator.share) {
-                          await navigator.share({ title: 'Join my League', text: `Join ${tier.name} on LeagueAce`, url });
-                        } else {
+                  <div className="qr-actions">
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      className="blue-outline-button" 
+                      title="Copy Code"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tier.join_code);
+                        toast({ title: "Copied!", description: "Join code copied to clipboard" });
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <div className="qr-popover">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="blue-outline-button"
+                        onClick={(e) => {
+                          const el = e.currentTarget.nextSibling;
+                          if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+                        }}
+                      >
+                        QR
+                      </Button>
+                      <div className="qr-card" style={{ display: 'none' }}>
+                        <QRCode value={`${window.location.origin}/?join=${tier.join_code}`} size={128} bgColor="transparent" fgColor="#ffffff" />
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="blue-outline-button" 
+                      onClick={async () => {
+                        const url = `${window.location.origin}/?join=${tier.join_code}`;
+                        try {
+                          if (navigator.share) {
+                            await navigator.share({ title: 'Join my League', text: `Join ${tier.name} on LeagueAce`, url });
+                          } else {
+                            await navigator.clipboard.writeText(url);
+                            toast({ title: "Share link copied!", description: url });
+                          }
+                        } catch (err) {
                           await navigator.clipboard.writeText(url);
                           toast({ title: "Share link copied!", description: url });
                         }
-                      } catch (err) {
-                        await navigator.clipboard.writeText(url);
-                        toast({ title: "Share link copied!", description: url });
-                      }
-                    }}
-                  >
-                    Share Join Link
-                  </Button>
+                      }}
+                    >
+                      Share Join Link
+                    </Button>
+                  </div>
                 </div>
                 <p className="join-instructions">Share this code with players to join this rating tier</p>
               </div>
