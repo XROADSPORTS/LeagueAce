@@ -642,7 +642,7 @@ function App() {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="leagueace-button"
+                  className="btn-primary-ios"
                   disabled={loading || !seasonData.name.trim()}
                 >
                   {loading ? "Creating..." : "Create Season"}
