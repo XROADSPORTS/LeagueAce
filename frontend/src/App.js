@@ -1290,15 +1290,16 @@ function App() {
                 <div className="join-code-display">
                   <code className="join-code">{tier.join_code}</code>
                   <Button 
-                    size="sm" 
+                    size="icon" 
                     variant="outline" 
                     className="blue-outline-button" 
+                    title="Copy Code"
                     onClick={() => {
                       navigator.clipboard.writeText(tier.join_code);
                       toast({ title: "Copied!", description: "Join code copied to clipboard" });
                     }}
                   >
-                    Copy Code
+                    <Copy className="w-4 h-4" />
                   </Button>
                   <Button 
                     size="sm" 
