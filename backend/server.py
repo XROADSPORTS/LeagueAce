@@ -1210,6 +1210,376 @@ async def get_group_matches(group_id: str, week_number: Optional[int] = None):
     matches = await db.matches.find(query).to_list(100)
     return [Match(**parse_from_mongo(match)) for match in matches]
 
+# Match Scheduling and Confirmation Routes
+@api_router.post("/matches/{match_id}/propose-time")
+async def propose_match_time(match_id: str, proposal: TimeProposalRequest, proposed_by: str):
+    """Propose a time and venue for a match"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if proposed_by not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can propose times")
+    
+    proposal_obj = MatchTimeProposal(
+        match_id=match_id,
+        proposed_by=proposed_by,
+        proposed_datetime=proposal.proposed_datetime,
+        venue_name=proposal.venue_name,
+        venue_address=proposal.venue_address,
+        notes=proposal.notes
+    )
+    
+    proposal_mongo = prepare_for_mongo(proposal_obj.dict())
+    await db.match_time_proposals.insert_one(proposal_mongo)
+    
+    # Add system message to match chat
+    if match["chat_thread_id"]:
+        user = await db.users.find_one({"id": proposed_by})
+        user_name = user["name"] if user else "Unknown"
+        
+        venue_text = f" at {proposal.venue_name}" if proposal.venue_name else ""
+        notes_text = f"\n📝 Notes: {proposal.notes}" if proposal.notes else ""
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"⏰ {user_name} proposed match time:\n" +
+            f"🗓️ {proposal.proposed_datetime.strftime('%A, %B %d at %I:%M %p')}" +
+            venue_text + notes_text +
+            "\n\nReact with 👍 to vote for this time!"
+        )
+    
+    # Notify other participants
+    for participant_id in match["participants"]:
+        if participant_id != proposed_by:
+            notification = NotificationCreate(
+                user_id=participant_id,
+                title="Match Time Proposed",
+                message=f"New time proposed for your Week {match['week_number']} match",
+                type=NotificationType.MATCH_SCHEDULED,
+                related_entity_id=match_id
+            )
+            await create_notification(notification)
+    
+    return proposal_obj
+
+@api_router.get("/matches/{match_id}/time-proposals")
+async def get_match_time_proposals(match_id: str):
+    """Get all time proposals for a match"""
+    proposals = await db.match_time_proposals.find({"match_id": match_id}).to_list(100)
+    return [MatchTimeProposal(**parse_from_mongo(proposal)) for proposal in proposals]
+
+@api_router.post("/matches/{match_id}/vote-time/{proposal_id}")
+async def vote_for_time_proposal(match_id: str, proposal_id: str, voter_id: str):
+    """Vote for a time proposal"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if voter_id not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can vote")
+    
+    proposal = await db.match_time_proposals.find_one({"id": proposal_id})
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Time proposal not found")
+    
+    # Add voter to the proposal if not already voted
+    if voter_id not in proposal.get("votes", []):
+        await db.match_time_proposals.update_one(
+            {"id": proposal_id},
+            {"$push": {"votes": voter_id}}
+        )
+        
+        # Check if we have majority vote (more than half of participants)
+        updated_proposal = await db.match_time_proposals.find_one({"id": proposal_id})
+        votes_needed = len(match["participants"]) // 2 + 1
+        
+        if len(updated_proposal["votes"]) >= votes_needed:
+            # Confirm the match with this time
+            await db.matches.update_one(
+                {"id": match_id},
+                {
+                    "$set": {
+                        "scheduled_at": proposal["proposed_datetime"],
+                        "venue_name": proposal["venue_name"],
+                        "venue_address": proposal["venue_address"],
+                        "status": MatchStatus.CONFIRMED
+                    }
+                }
+            )
+            
+            # Create player confirmations for all participants
+            for participant_id in match["participants"]:
+                confirmation_obj = PlayerConfirmation(
+                    match_id=match_id,
+                    player_id=participant_id,
+                    status=PlayerConfirmationStatus.PENDING
+                )
+                confirmation_mongo = prepare_for_mongo(confirmation_obj.dict())
+                await db.player_confirmations.insert_one(confirmation_mongo)
+            
+            # Add system message
+            if match["chat_thread_id"]:
+                await create_system_message(
+                    match["chat_thread_id"],
+                    f"🎉 Match confirmed!\n" +
+                    f"📅 {proposal['proposed_datetime'].strftime('%A, %B %d at %I:%M %p')}\n" +
+                    f"📍 {proposal['venue_name'] or 'Venue TBD'}\n\n" +
+                    f"Please confirm your attendance!"
+                )
+    
+    return {"message": "Vote recorded successfully"}
+
+@api_router.post("/matches/{match_id}/confirm")
+async def confirm_match_participation(match_id: str, confirmation: PlayerConfirmationRequest, player_id: str):
+    """Confirm or decline match participation"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if player_id not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can confirm")
+    
+    # Update or create confirmation
+    existing_confirmation = await db.player_confirmations.find_one({
+        "match_id": match_id,
+        "player_id": player_id
+    })
+    
+    if existing_confirmation:
+        await db.player_confirmations.update_one(
+            {"match_id": match_id, "player_id": player_id},
+            {
+                "$set": {
+                    "status": confirmation.status,
+                    "notes": confirmation.notes,
+                    "response_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+    else:
+        confirmation_obj = PlayerConfirmation(
+            match_id=match_id,
+            player_id=player_id,
+            status=confirmation.status,
+            notes=confirmation.notes,
+            response_at=datetime.now(timezone.utc)
+        )
+        confirmation_mongo = prepare_for_mongo(confirmation_obj.dict())
+        await db.player_confirmations.insert_one(confirmation_mongo)
+    
+    # Add system message to chat
+    if match["chat_thread_id"]:
+        user = await db.users.find_one({"id": player_id})
+        user_name = user["name"] if user else "Unknown"
+        status_emoji = "✅" if confirmation.status == PlayerConfirmationStatus.ACCEPTED else "❌"
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"{status_emoji} {user_name} {confirmation.status.lower()} the match" +
+            (f"\n💬 {confirmation.notes}" if confirmation.notes else "")
+        )
+    
+    return {"message": f"Match participation {confirmation.status.lower()}"}
+
+@api_router.get("/matches/{match_id}/confirmations")
+async def get_match_confirmations(match_id: str):
+    """Get all player confirmations for a match"""
+    confirmations = await db.player_confirmations.find({"match_id": match_id}).to_list(100)
+    return [PlayerConfirmation(**parse_from_mongo(confirmation)) for confirmation in confirmations]
+
+# Substitute Management Routes
+@api_router.post("/matches/{match_id}/request-substitute")
+async def request_substitute(match_id: str, request: SubstituteRequestCreate, requested_by: str):
+    """Request a substitute for a match"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if request.original_player_id not in match["participants"]:
+        raise HTTPException(status_code=400, detail="Original player is not in this match")
+    
+    # Check if requesting player has permission (original player or league manager)
+    if requested_by != request.original_player_id:
+        user = await db.users.find_one({"id": requested_by})
+        if not user or user["role"] != UserRole.LEAGUE_MANAGER:
+            raise HTTPException(status_code=403, detail="Only the player or league manager can request substitute")
+    
+    substitute_request_obj = SubstituteRequest(
+        match_id=match_id,
+        original_player_id=request.original_player_id,
+        requested_by=requested_by,
+        reason=request.reason
+    )
+    
+    substitute_mongo = prepare_for_mongo(substitute_request_obj.dict())
+    await db.substitute_requests.insert_one(substitute_mongo)
+    
+    # Add system message to chat
+    if match["chat_thread_id"]:
+        original_user = await db.users.find_one({"id": request.original_player_id})
+        original_name = original_user["name"] if original_user else "Unknown"
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"🔄 Substitute needed for {original_name}\n" +
+            f"📋 Reason: {request.reason}\n\n" +
+            f"Any available players can volunteer!"
+        )
+    
+    return substitute_request_obj
+
+@api_router.get("/matches/{match_id}/substitute-requests")
+async def get_substitute_requests(match_id: str):
+    """Get all substitute requests for a match"""
+    requests = await db.substitute_requests.find({"match_id": match_id}).to_list(100)
+    return [SubstituteRequest(**parse_from_mongo(request)) for request in requests]
+
+@api_router.post("/substitute-requests/{request_id}/approve")
+async def approve_substitute(request_id: str, approval: SubstituteApproval, approved_by: str):
+    """Approve a substitute player"""
+    substitute_request = await db.substitute_requests.find_one({"id": request_id})
+    if not substitute_request:
+        raise HTTPException(status_code=404, detail="Substitute request not found")
+    
+    match = await db.matches.find_one({"id": substitute_request["match_id"]})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Check if approver has permission (league manager or match participants)
+    approver = await db.users.find_one({"id": approved_by})
+    if (not approver or 
+        (approver["role"] != UserRole.LEAGUE_MANAGER and approved_by not in match["participants"])):
+        raise HTTPException(status_code=403, detail="Insufficient permissions to approve substitute")
+    
+    # Update substitute request
+    await db.substitute_requests.update_one(
+        {"id": request_id},
+        {
+            "$set": {
+                "substitute_player_id": approval.substitute_player_id,
+                "approved_by": approved_by,
+                "status": SubstituteRequestStatus.FILLED
+            }
+        }
+    )
+    
+    # Update match participants
+    new_participants = [
+        approval.substitute_player_id if p == substitute_request["original_player_id"] else p
+        for p in match["participants"]
+    ]
+    
+    await db.matches.update_one(
+        {"id": substitute_request["match_id"]},
+        {"$set": {"participants": new_participants}}
+    )
+    
+    # Add substitute to match chat
+    if match["chat_thread_id"]:
+        # Add substitute to chat thread
+        substitute_member = ChatThreadMember(
+            thread_id=match["chat_thread_id"],
+            user_id=approval.substitute_player_id
+        )
+        substitute_mongo = prepare_for_mongo(substitute_member.dict())
+        await db.chat_thread_members.insert_one(substitute_mongo)
+        
+        # Update member count
+        await db.chat_threads.update_one(
+            {"id": match["chat_thread_id"]},
+            {"$inc": {"member_count": 1}}
+        )
+        
+        # Add system message
+        substitute_user = await db.users.find_one({"id": approval.substitute_player_id})
+        original_user = await db.users.find_one({"id": substitute_request["original_player_id"]})
+        
+        substitute_name = substitute_user["name"] if substitute_user else "Unknown"
+        original_name = original_user["name"] if original_user else "Unknown"
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"✅ {substitute_name} will substitute for {original_name}\n" +
+            f"Welcome to the match chat!"
+        )
+    
+    return {"message": "Substitute approved successfully"}
+
+# Pre-Match Toss Routes
+@api_router.post("/matches/{match_id}/toss")
+async def conduct_pre_match_toss(match_id: str, toss_request: TossRequest, initiated_by: str):
+    """Conduct a digital coin toss for serve/court selection"""
+    match = await db.matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    if initiated_by not in match["participants"]:
+        raise HTTPException(status_code=403, detail="Only match participants can initiate toss")
+    
+    if match.get("toss_completed"):
+        raise HTTPException(status_code=400, detail="Toss already completed for this match")
+    
+    # Randomly select winner
+    import random
+    winner_id = random.choice(match["participants"])
+    
+    # Randomly select what they get to choose (serve/return or court side)
+    toss_choice = random.choice([TossResult.SERVE, TossResult.COURT_SIDE_A])
+    
+    # Create toss record
+    toss_obj = PreMatchToss(
+        match_id=match_id,
+        initiated_by=initiated_by,
+        winner_id=winner_id,
+        choice=toss_choice
+    )
+    
+    toss_mongo = prepare_for_mongo(toss_obj.dict())
+    await db.pre_match_tosses.insert_one(toss_mongo)
+    
+    # Update match
+    await db.matches.update_one(
+        {"id": match_id},
+        {
+            "$set": {
+                "toss_completed": True,
+                "toss_winner_id": winner_id,
+                "toss_choice": toss_choice
+            }
+        }
+    )
+    
+    # Add system message to chat
+    if match["chat_thread_id"]:
+        winner_user = await db.users.find_one({"id": winner_id})
+        winner_name = winner_user["name"] if winner_user else "Unknown"
+        
+        choice_text = "serve first" if toss_choice == TossResult.SERVE else "choose court side"
+        
+        await create_system_message(
+            match["chat_thread_id"],
+            f"🪙 **Toss Result**\n" +
+            f"🎯 {winner_name} wins the toss!\n" +
+            f"🎾 Choice: {choice_text}\n\n" +
+            f"Good luck to all players!"
+        )
+    
+    return {
+        "winner_id": winner_id,
+        "choice": toss_choice,
+        "message": f"Toss completed! {winner_name} gets to {choice_text}"
+    }
+
+@api_router.get("/matches/{match_id}/toss")
+async def get_match_toss(match_id: str):
+    """Get toss result for a match"""
+    toss = await db.pre_match_tosses.find_one({"match_id": match_id})
+    if not toss:
+        raise HTTPException(status_code=404, detail="No toss found for this match")
+    
+    return PreMatchToss(**parse_from_mongo(toss))
+
 # Include the router in the main app
 app.include_router(api_router)
 
