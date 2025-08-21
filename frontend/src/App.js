@@ -2542,7 +2542,7 @@ function App() {
                   className="btn-primary-ios"
                   onClick={() => setActivePlayerTab('leagues')}
                 >
-                  <Users className="w-4 h-4 mr-2" />
+                  <span className="icon-glass-container"><Users className="w-4 h-4 mr-2" /></span>
                   View My Leagues
                 </Button>
                 <Button 
