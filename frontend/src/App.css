@@ -1665,6 +1665,11 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.join-share-link {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.8);
+}
+
 .join-code {
   background: rgba(34, 197, 94, 0.2);
   color: rgba(255, 255, 255, 0.95);
