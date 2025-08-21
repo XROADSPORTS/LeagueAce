@@ -2549,7 +2549,7 @@ function App() {
                   className="btn-primary-ios"
                   onClick={() => setActivePlayerTab('schedule')}
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
+                  <span className="icon-glass-container"><Calendar className="w-4 h-4 mr-2" /></span>
                   View Schedule
                 </Button>
                 <Button 
