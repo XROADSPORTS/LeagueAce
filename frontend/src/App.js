@@ -3276,6 +3276,9 @@ function App() {
                       <div className="join-preview">
                         <div className="preview-title">{joinPreview.league_name || 'League'}</div>
                         <div className="preview-sub">{joinPreview.name} • Rating {joinPreview.min_rating}-{joinPreview.max_rating}</div>
+                        {user && (user.rating_level < joinPreview.min_rating || user.rating_level > joinPreview.max_rating) && (
+                          <div className="join-error">Your rating {user.rating_level} is outside this tier range. Please choose a different tier or ask your manager to adjust the tier range.</div>
+                        )}
                       </div>
                     )}
                     {!joinPreview && joinPreviewError && (
