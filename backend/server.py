@@ -471,6 +471,19 @@ class PlayerSeat(BaseModel):
 class JoinByCodeRequest(BaseModel):
     join_code: str
 
+class JoinRequest(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    rating_tier_id: str
+    status: JoinRequestStatus = JoinRequestStatus.PENDING
+    message: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class JoinRequestCreate(BaseModel):
+    user_id: str
+    rating_tier_id: str
+    message: Optional[str] = None
+
 # Enhanced Match Models
 class Match(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
