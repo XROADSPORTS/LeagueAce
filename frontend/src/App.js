@@ -3161,6 +3161,15 @@ function App() {
                       maxLength="6"
                       required
                     />
+                    {joinPreview && (
+                      <div className="join-preview">
+                        <div className="preview-title">{joinPreview.league_name || 'League'}</div>
+                        <div className="preview-sub">{joinPreview.name} • Rating {joinPreview.min_rating}-{joinPreview.max_rating}</div>
+                      </div>
+                    )}
+                    {!joinPreview && joinPreviewError && (
+                      <div className="join-error">{joinPreviewError}</div>
+                    )}
                   </div>
                   <div className="form-actions">
                     <Button 
