@@ -207,6 +207,30 @@ frontend:
         agent: "main"
         comment: "UI shows signup options. Role-based signup flow needs testing."
 
+  - task: "Group Management UI"
+    implemented: true
+    working: "unknown"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added GroupCreatorForm and GroupManagement components with schedule generation, match creation, and week controls."
+
+  - task: "Competition System UI"
+    implemented: true
+    working: "unknown"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "UI includes dropdown for Team League Format vs Knockout System with conditional playoff spots input."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
