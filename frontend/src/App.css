@@ -1059,3 +1059,70 @@ body {
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
 }
+
+/* Group Management Styles */
+.group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.group-management {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.schedule-management {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.schedule-info {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.week-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.matches-list h5 {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.match-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.group-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Blue input width adjustments */
+.blue-input.w-32 {
+  width: 8rem;
+}
