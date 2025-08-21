@@ -835,12 +835,12 @@ class LeagueAceAPITester:
         return True
 
     def run_complete_workflow_test(self):
-        """Test the complete 4-tier league workflow"""
+        """Test the complete 4-tier league workflow including Phase 2 features"""
         print("\n" + "="*60)
         print("🚀 STARTING LEAGUEACE 4-TIER LEAGUE WORKFLOW TEST")
         print("="*60)
 
-        # Test sequence for new 4-tier structure
+        # Test sequence for new 4-tier structure with Phase 2 features
         test_methods = [
             ("Root API", self.test_root_endpoint),
             ("Create League Manager", self.test_create_league_manager),
@@ -863,6 +863,23 @@ class LeagueAceAPITester:
             ("Join by Code", self.test_join_by_code),
             ("Create Player Groups", self.test_create_player_groups),
             ("Get Rating Tier Groups", self.test_get_rating_tier_groups),
+            
+            # PHASE 2 TESTS - NEW FEATURES
+            ("Create Multiple Players for Doubles", self.test_create_multiple_players_for_doubles),
+            ("Create Doubles Format Tier", self.test_create_doubles_format_tier),
+            ("Create Doubles Rating Tier (Team League)", self.test_create_doubles_rating_tier_with_competition_system),
+            ("Create Rating Tier (Knockout System)", self.test_knockout_system_rating_tier),
+            ("Join Multiple Players to Doubles", self.test_join_multiple_players_to_doubles_tier),
+            ("Create Doubles Groups (Custom Names)", self.test_create_doubles_groups_with_custom_names),
+            ("Generate Round Robin Doubles Schedule", self.test_generate_round_robin_doubles_schedule),
+            ("Get Group Schedule", self.test_get_group_schedule),
+            ("Create Week 1 Matches", self.test_create_week_matches),
+            ("Get Group Matches", self.test_get_group_matches),
+            ("Get Week Specific Matches", self.test_get_week_specific_matches),
+            ("Player Grouping Edge Cases", self.test_player_grouping_edge_cases),
+            ("Doubles Schedule Edge Cases", self.test_doubles_schedule_edge_cases),
+            
+            # EXISTING VALIDATION TESTS
             ("Invalid Join Code", self.test_invalid_join_code),
             ("Unauthorized League Creation", self.test_unauthorized_league_creation)
         ]
