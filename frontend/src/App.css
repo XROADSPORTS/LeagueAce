@@ -1403,3 +1403,97 @@ body {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
 }
+
+/* Season Creator Form Styles */
+.season-creator-form {
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+}
+
+.season-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Tier Management Styles */
+.tier-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tier-title {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.leagues-grid,
+.seasons-grid,
+.format-tiers-grid,
+.rating-tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.league-card,
+.season-card,
+.format-tier-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.league-card.selected,
+.season-card.selected,
+.format-tier-card.selected {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.league-card:hover,
+.season-card:hover,
+.format-tier-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.season-controls,
+.format-controls,
+.rating-controls {
+  margin-bottom: 1rem;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+.sport-type-badge-blue,
+.sport-badge-blue,
+.format-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
