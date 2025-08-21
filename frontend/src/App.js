@@ -523,7 +523,7 @@ function App() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="leagueace-button" disabled={loading}>
+              <Button type="submit" className="btn-primary-ios" disabled={loading}>
                 {loading ? "Creating..." : `Create ${activeSport} League`}
               </Button>
             </CardFooter>
