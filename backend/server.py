@@ -261,7 +261,7 @@ def calculate_player_rankings(player_stats: List["PlayerSetStats"]) -> List["Pla
     
     return sorted_players
 
-def update_player_stats_from_match(match: Dict, match_result: MatchResult) -> List[PlayerSetStats]:
+def update_player_stats_from_match(match: Dict, match_result: "MatchResult") -> List["PlayerSetStats"]:
     """Update player statistics based on a completed match"""
     updated_stats = []
     
