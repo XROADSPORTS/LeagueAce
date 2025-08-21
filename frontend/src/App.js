@@ -1050,6 +1050,122 @@ function App() {
       );
     };
 
+    const GroupManagement = ({ groupId, tierId }) => {
+      const [schedule, setSchedule] = useState(null);
+      const [matches, setMatches] = useState([]);
+      const [selectedWeek, setSelectedWeek] = useState(1);
+      const [loading, setLoading] = useState(false);
+
+      const loadSchedule = async () => {
+        try {
+          const response = await axios.get(`${API}/player-groups/${groupId}/schedule`);
+          setSchedule(response.data);
+        } catch (error) {
+          // Schedule doesn't exist yet
+          setSchedule(null);
+        }
+      };
+
+      const loadMatches = async (week = selectedWeek) => {
+        try {
+          const response = await axios.get(`${API}/player-groups/${groupId}/matches?week_number=${week}`);
+          setMatches(response.data);
+        } catch (error) {
+          console.error("Error loading matches:", error);
+        }
+      };
+
+      useEffect(() => {
+        loadSchedule();
+        loadMatches();
+      }, [groupId, selectedWeek]);
+
+      const generateSchedule = async () => {
+        setLoading(true);
+        try {
+          await axios.post(`${API}/player-groups/${groupId}/generate-schedule`);
+          await loadSchedule();
+          toast.success("Round robin schedule generated!");
+        } catch (error) {
+          toast.error(error.response?.data?.detail || "Failed to generate schedule");
+        }
+        setLoading(false);
+      };
+
+      const createWeekMatches = async () => {
+        setLoading(true);
+        try {
+          await axios.post(`${API}/player-groups/${groupId}/create-matches`, {
+            player_group_id: groupId,
+            week_number: selectedWeek
+          });
+          await loadMatches();
+          toast.success(`Week ${selectedWeek} matches created!`);
+        } catch (error) {
+          toast.error(error.response?.data?.detail || "Failed to create matches");
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div className="group-management">
+          {!schedule ? (
+            <Button 
+              size="sm" 
+              className="leagueace-button"
+              onClick={generateSchedule}
+              disabled={loading}
+            >
+              {loading ? "Generating..." : "Generate Round Robin Schedule"}
+            </Button>
+          ) : (
+            <div className="schedule-management">
+              <div className="schedule-info">
+                <Badge variant="outline">
+                  {schedule.total_weeks} weeks, {schedule.matches_per_week} matches/week
+                </Badge>
+              </div>
+              
+              <div className="week-controls">
+                <Select value={selectedWeek.toString()} onValueChange={(value) => setSelectedWeek(parseInt(value))}>
+                  <SelectTrigger className="blue-input w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...Array(schedule.total_weeks)].map((_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        Week {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button 
+                  size="sm" 
+                  className="leagueace-button"
+                  onClick={createWeekMatches}
+                  disabled={loading || matches.length > 0}
+                >
+                  {loading ? "Creating..." : `Create Week ${selectedWeek} Matches`}
+                </Button>
+              </div>
+
+              {matches.length > 0 && (
+                <div className="matches-list">
+                  <h5>Week {selectedWeek} Matches ({matches.length})</h5>
+                  {matches.map((match) => (
+                    <Badge key={match.id} className="match-badge" variant="outline">
+                      {match.format} - {match.status}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
     return (
       <div className="manager-dashboard">
         <div className="dashboard-header">
