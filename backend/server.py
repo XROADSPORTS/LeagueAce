@@ -110,6 +110,26 @@ class MessageType(str, Enum):
     FILE = "file"
     SYSTEM = "system"
     ACTION = "action"
+    EMOJI = "emoji"
+    REPLY = "reply"
+
+class ReactionType(str, Enum):
+    LIKE = "👍"
+    HEART = "❤️"
+    LAUGH = "😂"
+    SURPRISE = "😮"
+    ANGRY = "😠"
+    SAD = "😢"
+    TENNIS = "🎾"
+    FIRE = "🔥"
+
+class SlashCommand(str, Enum):
+    WHEN = "/when"
+    WHERE = "/where"
+    LINEUP = "/lineup"
+    SUBS = "/subs"
+    SCORE = "/score"
+    TOSS = "/toss"
 
 # Utility functions
 def generate_join_code():
