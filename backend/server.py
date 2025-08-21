@@ -648,6 +648,9 @@ class ChatThread(BaseModel):
     member_count: int = 0
     pinned_message_ids: List[str] = Field(default_factory=list)
     last_message_at: Optional[datetime] = None
+    unread_count: int = 0
+    is_archived: bool = False
+    moderation_settings: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ChatThreadCreate(BaseModel):
@@ -665,8 +668,14 @@ class ChatMessage(BaseModel):
     type: MessageType = MessageType.TEXT
     reply_to_message_id: Optional[str] = None
     attachments: List[str] = Field(default_factory=list)
-    reactions: Dict[str, bool] = Field(default_factory=dict)
+    reactions: Dict[str, List[str]] = Field(default_factory=dict)  # reaction_type -> list of user_ids
+    mentions: List[str] = Field(default_factory=list)  # user_ids mentioned in message
+    is_pinned: bool = False
+    is_edited: bool = False
+    edited_at: Optional[datetime] = None
     action_payload: Optional[Dict] = None
+    slash_command: Optional[SlashCommand] = None
+    read_by: List[str] = Field(default_factory=list)  # user_ids who have read this message
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ChatMessageCreate(BaseModel):
@@ -680,10 +689,25 @@ class ChatMessageCreate(BaseModel):
 class ChatThreadMember(BaseModel):
     thread_id: str
     user_id: str
-    role: str = "member"  # "admin" | "member"
+    role: str = "member"  # "admin" | "moderator" | "member"
     muted: bool = False
+    notifications_enabled: bool = True
     last_read_at: Optional[datetime] = None
+    last_typing_at: Optional[datetime] = None
     joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MessageReaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    message_id: str
+    user_id: str
+    reaction_type: ReactionType
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TypingIndicator(BaseModel):
+    thread_id: str
+    user_id: str
+    user_name: str
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Other existing models...
 class Availability(BaseModel):
