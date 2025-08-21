@@ -15,6 +15,18 @@ import { toast } from "./hooks/use-toast";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Capture ?join=CODE from URL and stash for later (player flow)
+const getPendingJoinCodeFromURL = () => {
+  try {
+    const url = new URL(window.location.href);
+    const raw = url.searchParams.get('join');
+    if (!raw) return null;
+    const code = (raw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length === 6) return code;
+  } catch (_) {}
+  return null;
+};
+
 function App() {
   const [currentView, setCurrentView] = useState("signup");
   const [user, setUser] = useState(null);
