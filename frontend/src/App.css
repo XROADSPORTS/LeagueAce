@@ -600,7 +600,7 @@ body {
 }
 
 /* Buttons with blue theme */
-.leagueace-button {
+.leagueace-button, .btn-primary-ios {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border: none;
   color: white;
