@@ -1885,6 +1885,69 @@ async def get_user_matches(user_id: str, sport_type: Optional[str] = None):
     
     return user_matches
 
+# Profile Picture Management Routes
+@api_router.post("/users/{user_id}/upload-picture")
+async def upload_profile_picture(user_id: str, file: UploadFile = File(...)):
+    """Upload and update user profile picture"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Check file size (limit to 5MB)
+    if file.size > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB")
+    
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Generate unique filename
+        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+        unique_filename = f"profile_{user_id}_{int(time.time())}.{file_extension}"
+        
+        # In a real implementation, you would upload to cloud storage (S3, etc.)
+        # For now, we'll create a data URL (base64 encoded)
+        import base64
+        file_base64 = base64.b64encode(file_content).decode()
+        profile_picture_url = f"data:{file.content_type};base64,{file_base64}"
+        
+        # Update user profile
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"profile_picture": profile_picture_url}}
+        )
+        
+        # Get updated user
+        updated_user = await db.users.find_one({"id": user_id})
+        
+        return {
+            "message": "Profile picture uploaded successfully",
+            "profile_picture": profile_picture_url,
+            "user": UserProfile(**parse_from_mongo(updated_user))
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload profile picture: {str(e)}")
+
+@api_router.delete("/users/{user_id}/remove-picture")
+async def remove_profile_picture(user_id: str):
+    """Remove user profile picture"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Remove profile picture
+    await db.users.update_one(
+        {"id": user_id},
+        {"$unset": {"profile_picture": "", "photo_url": ""}}
+    )
+    
+    return {"message": "Profile picture removed successfully"}
+
 # Set-by-Set Scoring Routes  
 @api_router.post("/matches/{match_id}/score-set")
 async def update_set_score(match_id: str, set_score: SetScoreUpdate, updated_by: str):
