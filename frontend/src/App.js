@@ -257,7 +257,7 @@ function App() {
       <div className="signup-container">
         <div className="leagueace-logo">
           <img 
-            src="https://customer-assets.emergentagent.com/job_netly-sports/artifacts/92512jvn_AE260291-0518-44D4-AA45-1A273E36B765.png" 
+            src="https://customer-assets.emergentagent.com/job_courtmaster-1/artifacts/kde0l6pr_leagueAce%20combo%20logo%20with%20slogans.png" 
             alt="LeagueAce" 
             className="logo-image"
           />
@@ -265,10 +265,10 @@ function App() {
         
         <div className="signup-hero">
           <h1 className="signup-title">
-            Welcome to <span className="gradient-text-blue">LeagueAce</span>
+            <span className="gradient-text-blue">Find Your Match - On and Off the Court</span>
           </h1>
           <p className="signup-subtitle">
-            Tennis. Organized. Choose how you want to participate.
+            Choose how you want to participate in organized tennis and pickleball leagues.
           </p>
         </div>
         
