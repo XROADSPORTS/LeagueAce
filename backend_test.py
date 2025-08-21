@@ -1283,7 +1283,7 @@ class LeagueAceAPITester:
         success, response = self.run_test(
             "Get User Joined Tiers",
             "GET",
-            f"users/{self.player_id}/joined-tiers",
+            f"users/{test_player_id}/joined-tiers",
             200
         )
         
