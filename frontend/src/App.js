@@ -791,7 +791,7 @@ function App() {
                     description: "Doubles format matches - team competition"
                   })}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="icon-glass-container"><Plus className="w-4 h-4 mr-2" /></span>
                   Add Doubles
                 </Button>
                 <Button 
