@@ -725,6 +725,20 @@ function App() {
 
       return (
         <div className="four-tier-management">
+          <div className="tier-instructions">
+            <Card className="glass-card-blue instruction-card">
+              <CardContent className="instruction-content">
+                <h4>📋 4-Tier League Setup Guide</h4>
+                <ol className="setup-steps">
+                  <li><strong>Step 1:</strong> Select a League (Tier 1) to manage</li>
+                  <li><strong>Step 2:</strong> Create Seasons (Tier 2) for your league</li>
+                  <li><strong>Step 3:</strong> Add Formats (Tier 3) - Singles, Doubles, Round Robin</li>
+                  <li><strong>Step 4:</strong> Create Rating Tiers (Tier 4) - 4.0, 4.5, 5.0, etc.</li>
+                </ol>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Tier 1: League Selection */}
           <div className="tier-section">
             <h3 className="tier-title">Tier 1: Leagues</h3>
