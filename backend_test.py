@@ -1299,14 +1299,16 @@ class LeagueAceAPITester:
     
     def test_get_user_standings(self):
         """Test getting user's standings (CRITICAL BUG FIX)"""
-        if not self.player_id:
+        # Use workflow player ID if available, otherwise use regular player ID
+        test_player_id = getattr(self, 'workflow_player_id', None) or self.player_id
+        if not test_player_id:
             print("❌ Skipping - No Player ID available")
             return False
         
         success, response = self.run_test(
             "Get User Standings",
             "GET",
-            f"users/{self.player_id}/standings",
+            f"users/{test_player_id}/standings",
             200
         )
         
