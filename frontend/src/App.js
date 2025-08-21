@@ -239,7 +239,7 @@ function App() {
         <div className="sport-selection-actions">
           <Button 
             onClick={handleSportSelection}
-            className="leagueace-button"
+            className="btn-primary-ios"
             disabled={selectedSports.length === 0 || loading}
           >
             {loading ? "Setting up..." : `Continue with ${selectedSports.length} sport${selectedSports.length !== 1 ? 's' : ''}`}
