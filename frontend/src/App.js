@@ -1670,47 +1670,50 @@ function App() {
           </CardHeader>
           <CardContent>
             <div className="match-actions">
-              {match.status === 'Pending' && (
+              {match.status !== 'Played' && (
                 <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="blue-outline-button"
-                    onClick={() => setShowTimeProposal(true)}
-                  >
-                    <Clock className="w-4 h-4 mr-1" />
-                    Propose Time
-                  </Button>
-                  
-                  {timeProposals.length > 0 && (
-                    <div className="time-proposals">
-                      <h6>Time Proposals ({timeProposals.length})</h6>
-                      {timeProposals.map((proposal) => (
-                        <div key={proposal.id} className="proposal-item">
-                          <span>{new Date(proposal.proposed_datetime).toLocaleString()}</span>
-                          <Badge variant="outline">{proposal.votes?.length || 0} votes</Badge>
+                  {match.status === 'Pending' && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="blue-outline-button"
+                        onClick={() => setShowTimeProposal(true)}
+                      >
+                        <Clock className="w-4 h-4 mr-1" />
+                        Propose Time
+                      </Button>
+                      {timeProposals.length > 0 && (
+                        <div className="time-proposals">
+                          <h6>Time Proposals ({timeProposals.length})</h6>
+                          {timeProposals.map((proposal) => (
+                            <div key={proposal.id} className="proposal-item">
+                              <span>{new Date(proposal.proposed_datetime).toLocaleString()}</span>
+                              <Badge variant="outline">{proposal.votes?.length || 0} votes</Badge>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {match.status === 'Confirmed' && (
-                <>
-                  <Button 
-                    size="sm" 
-                    className="btn-primary-ios"
-                    onClick={() => setShowConfirmation(true)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Confirm Attendance
-                  </Button>
-                  
-                  {!match.toss_completed && (
-                    <TossButton matchId={match.id} onTossComplete={loadMatchDetails} />
+                      )}
+                    </>
                   )}
 
+                  {match.status === 'Confirmed' && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        className="btn-primary-ios"
+                        onClick={() => setShowConfirmation(true)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Confirm Attendance
+                      </Button>
+                      {!match.toss_completed && (
+                        <TossButton matchId={match.id} onTossComplete={loadMatchDetails} />
+                      )}
+                    </>
+                  )}
+
+                  {/* Always show scoring widget so players can enter scores after play */}
                   <ScoringInterface match={match} onScoreUpdate={loadMatchDetails} />
 
                   {tossResult && (
