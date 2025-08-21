@@ -143,6 +143,42 @@ backend:
         agent: "testing"
         comment: "✅ AUTHENTICATION FULLY FUNCTIONAL - Tested user registration, social login (Google/Apple), profile picture upload, sports preferences update, role-based access control (League Manager vs Player permissions). All endpoints working correctly with proper validation and error handling."
 
+  - task: "Player Grouping Logic"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Implemented random player assignment to groups with admin-controlled group sizes and custom naming. Includes automatic group chat creation and balanced distribution."
+
+  - task: "Round Robin Doubles Algorithm"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added advanced Round Robin Doubles logic ensuring unique partner combinations. Includes schedule generation API, match creation with chat threads, and player notifications."
+
+  - task: "Competition System Selection"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Backend models support Team League Format vs Knockout System selection with playoff spots configuration."
+
 frontend:
   - task: "4-Tier League Format UI"
     implemented: true
