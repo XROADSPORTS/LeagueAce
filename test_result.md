@@ -134,6 +134,42 @@ backend:
         agent: "testing"
         comment: "🎉 NEW 3-TIER STRUCTURE VERIFIED - Successfully tested the updated league structure matching user's exact requirements! Key results: ✅ NEW `/format-tiers` POST endpoint with `league_id` working perfectly, ✅ NEW `/leagues/{league_id}/format-tiers` GET endpoint retrieving format tiers directly from league, ✅ Join code generation for rating tiers (4.0, 4.5, 5.0) with unique codes, ✅ Competition system selection (Team League Format vs Knockout System) with playoff spots configuration, ✅ Player group creation with custom names and automatic random assignment. Fixed Pydantic forward reference issues. 46 tests run with 91.3% success rate. The user's exact structure is working: League → Format (Singles/Doubles) → Rating Tiers (4.0, 4.5, 5.0) → Player Groups. System is production-ready!"
 
+  - task: "Player Join-by-Code Functionality"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL BUG FIX VERIFIED - Player join-by-code functionality completely restored! Key results: ✅ `/join-by-code/{user_id}` endpoint working perfectly with valid join codes, ✅ NEW `/users/{user_id}/joined-tiers` endpoint working - players can now see all joined leagues in dashboard with league names, tier names, status, and player counts, ✅ `/users/{user_id}/standings` endpoint working for player rankings, ✅ `/users/{user_id}/matches` endpoint working for player matches. Fixed critical MongoDB ObjectId serialization issue in joined-tiers endpoint. Complete player journey verified: join code → see leagues in dashboard. All 7 critical tests passed (100% success rate)."
+
+  - task: "Profile Picture Management"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PROFILE PICTURE FUNCTIONALITY VERIFIED - All new profile picture features working perfectly! Key results: ✅ NEW `/users/{user_id}/upload-picture` endpoint working with actual file uploads (multipart/form-data), ✅ File validation working correctly (rejects non-image files with 400 error), ✅ File size limits enforced (5MB maximum), ✅ NEW `/users/{user_id}/remove-picture` endpoint working to remove profile pictures, ✅ Profile pictures stored as base64 data URLs and retrieved correctly. All file upload and removal workflows tested and functional."
+
+  - task: "Complete Player Dashboard Workflow"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 COMPLETE PLAYER DASHBOARD WORKFLOW VERIFIED - End-to-end player experience fully functional! Comprehensive workflow tested: ✅ League creation → Format tier creation → Rating tier with join code generation, ✅ Player creation → Player joins using code → Player sees league in dashboard, ✅ All player dashboard data endpoints return correct information (joined tiers, standings, matches), ✅ Profile picture upload and removal working, ✅ Complete integration between join-by-code system and dashboard visibility. The reported critical bug where players couldn't see joined leagues is completely resolved. Players can now successfully join leagues and access all dashboard functionality."
+
   - task: "User Authentication & Profiles"
     implemented: true
     working: true
