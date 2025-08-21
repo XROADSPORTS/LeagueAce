@@ -2847,7 +2847,39 @@ function App() {
                       {tier.competition_system}
                     </Badge>
                     <div className="league-stats">
-                      <p>Join Code: <code>{tier.join_code}</code></p>
+                      <div className="join-code-display">
+                        <span>Join Code:</span>
+                        <code>{tier.join_code}</code>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Copy Code"
+                          onClick={() => navigator.clipboard?.writeText(tier.join_code)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="blue-outline-button"
+                          onClick={async () => {
+                            const url = `${window.location.origin}/?join=${tier.join_code}`;
+                            try {
+                              if (navigator.share) {
+                                await navigator.share({ title: 'Join my League', text: `Join ${tier.name} on LeagueAce`, url });
+                              } else {
+                                await navigator.clipboard.writeText(url);
+                                toast({ title: 'Share link copied!', description: url });
+                              }
+                            } catch (err) {
+                              await navigator.clipboard.writeText(url);
+                              toast({ title: 'Share link copied!', description: url });
+                            }
+                          }}
+                        >
+                          Share
+                        </Button>
+                      </div>
                       <p>Players: {tier.current_players || 0}/{tier.max_players}</p>
                     </div>
                   </div>
