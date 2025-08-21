@@ -2465,6 +2465,41 @@ function App() {
                 <CreateLeagueForm />
               )}
             </div>
+
+            {/* Persisted Leagues list so managers always see leagues after refresh */}
+            <div className="tier-section">
+              <h3 className="tier-title">Your {activeSport} Leagues</h3>
+              <div className="leagues-grid">
+                {leagues.length === 0 ? (
+                  <Card className="glass-card-blue empty-state-card">
+                    <CardContent className="empty-state">
+                      <div className="empty-icon">🏆</div>
+                      <h4>No leagues yet</h4>
+                      <p>Create your first league to get started. It will persist and appear here after refresh.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  leagues.map((league) => (
+                    <Card 
+                      key={league.id}
+                      className={`glass-card-blue league-card ${selectedLeague?.id === league.id ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedLeague(league);
+                        setActiveManagerTab('four-tier');
+                      }}
+                    >
+                      <CardHeader>
+                        <CardTitle>{league.name}</CardTitle>
+                        <CardDescription>{league.sport_type} League</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge className="sport-type-badge-blue">{league.sport_type}</Badge>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="four-tier">
