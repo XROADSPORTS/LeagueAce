@@ -377,13 +377,16 @@ metadata:
 
 test_plan:
   current_focus:
+    - "CRITICAL BUG FIXES - COMPLETED ✅"
+    - "Player Join-by-Code Functionality - COMPLETED ✅"
+    - "Profile Picture Management - COMPLETED ✅"
+    - "Complete Player Dashboard Workflow - COMPLETED ✅"
     - "NEW 3-Tier Structure Testing - COMPLETED ✅"
     - "Format Tier Creation Testing - COMPLETED ✅"
     - "Season Creation Workflow - COMPLETED ✅"
-    - "Match Management UI"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "critical_first"
 
 agent_communication:
   - agent: "main"
