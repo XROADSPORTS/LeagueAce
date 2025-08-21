@@ -205,15 +205,18 @@ backend:
 
   - task: "Player Confirmation System"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Players can accept/decline matches, request substitutes, and add notes. Includes confirmation tracking and chat integration."
+      - working: true
+        agent: "testing"
+        comment: "✅ PLAYER CONFIRMATION SYSTEM FULLY FUNCTIONAL - Comprehensive testing completed: 1) `/matches/{match_id}/confirm` endpoint working perfectly with all confirmation statuses (Accepted, Declined, Substitute Requested), 2) Confirmation tracking working correctly with 4 confirmations created and tracked, 3) Chat message integration working with system messages for each confirmation, 4) Optional notes functionality working perfectly with custom notes for each confirmation. All confirmation workflows verified and working as designed."
 
   - task: "Substitute Management"
     implemented: true
