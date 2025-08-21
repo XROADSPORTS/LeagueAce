@@ -10,6 +10,9 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Literal, Dict, Any
 import uuid
 from datetime import datetime, timezone, date, timedelta
+
+def generate_uuid() -> str:
+    return str(uuid.uuid4())
 from enum import Enum
 import random
 import string
