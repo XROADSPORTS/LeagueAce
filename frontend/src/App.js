@@ -1513,6 +1513,460 @@ function App() {
       );
     };
 
+    const ScoringInterface = ({ match, onScoreUpdate }) => {
+      const [sets, setSets] = useState([]);
+      const [currentSet, setCurrentSet] = useState(1);
+      const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        loadMatchScore();
+      }, [match.id]);
+
+      const loadMatchScore = async () => {
+        try {
+          const response = await axios.get(`${API}/matches/${match.id}/score`);
+          setSets(response.data.sets || []);
+          setCurrentSet(response.data.sets?.length + 1 || 1);
+        } catch (error) {
+          console.error("Error loading match score:", error);
+        }
+      };
+
+      const updateSetScore = async (setNumber, scoreData) => {
+        setLoading(true);
+        try {
+          await axios.post(`${API}/matches/${match.id}/score-set`, {
+            match_id: match.id,
+            set_number: setNumber,
+            ...scoreData
+          }, {
+            params: { updated_by: user?.id }
+          });
+          
+          await loadMatchScore();
+          if (onScoreUpdate) onScoreUpdate();
+          
+          toast({ title: "Success", description: "Set score updated!" });
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to update score", 
+            variant: "destructive" 
+          });
+        }
+        setLoading(false);
+      };
+
+      const submitFinalScore = async (finalScoreData) => {
+        setLoading(true);
+        try {
+          await axios.post(`${API}/matches/${match.id}/submit-final-score`, finalScoreData, {
+            params: { submitted_by: user?.id }
+          });
+          
+          await loadMatchScore();
+          if (onScoreUpdate) onScoreUpdate();
+          
+          toast({ title: "Success", description: "Match result submitted!" });
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to submit result", 
+            variant: "destructive" 
+          });
+        }
+        setLoading(false);
+      };
+
+      if (match.format === 'Doubles') {
+        return <DoublesScoring 
+          match={match} 
+          sets={sets} 
+          currentSet={currentSet}
+          onUpdateScore={updateSetScore}
+          onSubmitFinal={submitFinalScore}
+          loading={loading}
+        />;
+      } else {
+        return <SinglesScoring 
+          match={match} 
+          sets={sets} 
+          currentSet={currentSet}
+          onUpdateScore={updateSetScore}
+          onSubmitFinal={submitFinalScore}
+          loading={loading}
+        />;
+      }
+    };
+
+    const DoublesScoring = ({ match, sets, currentSet, onUpdateScore, onSubmitFinal, loading }) => {
+      const [teamAScore, setTeamAScore] = useState(0);
+      const [teamBScore, setTeamBScore] = useState(0);
+      const [isSetComplete, setIsSetComplete] = useState(false);
+      const [matchWinner, setMatchWinner] = useState([]);
+
+      const updateScore = () => {
+        onUpdateScore(currentSet, {
+          team_a_score: teamAScore,
+          team_b_score: teamBScore,
+          is_set_complete: isSetComplete
+        });
+        
+        if (isSetComplete) {
+          setTeamAScore(0);
+          setTeamBScore(0);
+          setIsSetComplete(false);
+        }
+      };
+
+      const submitFinalResult = () => {
+        const setsData = sets.map((set, index) => ({
+          set_number: index + 1,
+          team_a_score: set.team_a_score,
+          team_b_score: set.team_b_score,
+          is_set_complete: true
+        }));
+
+        onSubmitFinal({
+          match_id: match.id,
+          sets: setsData,
+          match_winner_ids: matchWinner
+        });
+      };
+
+      return (
+        <Card className="glass-card-blue scoring-interface">
+          <CardHeader>
+            <CardTitle>🎾 Doubles Match Scoring</CardTitle>
+            <CardDescription>Set {currentSet} Score Entry</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="scoring-grid">
+              <div className="team-scoring">
+                <h4>Team A</h4>
+                <div className="score-controls">
+                  <Button size="sm" variant="outline" onClick={() => setTeamAScore(Math.max(0, teamAScore - 1))}>
+                    -
+                  </Button>
+                  <span className="score-display">{teamAScore}</span>
+                  <Button size="sm" variant="outline" onClick={() => setTeamAScore(Math.min(7, teamAScore + 1))}>
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              <div className="vs-divider">vs</div>
+
+              <div className="team-scoring">
+                <h4>Team B</h4>
+                <div className="score-controls">
+                  <Button size="sm" variant="outline" onClick={() => setTeamBScore(Math.max(0, teamBScore - 1))}>
+                    -
+                  </Button>
+                  <span className="score-display">{teamBScore}</span>
+                  <Button size="sm" variant="outline" onClick={() => setTeamBScore(Math.min(7, teamBScore + 1))}>
+                    +
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="scoring-actions">
+              <div className="set-complete-check">
+                <input
+                  type="checkbox"
+                  id="setComplete"
+                  checked={isSetComplete}
+                  onChange={(e) => setIsSetComplete(e.target.checked)}
+                />
+                <Label htmlFor="setComplete">Set Complete</Label>
+              </div>
+
+              <Button 
+                className="leagueace-button" 
+                onClick={updateScore}
+                disabled={loading}
+              >
+                {loading ? "Updating..." : "Update Set Score"}
+              </Button>
+            </div>
+
+            {sets.length > 0 && (
+              <div className="sets-summary">
+                <h5>Match Score Summary</h5>
+                {sets.map((set, index) => (
+                  <div key={index} className="set-summary">
+                    Set {index + 1}: Team A {set.team_a_score} - {set.team_b_score} Team B
+                  </div>
+                ))}
+                
+                {sets.length >= 2 && (
+                  <div className="final-submission">
+                    <Select value={matchWinner.join(',')} onValueChange={(value) => setMatchWinner(value.split(','))}>
+                      <SelectTrigger className="blue-input">
+                        <SelectValue placeholder="Select match winner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={match.participants.slice(0, 2).join(',')}>Team A</SelectItem>
+                        <SelectItem value={match.participants.slice(2).join(',')}>Team B</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      className="leagueace-button mt-2" 
+                      onClick={submitFinalResult}
+                      disabled={loading || matchWinner.length === 0}
+                    >
+                      Submit Final Result
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
+
+    const SinglesScoring = ({ match, sets, currentSet, onUpdateScore, onSubmitFinal, loading }) => {
+      const [player1Score, setPlayer1Score] = useState(0);
+      const [player2Score, setPlayer2Score] = useState(0);
+      const [isSetComplete, setIsSetComplete] = useState(false);
+      const [matchWinner, setMatchWinner] = useState('');
+
+      const updateScore = () => {
+        onUpdateScore(currentSet, {
+          player1_score: player1Score,
+          player2_score: player2Score,
+          is_set_complete: isSetComplete
+        });
+        
+        if (isSetComplete) {
+          setPlayer1Score(0);
+          setPlayer2Score(0);
+          setIsSetComplete(false);
+        }
+      };
+
+      const submitFinalResult = () => {
+        const setsData = sets.map((set, index) => ({
+          set_number: index + 1,
+          player1_score: set.player1_score,
+          player2_score: set.player2_score,
+          is_set_complete: true
+        }));
+
+        onSubmitFinal({
+          match_id: match.id,
+          sets: setsData,
+          match_winner_ids: [matchWinner]
+        });
+      };
+
+      return (
+        <Card className="glass-card-blue scoring-interface">
+          <CardHeader>
+            <CardTitle>🎾 Singles Match Scoring</CardTitle>
+            <CardDescription>Set {currentSet} Score Entry</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="scoring-grid">
+              <div className="player-scoring">
+                <h4>Player 1</h4>
+                <div className="score-controls">
+                  <Button size="sm" variant="outline" onClick={() => setPlayer1Score(Math.max(0, player1Score - 1))}>
+                    -
+                  </Button>
+                  <span className="score-display">{player1Score}</span>
+                  <Button size="sm" variant="outline" onClick={() => setPlayer1Score(Math.min(7, player1Score + 1))}>
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              <div className="vs-divider">vs</div>
+
+              <div className="player-scoring">
+                <h4>Player 2</h4>
+                <div className="score-controls">
+                  <Button size="sm" variant="outline" onClick={() => setPlayer2Score(Math.max(0, player2Score - 1))}>
+                    -
+                  </Button>
+                  <span className="score-display">{player2Score}</span>
+                  <Button size="sm" variant="outline" onClick={() => setPlayer2Score(Math.min(7, player2Score + 1))}>
+                    +
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="scoring-actions">
+              <div className="set-complete-check">
+                <input
+                  type="checkbox"
+                  id="setComplete"
+                  checked={isSetComplete}
+                  onChange={(e) => setIsSetComplete(e.target.checked)}
+                />
+                <Label htmlFor="setComplete">Set Complete</Label>
+              </div>
+
+              <Button 
+                className="leagueace-button" 
+                onClick={updateScore}
+                disabled={loading}
+              >
+                {loading ? "Updating..." : "Update Set Score"}
+              </Button>
+            </div>
+
+            {sets.length > 0 && (
+              <div className="sets-summary">
+                <h5>Match Score Summary</h5>
+                {sets.map((set, index) => (
+                  <div key={index} className="set-summary">
+                    Set {index + 1}: {set.player1_score} - {set.player2_score}
+                  </div>
+                ))}
+                
+                {sets.length >= 2 && (
+                  <div className="final-submission">
+                    <Select value={matchWinner} onValueChange={setMatchWinner}>
+                      <SelectTrigger className="blue-input">
+                        <SelectValue placeholder="Select match winner" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={match.participants[0]}>Player 1</SelectItem>
+                        <SelectItem value={match.participants[1]}>Player 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      className="leagueace-button mt-2" 
+                      onClick={submitFinalResult}
+                      disabled={loading || !matchWinner}
+                    >
+                      Submit Final Result
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
+
+    const StandingsView = ({ tierId, groupId }) => {
+      const [standings, setStandings] = useState([]);
+      const [qualifiers, setQualifiers] = useState([]);
+      const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        loadStandings();
+        loadQualifiers();
+      }, [tierId, groupId]);
+
+      const loadStandings = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`${API}/rating-tiers/${tierId}/standings`, {
+            params: groupId ? { group_id: groupId } : {}
+          });
+          setStandings(response.data.standings || []);
+        } catch (error) {
+          console.error("Error loading standings:", error);
+        }
+        setLoading(false);
+      };
+
+      const loadQualifiers = async () => {
+        try {
+          const response = await axios.get(`${API}/rating-tiers/${tierId}/playoff-qualifiers`);
+          setQualifiers(response.data.qualifiers || []);
+        } catch (error) {
+          // Qualifiers not available yet
+        }
+      };
+
+      const createPlayoffBracket = async () => {
+        try {
+          const response = await axios.post(`${API}/rating-tiers/${tierId}/create-playoff-bracket`, {}, {
+            params: { created_by: user?.id }
+          });
+          toast({ title: "Success", description: "Playoff bracket created!" });
+          loadQualifiers();
+        } catch (error) {
+          toast({ 
+            title: "Error", 
+            description: error.response?.data?.detail || "Failed to create bracket", 
+            variant: "destructive" 
+          });
+        }
+      };
+
+      return (
+        <Card className="glass-card-blue standings-view">
+          <CardHeader>
+            <CardTitle>📊 League Standings</CardTitle>
+            <CardDescription>Current rankings and playoff qualifications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="loading-message">Loading standings...</div>
+            ) : standings.length > 0 ? (
+              <>
+                <div className="standings-table">
+                  <div className="standings-header">
+                    <span>Rank</span>
+                    <span>Player</span>
+                    <span>Sets Won</span>
+                    <span>Sets Played</span>
+                    <span>Win %</span>
+                    <span>Matches</span>
+                  </div>
+                  {standings.map((player, index) => (
+                    <div key={player.player_id} className={`standings-row ${index < 8 ? 'playoff-qualifier' : ''}`}>
+                      <span className="rank">#{player.rank}</span>
+                      <span className="player-name">{player.player_id}</span>
+                      <span className="sets-won">{player.total_sets_won}</span>
+                      <span className="sets-played">{player.total_sets_played}</span>
+                      <span className="win-percentage">{(player.set_win_percentage * 100).toFixed(1)}%</span>
+                      <span className="matches">{player.matches_played}W-{player.matches_played - player.matches_won}L</span>
+                    </div>
+                  ))}
+                </div>
+
+                {qualifiers.length > 0 && (
+                  <div className="playoff-section">
+                    <h5>🏆 Playoff Qualifiers (Top 8)</h5>
+                    <div className="qualifiers-list">
+                      {qualifiers.map((qualifier, index) => (
+                        <Badge key={qualifier.player_id} className="qualifier-badge">
+                          #{qualifier.rank} {qualifier.player_name}
+                        </Badge>
+                      ))}
+                    </div>
+                    
+                    <Button 
+                      className="leagueace-button mt-3"
+                      onClick={createPlayoffBracket}
+                    >
+                      Create Playoff Bracket
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="no-standings">
+                <p>No standings available yet. Complete some matches to see rankings!</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
+
     return (
       <div className="manager-dashboard">
         <div className="dashboard-header">
