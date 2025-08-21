@@ -2739,7 +2739,7 @@ function App() {
 
       useEffect(() => {
         loadThreads();
-      }, []);
+      }, [userJoinedTiers, upcomingMatches]);
 
       useEffect(() => {
         if (activeThread) {
