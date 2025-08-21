@@ -296,6 +296,19 @@ class MatchResult(BaseModel):
     winner_ids: List[str]
     submitted_by: str
 
+class RoundRobinSchedule(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    player_group_id: str
+    total_weeks: int
+    matches_per_week: int
+    partner_rotation: List[Dict[str, any]]  # Stores partner combinations for each week
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MatchGenerationRequest(BaseModel):
+    player_group_id: str
+    week_number: int
+    matches_per_week: Optional[int] = 4
+
 # Chat System Models
 class ChatThread(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
