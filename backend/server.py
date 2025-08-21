@@ -395,14 +395,14 @@ class SeasonCreate(BaseModel):
 
 class FormatTier(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    season_id: str
+    league_id: str  # Changed from season_id to league_id 
     name: str  # Tier 2: Singles, Doubles, Round Robin
     format_type: LeagueFormat
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class FormatTierCreate(BaseModel):
-    season_id: str
+    league_id: str  # Changed from season_id to league_id
     name: str
     format_type: LeagueFormat
     description: Optional[str] = None
