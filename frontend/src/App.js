@@ -1231,8 +1231,15 @@ function App() {
     const EnhancedRatingTierCard = ({ tier }) => {
       const [groups, setGroups] = useState([]);
       const [showGroupForm, setShowGroupForm] = useState(false);
+      const [tierState, setTierState] = useState(tier);
+      const [showEditRange, setShowEditRange] = useState(false);
+      const [minInput, setMinInput] = useState(tier.min_rating);
+      const [maxInput, setMaxInput] = useState(tier.max_rating);
 
       useEffect(() => {
+        setTierState(tier);
+        setMinInput(tier.min_rating);
+        setMaxInput(tier.max_rating);
         loadGroups();
       }, [tier.id]);
 
