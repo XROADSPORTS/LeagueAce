@@ -2967,7 +2967,13 @@ function App() {
     return (
       <div className="player-dashboard">
         <div className="dashboard-header">
-          <h2 className="section-title-blue">{activeSport} Player Dashboard</h2>
+          <div className="header-left">
+            <ProfilePicture user={user} size="lg" />
+            <div className="header-text">
+              <h2 className="section-title-blue">{activeSport} Player Dashboard</h2>
+              <p>Welcome back, {user.name}!</p>
+            </div>
+          </div>
           <div className="dashboard-user-info">
             <span>Rating: {user.rating_level}</span>
             <Badge className="role-badge-blue">Player</Badge>
