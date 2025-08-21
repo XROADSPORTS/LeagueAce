@@ -2663,6 +2663,14 @@ function App() {
 
           <TabsContent value="four-tier">
             <FourTierManagement />
+            <div className="tier-section" style={{ marginTop: 16 }}>
+              <h3 className="tier-title">Join Requests</h3>
+              <Card className="glass-card-blue">
+                <CardContent>
+                  <JoinRequestsPanel />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="chat">
