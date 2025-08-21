@@ -321,6 +321,8 @@ agent_communication:
     message: "Fixed JSX parsing error in App.js. Application now loads correctly. Ready for backend testing to verify 4-tier league format implementation and user authentication features."
   - agent: "main"
     message: "Implemented Phase 2 features: Player Grouping Logic with random assignment and admin controls, Round Robin Doubles Algorithm with unique partner combinations, and Competition System selection (Team League vs Knockout). Added comprehensive UI components for group management and match scheduling. Ready for testing of new functionality."
+  - agent: "main"
+    message: "Completed Phase 3: Match Management implementation. Added comprehensive match scheduling system with time proposals and voting, player confirmation system with accept/decline/substitute options, complete substitute management with approval workflow, and pre-match toss functionality. Enhanced UI with MatchCard, TimeProposalForm, ConfirmationForm, and TossButton components. All features integrated with chat system and notifications. Ready for testing."
   - agent: "testing"
     message: "🎉 BACKEND TESTING COMPLETE - All high-priority backend functionality is working perfectly! The 4-tier league system is fully operational with comprehensive API coverage. Fixed one minor issue with legacy data in leagues collection. All 23 test cases passed (100% success rate). The LeagueAce backend is ready for production use. Database operations, user authentication, league management, and player grouping all functioning correctly."
   - agent: "testing"
