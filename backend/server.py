@@ -344,7 +344,6 @@ class PlayerGroup(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PlayerGroupCreate(BaseModel):
-    rating_tier_id: str
     group_size: int = 12
     custom_names: Optional[List[str]] = None
 
