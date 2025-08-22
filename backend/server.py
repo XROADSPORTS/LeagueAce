@@ -1520,6 +1520,7 @@ async def create_partner_invite(inv: PartnerInviteCreate):
         rating_tier_id=rating_tier["id"],
         league_id=league["id"] if league else "",
         inviter_user_id=inv.inviter_user_id,
+        invitee_user_id=inv.invitee_user_id,
         invitee_contact=inv.invitee_contact
     )
     await db.doubles_partner_invites.insert_one(prepare_for_mongo(invite_obj.dict()))
