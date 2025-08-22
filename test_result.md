@@ -435,9 +435,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Doubles Coordinator Phase 1: Partner Link + Teams (backend)"
-    - "Doubles Coordinator Phase 2-4: Preferences, Scheduling, Scores, Standings (backend)"
-    - "Doubles UI Phases 1-4: Teams, Preferences, Scheduling, Scoring, Standings (frontend)"
+    - "User Authentication UI"
+    - "Group Management UI"
+    - "Competition System UI"
+    - "Match Management UI"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
