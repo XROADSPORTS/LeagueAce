@@ -414,14 +414,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Doubles Coordinator Phase 1: Partner Link + Teams (backend)"
-    - "Doubles UI Phase 1: My Doubles Teams + Partner Link (frontend)"
+    - "Player Dashboard: Joined Tiers, Standings, Matches"
+    - "Profile Picture Upload/Remove"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
-  stuck_tasks: []
-  test_all: false
-  test_priority: "critical_first"
 
 agent_communication:
   - agent: "main"
