@@ -114,6 +114,18 @@ user_problem_statement: |
   - Doubles partner link flow: create invite, accept invite, show teams
 
 backend:
+  - task: "Doubles Coordinator Phase 2-4: Preferences, Scheduling, Scores, Standings"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added endpoints: team preferences (GET/PUT), schedule generation for teams, propose/confirm slots with dual-team confirmations, list matches, submit score with validations, co-sign by partner/opponent to confirm, disputes, standings with points and tiebreakers, ICS calendar output."
+
   - task: "Doubles Coordinator Phase 1: Partner Link + Teams"
     implemented: true
     working: true
