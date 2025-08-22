@@ -3092,6 +3092,378 @@ async def handle_slash_command(command: SlashCommand, message: ChatMessage, mess
         await create_system_message(thread_id, f"❌ Error processing command: {str(e)}")
 
 # Include the router in the main app
+
+# ===================== Doubles Phase 2-4: Preferences, Scheduling, Scores, Standings =====================
+class WeeklyWindow(BaseModel):
+    day: Literal["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+    start: str  # "18:00"
+    end: str    # "21:00"
+
+class TeamPreferences(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    team_id: str
+    preferred_venues: List[str] = Field(default_factory=list)
+    availability: List[WeeklyWindow] = Field(default_factory=list)
+    max_subs: int = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ProposedSlot(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    proposed_by_user_id: str
+    proposed_for_team_id: Optional[str] = None
+    start: datetime
+    venue_name: Optional[str] = None
+    confirmations: List[str] = Field(default_factory=list)  # user_ids who confirmed this slot
+
+class DoublesMatchStatus(str, Enum):
+    PROPOSED = "proposed"
+    CONFIRMED = "confirmed"
+    PLAYED = "played"
+    FORFEIT = "forfeit"
+    DISPUTED = "disputed"
+
+class DoublesMatch(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    league_id: str
+    rating_tier_id: str
+    team1_id: str
+    team2_id: str
+    status: DoublesMatchStatus = DoublesMatchStatus.PROPOSED
+    scheduled_at: Optional[datetime] = None
+    scheduled_venue: Optional[str] = None
+    proposed_slot_ids: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CreateScheduleRequest(BaseModel):
+    rating_tier_id: str
+
+class ProposeSlotsRequest(BaseModel):
+    slots: List[Dict[str, Any]]  # [{start: iso, venue_name}]
+    proposed_by_user_id: str
+
+class ConfirmSlotRequest(BaseModel):
+    slot_id: str
+    user_id: str
+
+class DoublesSetScore(BaseModel):
+    team1_games: int = Field(ge=0, le=7)
+    team2_games: int = Field(ge=0, le=7)
+
+class SubmitScoreRequest(BaseModel):
+    sets: List[DoublesSetScore]
+    submitted_by_user_id: str
+
+class CoSignRequest(BaseModel):
+    user_id: str
+    role: Literal["partner","opponent"]
+
+class DoublesScoreStatus(str, Enum):
+    PENDING = "pending_co-sign"
+    CONFIRMED = "confirmed"
+    DISPUTED = "disputed"
+
+class DoublesScore(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    match_id: str
+    sets: List[DoublesSetScore]
+    winner_team_id: Optional[str] = None
+    status: DoublesScoreStatus = DoublesScoreStatus.PENDING
+    submitted_by_user_id: str
+    cosigns: List[Dict[str, Any]] = Field(default_factory=list)  # [{user_id, role}]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DoublesStandingsRow(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    league_id: str
+    rating_tier_id: str
+    team_id: str
+    wins: int = 0
+    losses: int = 0
+    sets_won: int = 0
+    sets_lost: int = 0
+    games_won: int = 0
+    games_lost: int = 0
+    points: int = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# -------- Preferences --------
+@api_router.get("/doubles/teams/{team_id}/preferences", response_model=TeamPreferences)
+async def get_team_preferences(team_id: str):
+    pref = await db.doubles_team_preferences.find_one({"team_id": team_id})
+    if pref:
+        return TeamPreferences(**parse_from_mongo(pref))
+    # default empty
+    tp = TeamPreferences(team_id=team_id)
+    await db.doubles_team_preferences.insert_one(prepare_for_mongo(tp.dict()))
+    return tp
+
+@api_router.put("/doubles/teams/{team_id}/preferences", response_model=TeamPreferences)
+async def put_team_preferences(team_id: str, prefs: TeamPreferences):
+    if prefs.team_id != team_id:
+        raise HTTPException(status_code=400, detail="team_id mismatch")
+    prefs.updated_at = datetime.now(timezone.utc)
+    await db.doubles_team_preferences.update_one({"team_id": team_id}, {"$set": prepare_for_mongo(prefs.dict())}, upsert=True)
+    saved = await db.doubles_team_preferences.find_one({"team_id": team_id})
+    return TeamPreferences(**parse_from_mongo(saved))
+
+# -------- Schedule generation --------
+@api_router.post("/doubles/rating-tiers/{rating_tier_id}/generate-team-schedule")
+async def generate_team_schedule(rating_tier_id: str):
+    teams = await db.doubles_teams.find({"rating_tier_id": rating_tier_id}).to_list(1000)
+    if len(teams) < 2:
+        raise HTTPException(status_code=400, detail="Need at least 2 teams to generate a schedule")
+    # Pair each combination once if not exists
+    created = 0
+    for i in range(len(teams)):
+        for j in range(i+1, len(teams)):
+            t1 = teams[i]
+            t2 = teams[j]
+            existing = await db.doubles_matches.find_one({
+                "rating_tier_id": rating_tier_id,
+                "team1_id": t1["id"],
+                "team2_id": t2["id"]
+            })
+            existing_rev = await db.doubles_matches.find_one({
+                "rating_tier_id": rating_tier_id,
+                "team1_id": t2["id"],
+                "team2_id": t1["id"]
+            })
+            if existing or existing_rev:
+                continue
+            ctx = await _get_league_and_format_for_tier(await db.rating_tiers.find_one({"id": rating_tier_id}))
+            league = ctx.get("league")
+            match = DoublesMatch(
+                league_id=league.get("id") if league else "",
+                rating_tier_id=rating_tier_id,
+                team1_id=t1["id"],
+                team2_id=t2["id"]
+            )
+            await db.doubles_matches.insert_one(prepare_for_mongo(match.dict()))
+            created += 1
+    return {"message": "Schedule generated", "created": created}
+
+# -------- Propose / Confirm slots --------
+@api_router.post("/doubles/matches/{match_id}/propose-slots")
+async def propose_slots(match_id: str, req: ProposeSlotsRequest):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    created_ids = []
+    for s in (req.slots or [])[:3]:
+        start = s.get("start")
+        if isinstance(start, str):
+            try:
+                start_dt = datetime.fromisoformat(start.replace('Z', '+00:00'))
+            except Exception:
+                raise HTTPException(status_code=400, detail="Invalid datetime format")
+        else:
+            start_dt = start
+        ps = ProposedSlot(
+            match_id=match_id,
+            proposed_by_user_id=req.proposed_by_user_id,
+            start=start_dt,
+            venue_name=s.get("venue_name")
+        )
+        await db.doubles_proposed_slots.insert_one(prepare_for_mongo(ps.dict()))
+        created_ids.append(ps.id)
+    # Update match with proposed ids
+    await db.doubles_matches.update_one({"id": match_id}, {"$addToSet": {"proposed_slot_ids": {"$each": created_ids}}})
+    return {"created": created_ids}
+
+async def _get_team_members(team_id: str) -> List[str]:
+    members = await db.doubles_team_members.find({"team_id": team_id}).to_list(10)
+    return [m.get("user_id") for m in members]
+
+@api_router.post("/doubles/matches/{match_id}/confirm-slot")
+async def confirm_slot(match_id: str, req: ConfirmSlotRequest):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    if match.get("status") not in [DoublesMatchStatus.PROPOSED, DoublesMatchStatus.CONFIRMED]:
+        raise HTTPException(status_code=400, detail="Match not in confirmable state")
+    if req.slot_id not in (match.get("proposed_slot_ids") or []):
+        raise HTTPException(status_code=404, detail="Proposed slot not found for this match")
+    slot = await db.doubles_proposed_slots.find_one({"id": req.slot_id})
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+    # Add confirmation
+    await db.doubles_proposed_slots.update_one({"id": req.slot_id}, {"$addToSet": {"confirmations": req.user_id}})
+    slot = await db.doubles_proposed_slots.find_one({"id": req.slot_id})
+    # Check both partners on both teams confirmed
+    team1_members = await _get_team_members(match.get("team1_id"))
+    team2_members = await _get_team_members(match.get("team2_id"))
+    confs = set(slot.get("confirmations") or [])
+    team1_ok = all(uid in confs for uid in team1_members)
+    team2_ok = all(uid in confs for uid in team2_members)
+    if team1_ok and team2_ok:
+        await db.doubles_matches.update_one({"id": match_id}, {"$set": {"status": DoublesMatchStatus.CONFIRMED, "scheduled_at": slot.get("start"), "scheduled_venue": slot.get("venue_name")}})
+        return {"locked": True, "scheduled_at": slot.get("start"), "venue": slot.get("venue_name")}
+    return {"locked": False, "confirmations": list(confs)}
+
+# -------- List matches --------
+@api_router.get("/doubles/matches")
+async def list_doubles_matches(player_id: Optional[str] = None, team_id: Optional[str] = None, rating_tier_id: Optional[str] = None):
+    query = {}
+    if team_id:
+        query["$or"] = [{"team1_id": team_id}, {"team2_id": team_id}]
+    if rating_tier_id:
+        query["rating_tier_id"] = rating_tier_id
+    matches = await db.doubles_matches.find(query if query else {}).to_list(1000)
+    # If filtering by player, post-filter by team memberships
+    if player_id and not team_id:
+        memberships = await db.doubles_team_members.find({"user_id": player_id}).to_list(100)
+        t_ids = {m.get("team_id") for m in memberships}
+        matches = [m for m in matches if (m.get("team1_id") in t_ids or m.get("team2_id") in t_ids)]
+    # Expand
+    out = []
+    for m in matches:
+        t1 = await db.doubles_teams.find_one({"id": m.get("team1_id")})
+        t2 = await db.doubles_teams.find_one({"id": m.get("team2_id")})
+        slots = await db.doubles_proposed_slots.find({"id": {"$in": m.get("proposed_slot_ids") or []}}).to_list(10)
+        out.append({
+            **{k: v for k, v in m.items() if k != "_id"},
+            "team1_name": t1.get("team_name") if t1 else None,
+            "team2_name": t2.get("team_name") if t2 else None,
+            "proposed_slots": [parse_from_mongo(s) for s in slots]
+        })
+    return out
+
+# -------- Scores / Co-sign --------
+@api_router.post("/doubles/matches/{match_id}/submit-score")
+async def submit_doubles_score(match_id: str, req: SubmitScoreRequest):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    if not req.sets or len(req.sets) == 0:
+        raise HTTPException(status_code=400, detail="At least one set required")
+    # Validate majority winner
+    t1_sets = sum(1 for s in req.sets if s.team1_games > s.team2_games)
+    t2_sets = sum(1 for s in req.sets if s.team2_games > s.team1_games)
+    if t1_sets == t2_sets:
+        raise HTTPException(status_code=400, detail="Winner must have majority of sets")
+    winner_team_id = match.get("team1_id") if t1_sets > t2_sets else match.get("team2_id")
+    score = DoublesScore(
+        match_id=match_id,
+        sets=req.sets,
+        winner_team_id=winner_team_id,
+        submitted_by_user_id=req.submitted_by_user_id
+    )
+    await db.doubles_scores.insert_one(prepare_for_mongo(score.dict()))
+    await db.doubles_matches.update_one({"id": match_id}, {"$set": {"status": DoublesMatchStatus.PROPOSED}})  # pending until co-signed
+    return {"score_id": score.id, "status": score.status}
+
+@api_router.post("/doubles/matches/{match_id}/co-sign")
+async def cosign_doubles_score(match_id: str, req: CoSignRequest):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    score = await db.doubles_scores.find_one({"match_id": match_id}, sort=[("created_at", -1)])
+    if not score:
+        raise HTTPException(status_code=404, detail="No score to co-sign")
+    # Append cosign if not already
+    cosigns = score.get("cosigns") or []
+    if any(c.get("user_id") == req.user_id for c in cosigns):
+        return {"status": score.get("status"), "cosigns": cosigns}
+    cosigns.append({"user_id": req.user_id, "role": req.role})
+    await db.doubles_scores.update_one({"id": score.get("id")}, {"$set": {"cosigns": cosigns}})
+    # Check requirements: partner co-sign AND one opponent co-sign
+    # Determine teams
+    team1 = match.get("team1_id"); team2 = match.get("team2_id")
+    team1_members = await _get_team_members(team1)
+    team2_members = await _get_team_members(team2)
+    users_cosigned = {c.get("user_id") for c in cosigns}
+    partner_ok = any(uid in users_cosigned for uid in team1_members) and any(uid in users_cosigned for uid in team2_members)
+    opponent_ok = partner_ok  # we already have at least one from each side
+    if partner_ok and opponent_ok:
+        await db.doubles_scores.update_one({"id": score.get("id")}, {"$set": {"status": DoublesScoreStatus.CONFIRMED}})
+        await db.doubles_matches.update_one({"id": match_id}, {"$set": {"status": DoublesMatchStatus.PLAYED}})
+        await _update_doubles_standings(match_id, score)
+        return {"status": DoublesScoreStatus.CONFIRMED, "cosigns": cosigns}
+    return {"status": score.get("status"), "cosigns": cosigns}
+
+@api_router.post("/doubles/matches/{match_id}/dispute")
+async def dispute_doubles_score(match_id: str, user_id: str):
+    score = await db.doubles_scores.find_one({"match_id": match_id}, sort=[("created_at", -1)])
+    if not score:
+        raise HTTPException(status_code=404, detail="No score to dispute")
+    await db.doubles_scores.update_one({"id": score.get("id")}, {"$set": {"status": DoublesScoreStatus.DISPUTED}})
+    await db.doubles_matches.update_one({"id": match_id}, {"$set": {"status": DoublesMatchStatus.DISPUTED}})
+    return {"status": DoublesScoreStatus.DISPUTED}
+
+async def _get_or_create_standings_row(league_id: str, rating_tier_id: str, team_id: str) -> DoublesStandingsRow:
+    row = await db.doubles_standings.find_one({"league_id": league_id, "rating_tier_id": rating_tier_id, "team_id": team_id})
+    if row:
+        return DoublesStandingsRow(**parse_from_mongo(row))
+    new_row = DoublesStandingsRow(league_id=league_id, rating_tier_id=rating_tier_id, team_id=team_id)
+    await db.doubles_standings.insert_one(prepare_for_mongo(new_row.dict()))
+    return new_row
+
+async def _update_doubles_standings(match_id: str, score: Dict[str, Any]):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match:
+        return
+    league_id = match.get("league_id"); rating_tier_id = match.get("rating_tier_id")
+    t1 = match.get("team1_id"); t2 = match.get("team2_id")
+    # Calculate set and game counts
+    sets = score.get("sets") or []
+    t1_sets = sum(1 for s in sets if s.get("team1_games",0) > s.get("team2_games",0))
+    t2_sets = sum(1 for s in sets if s.get("team2_games",0) > s.get("team1_games",0))
+    t1_games = sum(int(s.get("team1_games",0)) for s in sets)
+    t2_games = sum(int(s.get("team2_games",0)) for s in sets)
+    winner = score.get("winner_team_id")
+
+    r1 = await _get_or_create_standings_row(league_id, rating_tier_id, t1)
+    r2 = await _get_or_create_standings_row(league_id, rating_tier_id, t2)
+
+    if winner == t1:
+        r1.wins += 1; r2.losses += 1; r1.points += 3
+    else:
+        r2.wins += 1; r1.losses += 1; r2.points += 3
+
+    r1.sets_won += t1_sets; r1.sets_lost += t2_sets
+    r2.sets_won += t2_sets; r2.sets_lost += t1_sets
+    r1.games_won += t1_games; r1.games_lost += t2_games
+    r2.games_won += t2_games; r2.games_lost += t1_games
+    r1.updated_at = datetime.now(timezone.utc); r2.updated_at = datetime.now(timezone.utc)
+
+    await db.doubles_standings.update_one({"id": r1.id}, {"$set": prepare_for_mongo(r1.dict())}, upsert=True)
+    await db.doubles_standings.update_one({"id": r2.id}, {"$set": prepare_for_mongo(r2.dict())}, upsert=True)
+
+@api_router.get("/doubles/standings")
+async def get_doubles_standings(rating_tier_id: str):
+    rows = await db.doubles_standings.find({"rating_tier_id": rating_tier_id}).to_list(1000)
+    # sort: points desc, set diff, game diff
+    def sort_key(r):
+        return (-r.get("points",0), -((r.get("sets_won",0)) - (r.get("sets_lost",0))), -((r.get("games_won",0)) - (r.get("games_lost",0))))
+    rows_sorted = sorted(rows, key=sort_key)
+    # attach team names
+    out = []
+    for r in rows_sorted:
+        team = await db.doubles_teams.find_one({"id": r.get("team_id")})
+        obj = parse_from_mongo(r)
+        obj["team_name"] = team.get("team_name") if team else None
+        out.append(obj)
+    return out
+
+# -------- ICS generation --------
+@api_router.get("/doubles/matches/{match_id}/ics")
+async def get_match_ics(match_id: str):
+    match = await db.doubles_matches.find_one({"id": match_id})
+    if not match or not match.get("scheduled_at"):
+        raise HTTPException(status_code=404, detail="Match not scheduled")
+    t1 = await db.doubles_teams.find_one({"id": match.get("team1_id")})
+    t2 = await db.doubles_teams.find_one({"id": match.get("team2_id")})
+    start_dt = match.get("scheduled_at")
+    if isinstance(start_dt, str):
+        start_dt = datetime.fromisoformat(start_dt.replace('Z', '+00:00'))
+    dtstamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    dtstart = start_dt.strftime("%Y%m%dT%H%M%SZ")
+    summary = f"Doubles: {t1.get('team_name')} vs {t2.get('team_name')}"
+    location = match.get("scheduled_venue") or "TBD"
+    ics = f"BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//LeagueAce//Doubles//EN\nBEGIN:VEVENT\nUID:{match.get('id')}@leagueace\nDTSTAMP:{dtstamp}\nDTSTART:{dtstart}\nSUMMARY:{summary}\nLOCATION:{location}\nEND:VEVENT\nEND:VCALENDAR"
+    return {"ics": ics}
+
 app.include_router(api_router)
 
 app.add_middleware(
