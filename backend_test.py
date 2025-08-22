@@ -3552,8 +3552,12 @@ def main():
     
     tester = LeagueAceAPITester()
     
-    # Run PLAYER JOIN-BY-CODE END-TO-END TEST (HIGHEST PRIORITY as requested in review)
-    print("\n🚨 Running PLAYER JOIN-BY-CODE END-TO-END TEST (HIGHEST PRIORITY)...")
+    # Run DOUBLES COORDINATOR PHASE 1 TESTS (HIGHEST PRIORITY as requested in review)
+    print("\n🤝 Running DOUBLES COORDINATOR PHASE 1 TESTS (HIGHEST PRIORITY)...")
+    doubles_success = tester.run_doubles_coordinator_tests()
+    
+    # Run PLAYER JOIN-BY-CODE END-TO-END TEST (HIGH PRIORITY as requested in review)
+    print("\n🚨 Running PLAYER JOIN-BY-CODE END-TO-END TEST (HIGH PRIORITY)...")
     join_code_success = tester.test_player_join_by_code_end_to_end()
     
     # Run CRITICAL BUG FIX TESTS (HIGH PRIORITY as requested in review)
@@ -3581,22 +3585,24 @@ def main():
     print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
     print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
     
-    print(f"\n🎯 PLAYER JOIN-BY-CODE Test: {'✅ PASSED' if join_code_success else '❌ FAILED'}")
+    print(f"\n🤝 DOUBLES COORDINATOR Tests: {'✅ PASSED' if doubles_success else '❌ FAILED'}")
+    print(f"🎯 PLAYER JOIN-BY-CODE Test: {'✅ PASSED' if join_code_success else '❌ FAILED'}")
     print(f"🚨 CRITICAL BUG FIX Tests: {critical_passed}/{critical_total} ({'✅ PASSED' if critical_passed == critical_total else '❌ ISSUES FOUND'})")
     print(f"🎯 NEW 3-TIER STRUCTURE Test: {'✅ PASSED' if new_structure_success else '❌ FAILED'}")
     print(f"🎯 Format Tier Creation Test: {'✅ PASSED' if format_tier_success else '❌ FAILED'}")
     print(f"🎯 Season Creation Test: {'✅ PASSED' if season_success else '❌ FAILED'}")
     
-    # Success criteria: Join-by-code test must work + Critical bug fixes must work + good overall pass rate
+    # Success criteria: Doubles tests must work + Join-by-code test must work + Critical bug fixes must work + good overall pass rate
+    doubles_working = doubles_success
     join_code_working = join_code_success
     critical_success = critical_passed >= critical_total * 0.8  # 80% of critical tests must pass
     overall_success = tester.tests_passed >= (tester.tests_run * 0.85)  # 85% overall pass rate
     
-    if join_code_working and critical_success and overall_success:
-        print("\n🎉 PLAYER JOIN-BY-CODE functionality is working! Critical bug fixes are working! Player dashboard functionality restored!")
+    if doubles_working and join_code_working and critical_success and overall_success:
+        print("\n🎉 DOUBLES COORDINATOR functionality is working! Player join-by-code functionality is working! Critical bug fixes are working!")
         return 0
     else:
-        print(f"\n⚠️  Issues detected. Player join-by-code or critical bug fixes need attention.")
+        print(f"\n⚠️  Issues detected. Doubles coordinator, player join-by-code, or critical bug fixes need attention.")
         return 1
 
 if __name__ == "__main__":
