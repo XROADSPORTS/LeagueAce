@@ -116,15 +116,18 @@ user_problem_statement: |
 backend:
   - task: "Doubles Coordinator Phase 1: Partner Link + Teams"
     implemented: true
-    working: "unknown"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Added models PartnerInvite, Team, TeamMember; endpoints: POST /api/doubles/invites, GET /api/doubles/invites/{token}, POST /api/doubles/invites/accept, GET /api/doubles/teams, and stub /api/doubles/invites/send. Enforces doubles-only tier, eligibility by rating, and no duplicate active teams in same tier."
+      - working: true
+        agent: "testing"
+        comment: "✅ DOUBLES COORDINATOR PHASE 1 COMPREHENSIVE TESTING COMPLETE - All newly implemented doubles endpoints are working perfectly! Comprehensive testing results: 1) **POST /api/doubles/invites** - Create partner invites using rating_tier_id or join_code working flawlessly ✅, validates non-doubles tier returns 400 ✅, missing tier returns 404 ✅, inviter rating out-of-range returns 400 ✅, response includes all required fields (token, league_name, tier_name, inviter_name, expires_at) ✅. 2) **GET /api/doubles/invites/{token}** - Preview invite working perfectly ✅, expired/invalid invites return 404 as expected ✅. 3) **POST /api/doubles/invites/accept** - Accept invite functionality working perfectly ✅, creates team with correct name format 'Inviter & Invitee' ✅, adds both members with PRIMARY role ✅, validates same person cannot accept (400) ✅, validates users already on active team in same tier return 400 ✅, validates non-doubles tier errors appropriately ✅. 4) **GET /api/doubles/teams?player_id=...** - Returns all teams for player with complete league/tier names and member details ✅, correctly returns empty array for players with no teams ✅. **SETUP VALIDATION**: Created proper test environment with doubles format tiers, rating tiers with correct rating ranges, and both eligible and ineligible users. **TEST RESULTS**: 24/24 tests passed (100% success rate). All validation scenarios working correctly including edge cases. The doubles coordinator partner link and team creation functionality is fully operational and ready for production use."
 
   - task: "NEW 3-Tier League Structure API"
     implemented: true
