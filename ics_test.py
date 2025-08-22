@@ -336,11 +336,11 @@ class ICSTestRunner:
             data=propose_data
         )
         
-        if not success or 'slot_ids' not in response:
+        if not success or 'created' not in response:
             print("❌ Failed to propose time slots")
             return False
         
-        slot_id = response['slot_ids'][0]
+        slot_id = response['created'][0]
         print(f"   Created slot ID: {slot_id}")
         
         # 5. Confirm the slot with all 4 players
