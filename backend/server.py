@@ -1533,6 +1533,56 @@ async def create_partner_invite(inv: PartnerInviteCreate):
         expires_at=invite_obj.expires_at
     )
 
+@api_router.get("/doubles/invites")
+async def list_partner_invites(user_id: str, role: Optional[Literal['incoming','outgoing']] = None):
+    q = {"status": PartnerInviteStatus.PENDING}
+    if role == 'incoming':
+        q["invitee_user_id"] = user_id
+    elif role == 'outgoing':
+        q["inviter_user_id"] = user_id
+    else:
+        q["$or"] = [{"inviter_user_id": user_id}, {"invitee_user_id": user_id}]
+    rows = await db.doubles_partner_invites.find(q).to_list(1000)
+    out = []
+    for inv in rows:
+        tier = await db.rating_tiers.find_one({"id": inv.get("rating_tier_id")})
+        ctx = await _get_league_and_format_for_tier(tier) if tier else {"league": None}
+        inviter = await db.users.find_one({"id": inv.get("inviter_user_id")})
+        invitee = await db.users.find_one({"id": inv.get("invitee_user_id")})
+        out.append({
+            "id": inv.get("id"),
+            "token": inv.get("token"),
+            "league_name": (ctx.get("league") or {}).get("name") if ctx.get("league") else None,
+            "tier_name": tier.get("name") if tier else None,
+            "inviter": {"id": inviter.get("id"), "name": inviter.get("name")} if inviter else None,
+            "invitee": {"id": (invitee or {}).get("id"), "name": (invitee or {}).get("name")} if invitee else None,
+            "expires_at": inv.get("expires_at"),
+        })
+    return {"invites": out}
+
+class InviteDecision(BaseModel):
+    invite_id: str
+    user_id: str
+
+@api_router.post("/doubles/invites/{invite_id}/accept", response_model=DoublesTeamResponse)
+async def accept_partner_invite_by_id(invite_id: str, dec: InviteDecision):
+    inv = await db.doubles_partner_invites.find_one({"id": invite_id})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    # accept using existing token-based logic
+    return await accept_partner_invite(PartnerInviteAccept(token=inv.get("token"), invitee_user_id=dec.user_id))
+
+@api_router.post("/doubles/invites/{invite_id}/reject")
+async def reject_partner_invite(invite_id: str, dec: InviteDecision):
+    inv = await db.doubles_partner_invites.find_one({"id": invite_id})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if dec.user_id not in [inv.get("invitee_user_id"), inv.get("inviter_user_id")]:
+        raise HTTPException(status_code=403, detail="Not authorized to act on this invite")
+    await db.doubles_partner_invites.update_one({"id": invite_id}, {"$set": {"status": PartnerInviteStatus.CANCELLED}})
+    return {"status": PartnerInviteStatus.CANCELLED}
+
+
 @api_router.get("/doubles/invites/{token}", response_model=PartnerInvitePreview)
 async def preview_partner_invite(token: str):
     invite = await db.doubles_partner_invites.find_one({"token": token})
