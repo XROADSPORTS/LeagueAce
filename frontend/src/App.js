@@ -3152,6 +3152,17 @@ function App() {
         }
       };
 
+      const loadInvites = async () => {
+        try {
+          const inc = await axios.get(`${API}/doubles/invites`, { params: { user_id: user.id, role: 'incoming' } });
+          const out = await axios.get(`${API}/doubles/invites`, { params: { user_id: user.id, role: 'outgoing' } });
+          setIncomingInvites(inc.data?.invites || []);
+          setOutgoingInvites(out.data?.invites || []);
+        } catch (e) {
+          console.error('Failed to load invites', e);
+        }
+      };
+
       const loadPrefs = async (team) => {
         try {
           const { data } = await axios.get(`${API}/doubles/teams/${team.id}/preferences`);
