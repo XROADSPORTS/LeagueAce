@@ -4788,7 +4788,7 @@ class LeagueAceAPITester:
                 )
                 
                 if success:
-                    teams = teams_response.get('teams', [])
+                    teams = teams_response if isinstance(teams_response, list) else teams_response.get('teams', [])
                     print(f"   ✅ Total teams for user D: {len(teams)}")
                     # Should be 0 teams (invite was rejected)
                     if len(teams) == 0:
