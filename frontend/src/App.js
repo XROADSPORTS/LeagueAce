@@ -3462,10 +3462,16 @@ function App() {
 
               <div className="tier-creator" style={{ marginTop: 16 }}>
                 <Label>Enter Doubles Tier Join Code</Label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <Input value={tierCode} onChange={(e)=> setTierCode((e.target.value||'').toUpperCase())} maxLength={6} className="blue-input w-32" placeholder="e.g., ABC123" />
-                  <Button className="btn-primary-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={createInvite}>
+                  <Button className="btn-primary-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={()=> createInvite()}>
                     {creatingInvite ? 'Creating…' : 'Create Partner Link'}
+                  </Button>
+                  <Button className="btn-outline-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={()=> {
+                    const partnerId = prompt('Enter partner\'s LeagueAce User ID');
+                    if (partnerId) createInvite(partnerId);
+                  }}>
+                    Invite User (in-app)
                   </Button>
                 </div>
               </div>
