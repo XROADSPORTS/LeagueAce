@@ -3135,6 +3135,8 @@ function App() {
       const [inviteContact, setInviteContact] = useState('');
       const [linkToken, setLinkToken] = useState('');
       const [tierCode, setTierCode] = useState('');
+      const [incomingInvites, setIncomingInvites] = useState([]);
+      const [outgoingInvites, setOutgoingInvites] = useState([]);
 
       const [expanded, setExpanded] = useState({});
       const [prefsByTeam, setPrefsByTeam] = useState({});
