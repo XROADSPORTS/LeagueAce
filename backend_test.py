@@ -4675,15 +4675,58 @@ class LeagueAceAPITester:
         """Test rejecting invite by ID (should set status=CANCELLED, no team created)"""
         print("\n4️⃣ Testing REJECT INVITE BY ID...")
         
-        # Create another invite to reject
-        invite_data = {
-            "inviter_user_id": self.internal_user_a_id,
-            "rating_tier_id": self.internal_doubles_rating_tier_id,
-            "invitee_user_id": self.internal_user_b_id
+        # Create two new users for rejection test (since A and B are already on a team)
+        user_c_data = {
+            "name": "Internal User C",
+            "email": f"internal.user.c_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1005",
+            "rating_level": 4.2,
+            "role": "Player"
         }
         
         success, response = self.run_test(
-            "Create Another Internal Invite for Rejection",
+            "Create Internal User C for Rejection Test",
+            "POST",
+            "users",
+            200,
+            data=user_c_data
+        )
+        
+        if not success:
+            return False
+        
+        internal_user_c_id = response['id']
+        
+        user_d_data = {
+            "name": "Internal User D",
+            "email": f"internal.user.d_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1006",
+            "rating_level": 4.3,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Internal User D for Rejection Test",
+            "POST",
+            "users",
+            200,
+            data=user_d_data
+        )
+        
+        if not success:
+            return False
+        
+        internal_user_d_id = response['id']
+        
+        # Create invite to reject
+        invite_data = {
+            "inviter_user_id": internal_user_c_id,
+            "rating_tier_id": self.internal_doubles_rating_tier_id,
+            "invitee_user_id": internal_user_d_id
+        }
+        
+        success, response = self.run_test(
+            "Create Internal Invite for Rejection",
             "POST",
             "doubles/invites",
             200,
@@ -4700,29 +4743,24 @@ class LeagueAceAPITester:
             "GET",
             "doubles/invites",
             200,
-            params={"user_id": self.internal_user_b_id, "role": "incoming"}
+            params={"user_id": internal_user_d_id, "role": "incoming"}
         )
         
         if not success or not response.get('invites'):
             print("   ❌ Failed to get invite for rejection")
             return False
         
-        # Find the pending invite (not the accepted one)
-        reject_invite_id = None
-        for invite in response.get('invites', []):
-            # This should be a new pending invite
-            if invite.get('id') != getattr(self, 'internal_invite_id', None):
-                reject_invite_id = invite.get('id')
-                break
+        # Get the invite ID
+        reject_invite_id = response.get('invites', [{}])[0].get('id')
         
         if not reject_invite_id:
-            print("   ❌ No pending invite found for rejection")
+            print("   ❌ No invite found for rejection")
             return False
         
         # Reject the invite
         reject_data = {
             "invite_id": reject_invite_id,
-            "user_id": self.internal_user_b_id
+            "user_id": internal_user_d_id
         }
         
         success, response = self.run_test(
@@ -4742,19 +4780,19 @@ class LeagueAceAPITester:
                 
                 # Verify no team was created by checking teams count
                 success, teams_response = self.run_test(
-                    "Verify No Extra Team Created",
+                    "Verify No Team Created from Rejected Invite",
                     "GET",
                     "doubles/teams",
                     200,
-                    params={"player_id": self.internal_user_b_id}
+                    params={"player_id": internal_user_d_id}
                 )
                 
                 if success:
                     teams = teams_response.get('teams', [])
-                    print(f"   ✅ Total teams for user: {len(teams)}")
-                    # Should still be 1 team (from the accepted invite)
-                    if len(teams) == 1:
-                        print("   ✅ No additional team created from rejected invite")
+                    print(f"   ✅ Total teams for user D: {len(teams)}")
+                    # Should be 0 teams (invite was rejected)
+                    if len(teams) == 0:
+                        print("   ✅ No team created from rejected invite")
                         return True
                     else:
                         print(f"   ❌ Unexpected number of teams: {len(teams)}")
