@@ -422,7 +422,7 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Fixed JSX parsing error in App.js. Application now loads correctly. Ready for backend testing to verify 4-tier league format implementation and user authentication features."
+    message: "Implemented Doubles Phase 1: backend partner invites + team creation on acceptance, and frontend PlayerDoubles tab with partner link creation and URL token acceptance. Please run backend tests focusing on the new /api/doubles endpoints. I will pause frontend automated tests until you confirm."
   - agent: "main"
     message: "Implemented Phase 2 features: Player Grouping Logic with random assignment and admin controls, Round Robin Doubles Algorithm with unique partner combinations, and Competition System selection (Team League vs Knockout). Added comprehensive UI components for group management and match scheduling. Ready for testing of new functionality."
   - agent: "main"
