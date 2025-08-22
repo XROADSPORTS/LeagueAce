@@ -1386,6 +1386,355 @@ async def list_join_requests(manager_id: str):
     return {"requests": results}
 
 # Continue with existing routes but updated for new structure...
+# Doubles Coordinator Models and Routes
+class PartnerInviteStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+class PartnerInvite(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    token: str
+    rating_tier_id: str
+    league_id: str
+    inviter_user_id: str
+    invitee_contact: Optional[str] = None  # email or phone
+    status: PartnerInviteStatus = PartnerInviteStatus.PENDING
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=14))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PartnerInviteCreate(BaseModel):
+    inviter_user_id: str
+    rating_tier_id: Optional[str] = None
+    join_code: Optional[str] = None
+    invitee_contact: Optional[str] = None
+
+class PartnerInviteAccept(BaseModel):
+    token: str
+    invitee_user_id: str
+
+class PartnerInvitePreview(BaseModel):
+    token: str
+    league_name: Optional[str]
+    tier_name: Optional[str]
+    inviter_name: Optional[str]
+    format_type: Optional[LeagueFormat]
+    expires_at: datetime
+
+class TeamStatus(str, Enum):
+    ACTIVE = "active"
+    PROVISIONAL = "provisional"
+
+class Team(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_tier_id: str
+    league_id: str
+    team_name: str
+    status: TeamStatus = TeamStatus.ACTIVE
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TeamMemberRole(str, Enum):
+    PRIMARY = "primary"
+    SUB = "sub"
+
+class TeamMember(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    team_id: str
+    user_id: str
+    role: TeamMemberRole = TeamMemberRole.PRIMARY
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DoublesTeamResponse(BaseModel):
+    id: str
+    team_name: str
+    rating_tier_id: str
+    rating_tier_name: Optional[str] = None
+    league_id: str
+    league_name: Optional[str] = None
+    status: TeamStatus
+    members: List[Dict[str, Any]] = Field(default_factory=list)
+    created_at: datetime
+
+async def _get_league_and_format_for_tier(rating_tier: Dict[str, Any]) -> Dict[str, Any]:
+    fmt = await db.format_tiers.find_one({"id": rating_tier.get("format_tier_id")})
+    league = None
+    if fmt:
+        league = await db.leagues.find_one({"id": fmt.get("league_id")})
+    return {"format": fmt, "league": league}
+
+async def _assert_doubles_tier(rating_tier: Dict[str, Any]):
+    ctx = await _get_league_and_format_for_tier(rating_tier)
+    fmt = ctx.get("format")
+    if not fmt or fmt.get("format_type") != LeagueFormat.DOUBLES:
+        raise HTTPException(status_code=400, detail="This rating tier is not a Doubles format tier")
+    return ctx
+
+async def _check_player_eligible_for_tier(user: Dict[str, Any], rating_tier: Dict[str, Any]):
+    # Simple eligibility: rating within band
+    rl = float(user.get("rating_level", 0))
+    if rl < float(rating_tier.get("min_rating", 0)) or rl > float(rating_tier.get("max_rating", 10)):
+        raise HTTPException(status_code=400, detail="Player rating is outside the tier's rating range")
+
+async def _check_not_already_on_team(user_id: str, rating_tier_id: str):
+    # Ensure user is not already on an active team in this rating tier
+    member = await db.doubles_team_members.find_one({"user_id": user_id})
+    if member:
+        team = await db.doubles_teams.find_one({"id": member.get("team_id")})
+        if team and team.get("rating_tier_id") == rating_tier_id and team.get("status") == TeamStatus.ACTIVE:
+            raise HTTPException(status_code=400, detail="Player already belongs to an active doubles team in this tier")
+
+@api_router.post("/doubles/invites", response_model=PartnerInvitePreview)
+async def create_partner_invite(inv: PartnerInviteCreate):
+    # Resolve rating tier
+    rating_tier = None
+    if inv.rating_tier_id:
+        rating_tier = await db.rating_tiers.find_one({"id": inv.rating_tier_id})
+    elif inv.join_code:
+        code = inv.join_code.strip().upper()
+        rating_tier = await db.rating_tiers.find_one({"join_code": code})
+    if not rating_tier:
+        raise HTTPException(status_code=404, detail="Rating tier not found")
+
+    # Ensure doubles tier
+    ctx = await _assert_doubles_tier(rating_tier)
+    league = ctx.get("league")
+
+    inviter = await db.users.find_one({"id": inv.inviter_user_id})
+    if not inviter:
+        raise HTTPException(status_code=404, detail="Inviter not found")
+
+    # Eligibility and constraints
+    await _check_player_eligible_for_tier(inviter, rating_tier)
+    await _check_not_already_on_team(inv.inviter_user_id, rating_tier["id"])
+
+    # Generate secure token
+    import secrets
+    token = secrets.token_urlsafe(24)
+
+    invite_obj = PartnerInvite(
+        token=token,
+        rating_tier_id=rating_tier["id"],
+        league_id=league["id"] if league else "",
+        inviter_user_id=inv.inviter_user_id,
+        invitee_contact=inv.invitee_contact
+    )
+    await db.doubles_partner_invites.insert_one(prepare_for_mongo(invite_obj.dict()))
+
+    return PartnerInvitePreview(
+        token=token,
+        league_name=league.get("name") if league else None,
+        tier_name=rating_tier.get("name"),
+        inviter_name=inviter.get("name"),
+        format_type=LeagueFormat.DOUBLES,
+        expires_at=invite_obj.expires_at
+    )
+
+@api_router.get("/doubles/invites/{token}", response_model=PartnerInvitePreview)
+async def preview_partner_invite(token: str):
+    invite = await db.doubles_partner_invites.find_one({"token": token})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite.get("status") != PartnerInviteStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Invite is not pending")
+    # Expiry check
+    try:
+        if isinstance(invite.get("expires_at"), str):
+            exp = datetime.fromisoformat(invite["expires_at"].replace('Z', '+00:00'))
+        else:
+            exp = invite.get("expires_at")
+        if exp and exp < datetime.now(timezone.utc):
+            await db.doubles_partner_invites.update_one({"id": invite["id"]}, {"$set": {"status": PartnerInviteStatus.EXPIRED}})
+            raise HTTPException(status_code=400, detail="Invite expired")
+    except Exception:
+        pass
+
+    rating_tier = await db.rating_tiers.find_one({"id": invite.get("rating_tier_id")})
+    ctx = await _get_league_and_format_for_tier(rating_tier) if rating_tier else {"league": None, "format": None}
+    inviter = await db.users.find_one({"id": invite.get("inviter_user_id")})
+
+    return PartnerInvitePreview(
+        token=token,
+        league_name=(ctx.get("league") or {}).get("name") if ctx.get("league") else None,
+        tier_name=rating_tier.get("name") if rating_tier else None,
+        inviter_name=inviter.get("name") if inviter else None,
+        format_type=LeagueFormat.DOUBLES,
+        expires_at=invite.get("expires_at") if isinstance(invite.get("expires_at"), datetime) else datetime.now(timezone.utc) + timedelta(days=7)
+    )
+
+@api_router.post("/doubles/invites/accept", response_model=DoublesTeamResponse)
+async def accept_partner_invite(payload: PartnerInviteAccept):
+    invite = await db.doubles_partner_invites.find_one({"token": payload.token})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite.get("status") != PartnerInviteStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Invite is not pending")
+
+    # Expiry check
+    try:
+        exp = invite.get("expires_at")
+        if isinstance(exp, str):
+            exp = datetime.fromisoformat(exp.replace('Z', '+00:00'))
+        if exp and exp < datetime.now(timezone.utc):
+            await db.doubles_partner_invites.update_one({"id": invite["id"]}, {"$set": {"status": PartnerInviteStatus.EXPIRED}})
+            raise HTTPException(status_code=400, detail="Invite expired")
+    except Exception:
+        pass
+
+    inviter = await db.users.find_one({"id": invite.get("inviter_user_id")})
+    invitee = await db.users.find_one({"id": payload.invitee_user_id})
+    if not invitee:
+        raise HTTPException(status_code=404, detail="Invitee not found")
+    if not inviter:
+        raise HTTPException(status_code=404, detail="Inviter not found")
+    if inviter.get("id") == invitee.get("id"):
+        raise HTTPException(status_code=400, detail="Cannot accept your own invite as partner")
+
+    rating_tier = await db.rating_tiers.find_one({"id": invite.get("rating_tier_id")})
+    if not rating_tier:
+        raise HTTPException(status_code=404, detail="Rating tier missing for invite")
+
+    # Ensure doubles tier and eligibility
+    await _assert_doubles_tier(rating_tier)
+    await _check_player_eligible_for_tier(inviter, rating_tier)
+    await _check_player_eligible_for_tier(invitee, rating_tier)
+
+    # Not already on team
+    await _check_not_already_on_team(inviter["id"], rating_tier["id"])
+    await _check_not_already_on_team(invitee["id"], rating_tier["id"])
+
+    # Create team
+    team_name = f"{inviter.get('name', 'Player A')} & {invitee.get('name', 'Player B')}"
+    ctx = await _get_league_and_format_for_tier(rating_tier)
+    league = ctx.get("league")
+    team = Team(
+        rating_tier_id=rating_tier["id"],
+        league_id=league["id"] if league else "",
+        team_name=team_name,
+        status=TeamStatus.ACTIVE,
+        created_by=inviter["id"],
+    )
+    await db.doubles_teams.insert_one(prepare_for_mongo(team.dict()))
+
+    # Add members
+    m1 = TeamMember(team_id=team.id, user_id=inviter["id"], role=TeamMemberRole.PRIMARY)
+    m2 = TeamMember(team_id=team.id, user_id=invitee["id"], role=TeamMemberRole.PRIMARY)
+    await db.doubles_team_members.insert_one(prepare_for_mongo(m1.dict()))
+    await db.doubles_team_members.insert_one(prepare_for_mongo(m2.dict()))
+
+    # Mark invite accepted
+    await db.doubles_partner_invites.update_one({"id": invite["id"]}, {"$set": {"status": PartnerInviteStatus.ACCEPTED}})
+
+    # Optional: create team chat thread
+    try:
+        thread = await create_chat_thread(
+            ChatThreadCreate(
+                type=ChatThreadType.GROUP,
+                name=f"Team • {team_name}",
+                scope={"team_id": team.id, "league_id": team.league_id},
+                member_ids=[inviter["id"], invitee["id"]]
+            ),
+            created_by=inviter["id"]
+        )
+        await create_system_message(thread.id, f"Team created: {team_name}")
+    except Exception:
+        pass
+
+    # Build response
+    members = [
+        {"user_id": inviter["id"], "name": inviter.get("name"), "email": inviter.get("email")},
+        {"user_id": invitee["id"], "name": invitee.get("name"), "email": invitee.get("email")},
+    ]
+    return DoublesTeamResponse(
+        id=team.id,
+        team_name=team.team_name,
+        rating_tier_id=team.rating_tier_id,
+        rating_tier_name=rating_tier.get("name"),
+        league_id=team.league_id,
+        league_name=league.get("name") if league else None,
+        status=team.status,
+        members=members,
+        created_at=team.created_at
+    )
+
+@api_router.get("/doubles/teams", response_model=List[DoublesTeamResponse])
+async def list_player_doubles_teams(player_id: str):
+    memberships = await db.doubles_team_members.find({"user_id": player_id}).to_list(1000)
+    team_ids = [m.get("team_id") for m in memberships]
+    if not team_ids:
+        return []
+    teams = await db.doubles_teams.find({"id": {"$in": team_ids}}).to_list(1000)
+    responses: List[DoublesTeamResponse] = []
+    for t in teams:
+        rating_tier = await db.rating_tiers.find_one({"id": t.get("rating_tier_id")})
+        ctx = await _get_league_and_format_for_tier(rating_tier) if rating_tier else {"league": None}
+        league = ctx.get("league")
+        # members
+        mm = await db.doubles_team_members.find({"team_id": t.get("id")}).to_list(10)
+        members = []
+        for m in mm:
+            u = await db.users.find_one({"id": m.get("user_id")})
+            if u:
+                members.append({"user_id": u.get("id"), "name": u.get("name"), "email": u.get("email")})
+        responses.append(DoublesTeamResponse(
+            id=t.get("id"),
+            team_name=t.get("team_name"),
+            rating_tier_id=t.get("rating_tier_id"),
+            rating_tier_name=rating_tier.get("name") if rating_tier else None,
+            league_id=t.get("league_id"),
+            league_name=league.get("name") if league else None,
+            status=t.get("status", TeamStatus.ACTIVE),
+            members=members,
+            created_at=datetime.fromisoformat(t["created_at"]) if isinstance(t.get("created_at"), str) else t.get("created_at")
+        ))
+    return responses
+
+# Optional: send invite via email/SMS (returns not configured if keys missing)
+class SendInviteRequest(BaseModel):
+    invite_id: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+@api_router.post("/doubles/invites/send")
+async def send_partner_invite_links(payload: SendInviteRequest):
+    # Check invite exists
+    inv = await db.doubles_partner_invites.find_one({"id": payload.invite_id})
+    if not inv:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    # Build link (frontend reads token from query)
+    # We cannot hardcode frontend URL. The frontend constructs share link client-side.
+    # This endpoint only attempts sending if providers configured.
+    sendgrid_key = os.environ.get("SENDGRID_API_KEY")
+    twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    twilio_token = os.environ.get("TWILIO_AUTH_TOKEN")
+
+    providers = []
+    if payload.email:
+        providers.append("email")
+    if payload.phone:
+        providers.append("sms")
+
+    if not providers:
+        raise HTTPException(status_code=400, detail="Provide at least one of email or phone")
+
+    results = {"email": None, "sms": None}
+
+    if payload.email:
+        if not sendgrid_key:
+            results["email"] = {"success": False, "error": "SendGrid not configured"}
+        else:
+            # We will implement actual sending after keys are provided
+            results["email"] = {"success": False, "error": "Email sending not enabled in this environment"}
+
+    if payload.phone:
+        if not (twilio_sid and twilio_token):
+            results["sms"] = {"success": False, "error": "Twilio not configured"}
+        else:
+            results["sms"] = {"success": False, "error": "SMS sending not enabled in this environment"}
+
+    return {"message": "Dispatch attempted", "results": results}
+
 # (Chat routes, match routes, etc. would continue here)
 
 # Round Robin Doubles Match Generation Routes
