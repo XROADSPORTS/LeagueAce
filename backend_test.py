@@ -2533,6 +2533,585 @@ class LeagueAceAPITester:
             join_success
         ])
 
+    # DOUBLES COORDINATOR PHASE 1 TESTS
+    
+    def test_doubles_coordinator_setup(self):
+        """Setup for doubles coordinator testing - create users and doubles tier"""
+        print("\n🔍 Setting up Doubles Coordinator Testing Environment...")
+        
+        # Create two users with ratings within doubles tier range
+        self.doubles_inviter_id = None
+        self.doubles_invitee_id = None
+        self.doubles_tier_id = None
+        self.doubles_join_code = None
+        
+        # Create inviter user
+        inviter_data = {
+            "name": "Alice Johnson",
+            "email": f"alice.johnson_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0201",
+            "rating_level": 4.2,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Inviter",
+            "POST",
+            "users",
+            200,
+            data=inviter_data
+        )
+        
+        if success and 'id' in response:
+            self.doubles_inviter_id = response['id']
+            print(f"   Created Doubles Inviter ID: {self.doubles_inviter_id}")
+        else:
+            return False
+        
+        # Create invitee user
+        invitee_data = {
+            "name": "Bob Smith",
+            "email": f"bob.smith_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0202",
+            "rating_level": 4.1,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Invitee",
+            "POST",
+            "users",
+            200,
+            data=invitee_data
+        )
+        
+        if success and 'id' in response:
+            self.doubles_invitee_id = response['id']
+            print(f"   Created Doubles Invitee ID: {self.doubles_invitee_id}")
+        else:
+            return False
+        
+        # Create league if not exists
+        if not self.league_id:
+            if not self.test_create_league():
+                return False
+        
+        # Create doubles format tier
+        doubles_format_data = {
+            "league_id": self.league_id,
+            "name": "Doubles Tournament",
+            "format_type": "Doubles",
+            "description": "Doubles format for partner coordination"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Format Tier",
+            "POST",
+            "format-tiers",
+            200,
+            data=doubles_format_data
+        )
+        
+        if success and 'id' in response:
+            self.doubles_format_tier_id = response['id']
+            print(f"   Created Doubles Format Tier ID: {self.doubles_format_tier_id}")
+        else:
+            return False
+        
+        # Create doubles rating tier
+        doubles_rating_data = {
+            "format_tier_id": self.doubles_format_tier_id,
+            "name": "4.0-4.5 Doubles",
+            "min_rating": 3.8,
+            "max_rating": 4.7,
+            "max_players": 16,
+            "competition_system": "Team League Format",
+            "playoff_spots": 4,
+            "region": "Bay Area",
+            "surface": "Hard Court"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Rating Tier",
+            "POST",
+            "rating-tiers",
+            200,
+            data=doubles_rating_data
+        )
+        
+        if success and 'id' in response:
+            self.doubles_tier_id = response['id']
+            self.doubles_join_code = response.get('join_code')
+            print(f"   Created Doubles Rating Tier ID: {self.doubles_tier_id}")
+            print(f"   Generated Join Code: {self.doubles_join_code}")
+        else:
+            return False
+        
+        # Create non-doubles tier for negative testing
+        singles_format_data = {
+            "league_id": self.league_id,
+            "name": "Singles Tournament",
+            "format_type": "Singles",
+            "description": "Singles format (not doubles)"
+        }
+        
+        success, response = self.run_test(
+            "Create Singles Format Tier (Non-Doubles)",
+            "POST",
+            "format-tiers",
+            200,
+            data=singles_format_data
+        )
+        
+        if success and 'id' in response:
+            singles_format_tier_id = response['id']
+            
+            # Create singles rating tier
+            singles_rating_data = {
+                "format_tier_id": singles_format_tier_id,
+                "name": "4.0 Singles",
+                "min_rating": 3.5,
+                "max_rating": 4.5,
+                "max_players": 12,
+                "competition_system": "Team League Format",
+                "playoff_spots": 4
+            }
+            
+            success, response = self.run_test(
+                "Create Singles Rating Tier (Non-Doubles)",
+                "POST",
+                "rating-tiers",
+                200,
+                data=singles_rating_data
+            )
+            
+            if success and 'id' in response:
+                self.singles_tier_id = response['id']
+                print(f"   Created Singles Rating Tier ID: {self.singles_tier_id}")
+        
+        return True
+    
+    def test_create_partner_invite_with_rating_tier_id(self):
+        """Test POST /api/doubles/invites with rating_tier_id"""
+        if not self.doubles_inviter_id or not self.doubles_tier_id:
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        invite_data = {
+            "inviter_user_id": self.doubles_inviter_id,
+            "rating_tier_id": self.doubles_tier_id,
+            "invitee_contact": "partner@example.com"
+        }
+        
+        success, response = self.run_test(
+            "Create Partner Invite (Rating Tier ID)",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if success:
+            self.partner_invite_token = response.get('token')
+            print(f"   Token: {self.partner_invite_token}")
+            print(f"   League: {response.get('league_name')}")
+            print(f"   Tier: {response.get('tier_name')}")
+            print(f"   Inviter: {response.get('inviter_name')}")
+            print(f"   Expires: {response.get('expires_at')}")
+            
+            # Validate response structure
+            required_fields = ['token', 'league_name', 'tier_name', 'inviter_name', 'expires_at']
+            missing_fields = [field for field in required_fields if field not in response]
+            if missing_fields:
+                print(f"   ⚠️  Missing fields: {missing_fields}")
+                return False
+        
+        return success
+    
+    def test_create_partner_invite_with_join_code(self):
+        """Test POST /api/doubles/invites with join_code"""
+        if not self.doubles_inviter_id or not self.doubles_join_code:
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        invite_data = {
+            "inviter_user_id": self.doubles_inviter_id,
+            "join_code": self.doubles_join_code,
+            "invitee_contact": "partner2@example.com"
+        }
+        
+        success, response = self.run_test(
+            "Create Partner Invite (Join Code)",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if success:
+            self.partner_invite_token_2 = response.get('token')
+            print(f"   Token: {self.partner_invite_token_2}")
+            print(f"   League: {response.get('league_name')}")
+            print(f"   Tier: {response.get('tier_name')}")
+        
+        return success
+    
+    def test_create_partner_invite_non_doubles_tier(self):
+        """Test POST /api/doubles/invites with non-doubles tier (should return 400)"""
+        if not self.doubles_inviter_id or not hasattr(self, 'singles_tier_id'):
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        invite_data = {
+            "inviter_user_id": self.doubles_inviter_id,
+            "rating_tier_id": self.singles_tier_id
+        }
+        
+        success, response = self.run_test(
+            "Create Partner Invite (Non-Doubles Tier - Should Fail)",
+            "POST",
+            "doubles/invites",
+            400,
+            data=invite_data
+        )
+        
+        return success
+    
+    def test_create_partner_invite_missing_tier(self):
+        """Test POST /api/doubles/invites with missing tier (should return 404)"""
+        if not self.doubles_inviter_id:
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        invite_data = {
+            "inviter_user_id": self.doubles_inviter_id,
+            "rating_tier_id": "non-existent-tier-id"
+        }
+        
+        success, response = self.run_test(
+            "Create Partner Invite (Missing Tier - Should Fail)",
+            "POST",
+            "doubles/invites",
+            404,
+            data=invite_data
+        )
+        
+        return success
+    
+    def test_create_partner_invite_out_of_range_rating(self):
+        """Test POST /api/doubles/invites with inviter rating out of range (should return 400)"""
+        # Create user with rating outside the doubles tier range
+        out_of_range_data = {
+            "name": "Charlie Wilson",
+            "email": f"charlie.wilson_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0203",
+            "rating_level": 5.2,  # Outside the 3.8-4.7 range
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Out-of-Range User",
+            "POST",
+            "users",
+            200,
+            data=out_of_range_data
+        )
+        
+        if not success or 'id' not in response:
+            return False
+        
+        out_of_range_user_id = response['id']
+        
+        invite_data = {
+            "inviter_user_id": out_of_range_user_id,
+            "rating_tier_id": self.doubles_tier_id
+        }
+        
+        success, response = self.run_test(
+            "Create Partner Invite (Out-of-Range Rating - Should Fail)",
+            "POST",
+            "doubles/invites",
+            400,
+            data=invite_data
+        )
+        
+        return success
+    
+    def test_preview_partner_invite(self):
+        """Test GET /api/doubles/invites/{token}"""
+        if not hasattr(self, 'partner_invite_token') or not self.partner_invite_token:
+            print("❌ Skipping - No partner invite token available")
+            return False
+        
+        success, response = self.run_test(
+            "Preview Partner Invite",
+            "GET",
+            f"doubles/invites/{self.partner_invite_token}",
+            200
+        )
+        
+        if success:
+            print(f"   Token: {response.get('token')}")
+            print(f"   League: {response.get('league_name')}")
+            print(f"   Tier: {response.get('tier_name')}")
+            print(f"   Inviter: {response.get('inviter_name')}")
+            print(f"   Format: {response.get('format_type')}")
+            print(f"   Expires: {response.get('expires_at')}")
+        
+        return success
+    
+    def test_preview_expired_invite(self):
+        """Test GET /api/doubles/invites/{token} with expired invite"""
+        # Create an invite that we'll manually expire
+        if not self.doubles_inviter_id or not self.doubles_tier_id:
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        # For this test, we'll create an invite and then test with an invalid token
+        # to simulate expired behavior
+        success, response = self.run_test(
+            "Preview Invalid/Expired Invite (Should Fail)",
+            "GET",
+            "doubles/invites/invalid-token-12345",
+            404  # Invalid token should return 404
+        )
+        
+        return success
+    
+    def test_accept_partner_invite(self):
+        """Test POST /api/doubles/invites/accept"""
+        if not hasattr(self, 'partner_invite_token') or not self.partner_invite_token or not self.doubles_invitee_id:
+            print("❌ Skipping - No partner invite token or invitee available")
+            return False
+        
+        accept_data = {
+            "token": self.partner_invite_token,
+            "invitee_user_id": self.doubles_invitee_id
+        }
+        
+        success, response = self.run_test(
+            "Accept Partner Invite",
+            "POST",
+            "doubles/invites/accept",
+            200,
+            data=accept_data
+        )
+        
+        if success:
+            self.doubles_team_id = response.get('id')
+            print(f"   Team ID: {self.doubles_team_id}")
+            print(f"   Team Name: {response.get('team_name')}")
+            print(f"   Status: {response.get('status')}")
+            print(f"   Members: {len(response.get('members', []))}")
+            
+            # Validate team name format
+            expected_pattern = "Alice Johnson & Bob Smith"  # Should be "Inviter & Invitee"
+            actual_name = response.get('team_name', '')
+            if '&' in actual_name and len(response.get('members', [])) == 2:
+                print(f"   ✅ Team name format correct: {actual_name}")
+            else:
+                print(f"   ⚠️  Team name format may be incorrect: {actual_name}")
+            
+            # Validate members
+            members = response.get('members', [])
+            if len(members) == 2:
+                member_ids = [m.get('user_id') for m in members]
+                if self.doubles_inviter_id in member_ids and self.doubles_invitee_id in member_ids:
+                    print(f"   ✅ Both inviter and invitee added as members")
+                else:
+                    print(f"   ⚠️  Member IDs don't match expected users")
+            else:
+                print(f"   ⚠️  Expected 2 members, got {len(members)}")
+        
+        return success
+    
+    def test_accept_invite_same_person(self):
+        """Test POST /api/doubles/invites/accept with same person (should fail)"""
+        if not hasattr(self, 'partner_invite_token_2') or not self.partner_invite_token_2 or not self.doubles_inviter_id:
+            print("❌ Skipping - No second partner invite token available")
+            return False
+        
+        accept_data = {
+            "token": self.partner_invite_token_2,
+            "invitee_user_id": self.doubles_inviter_id  # Same as inviter
+        }
+        
+        success, response = self.run_test(
+            "Accept Invite (Same Person - Should Fail)",
+            "POST",
+            "doubles/invites/accept",
+            400,
+            data=accept_data
+        )
+        
+        return success
+    
+    def test_accept_invite_already_on_team(self):
+        """Test POST /api/doubles/invites/accept when user already on active team (should fail)"""
+        # Create another invite to test this scenario
+        if not self.doubles_inviter_id or not self.doubles_tier_id:
+            print("❌ Skipping - Setup not complete")
+            return False
+        
+        # Create a third user
+        third_user_data = {
+            "name": "Carol Davis",
+            "email": f"carol.davis_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0204",
+            "rating_level": 4.3,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Third User for Team Test",
+            "POST",
+            "users",
+            200,
+            data=third_user_data
+        )
+        
+        if not success or 'id' not in response:
+            return False
+        
+        third_user_id = response['id']
+        
+        # Create another invite with the third user as inviter
+        invite_data = {
+            "inviter_user_id": third_user_id,
+            "rating_tier_id": self.doubles_tier_id
+        }
+        
+        success, response = self.run_test(
+            "Create Second Invite for Team Test",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if not success or 'token' not in response:
+            return False
+        
+        second_token = response['token']
+        
+        # Try to accept with someone who's already on a team (doubles_invitee_id)
+        accept_data = {
+            "token": second_token,
+            "invitee_user_id": self.doubles_invitee_id  # Already on a team
+        }
+        
+        success, response = self.run_test(
+            "Accept Invite (Already on Team - Should Fail)",
+            "POST",
+            "doubles/invites/accept",
+            400,
+            data=accept_data
+        )
+        
+        return success
+    
+    def test_get_player_doubles_teams(self):
+        """Test GET /api/doubles/teams?player_id=..."""
+        if not self.doubles_inviter_id:
+            print("❌ Skipping - No doubles inviter ID available")
+            return False
+        
+        success, response = self.run_test(
+            "Get Player Doubles Teams",
+            "GET",
+            "doubles/teams",
+            200,
+            params={"player_id": self.doubles_inviter_id}
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} teams for player")
+            for i, team in enumerate(response):
+                print(f"   Team {i+1}: {team.get('team_name')}")
+                print(f"     - League: {team.get('league_name')}")
+                print(f"     - Tier: {team.get('rating_tier_name')}")
+                print(f"     - Status: {team.get('status')}")
+                print(f"     - Members: {len(team.get('members', []))}")
+                
+                # Validate team structure
+                required_fields = ['id', 'team_name', 'rating_tier_id', 'league_id', 'status', 'members']
+                missing_fields = [field for field in required_fields if field not in team]
+                if missing_fields:
+                    print(f"     ⚠️  Missing fields: {missing_fields}")
+        
+        return success
+    
+    def test_get_player_doubles_teams_no_teams(self):
+        """Test GET /api/doubles/teams?player_id=... for player with no teams"""
+        # Create a new user who hasn't joined any teams
+        new_user_data = {
+            "name": "David Lee",
+            "email": f"david.lee_{datetime.now().strftime('%H%M%S')}@tennisclub.com",
+            "phone": "+1-555-0205",
+            "rating_level": 4.0,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create User with No Teams",
+            "POST",
+            "users",
+            200,
+            data=new_user_data
+        )
+        
+        if not success or 'id' not in response:
+            return False
+        
+        new_user_id = response['id']
+        
+        success, response = self.run_test(
+            "Get Doubles Teams (No Teams)",
+            "GET",
+            "doubles/teams",
+            200,
+            params={"player_id": new_user_id}
+        )
+        
+        if success and isinstance(response, list):
+            print(f"   Found {len(response)} teams (expected 0)")
+            return len(response) == 0
+        
+        return success
+    
+    def run_doubles_coordinator_tests(self):
+        """Run all doubles coordinator tests"""
+        print("\n🎾 DOUBLES COORDINATOR PHASE 1 TESTING")
+        print("=" * 50)
+        
+        doubles_tests = [
+            ("Setup Doubles Environment", self.test_doubles_coordinator_setup),
+            ("Create Partner Invite (Rating Tier ID)", self.test_create_partner_invite_with_rating_tier_id),
+            ("Create Partner Invite (Join Code)", self.test_create_partner_invite_with_join_code),
+            ("Create Invite Non-Doubles Tier (400)", self.test_create_partner_invite_non_doubles_tier),
+            ("Create Invite Missing Tier (404)", self.test_create_partner_invite_missing_tier),
+            ("Create Invite Out-of-Range Rating (400)", self.test_create_partner_invite_out_of_range_rating),
+            ("Preview Partner Invite", self.test_preview_partner_invite),
+            ("Preview Invalid/Expired Invite (404)", self.test_preview_expired_invite),
+            ("Accept Partner Invite", self.test_accept_partner_invite),
+            ("Accept Invite Same Person (400)", self.test_accept_invite_same_person),
+            ("Accept Invite Already on Team (400)", self.test_accept_invite_already_on_team),
+            ("Get Player Doubles Teams", self.test_get_player_doubles_teams),
+            ("Get Player Doubles Teams (No Teams)", self.test_get_player_doubles_teams_no_teams)
+        ]
+        
+        successful_tests = 0
+        for test_name, test_method in doubles_tests:
+            print(f"\n📋 Running: {test_name}")
+            if test_method():
+                successful_tests += 1
+        
+        print(f"\n✅ Doubles Coordinator Tests: {successful_tests}/{len(doubles_tests)} tests passed")
+        success_rate = (successful_tests / len(doubles_tests)) * 100
+        print(f"📈 Success Rate: {success_rate:.1f}%")
+        
+        return successful_tests == len(doubles_tests)
+
     def run_critical_bug_fix_tests(self):
         """Run all critical bug fix tests as requested in review"""
         print("\n" + "="*80)
