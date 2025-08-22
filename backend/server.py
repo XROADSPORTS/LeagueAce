@@ -3450,7 +3450,7 @@ async def get_doubles_standings(rating_tier_id: str):
 @api_router.get("/doubles/matches/{match_id}/ics")
 async def get_match_ics(match_id: str):
     match = await db.doubles_matches.find_one({"id": match_id})
-    if not match or not match.get("scheduled_at"):
+    if not match or match.get("status") != DoublesMatchStatus.CONFIRMED or not match.get("scheduled_at"):
         raise HTTPException(status_code=404, detail="Match not scheduled")
     t1 = await db.doubles_teams.find_one({"id": match.get("team1_id")})
     t2 = await db.doubles_teams.find_one({"id": match.get("team2_id")})
