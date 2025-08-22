@@ -3396,6 +3396,10 @@ function App() {
             <PlayerLeagues />
           </TabsContent>
 
+          <TabsContent value="doubles" className="tab-content">
+            <PlayerDoubles />
+          </TabsContent>
+
           <TabsContent value="schedule" className="tab-content">
             <PlayerSchedule />
           </TabsContent>
