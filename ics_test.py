@@ -277,19 +277,33 @@ class ICSTestRunner:
             200
         )
         
-        if not success or 'matches' not in response:
+        if not success or 'created' not in response:
             print("❌ Failed to generate team schedule")
             return False
         
-        matches = response['matches']
-        if not matches:
-            print("❌ No matches generated")
+        if response['created'] == 0:
+            print("❌ No matches were created")
             return False
         
-        self.match_id = matches[0]['id']
-        print(f"   Created match ID: {self.match_id}")
+        print(f"   Created {response['created']} matches")
         
-        # 2. Test ICS for unconfirmed match (should return 404)
+        # 2. Get the matches that were created
+        success, matches_response = self.run_test(
+            "Get Generated Matches",
+            "GET",
+            "doubles/matches",
+            200,
+            params={"rating_tier_id": self.rating_tier_id}
+        )
+        
+        if not success or not matches_response:
+            print("❌ Failed to get matches")
+            return False
+        
+        self.match_id = matches_response[0]['id']
+        print(f"   Using match ID: {self.match_id}")
+        
+        # 3. Test ICS for unconfirmed match (should return 404)
         success, response = self.run_test(
             "Get ICS for Unconfirmed Match (Should Return 404)",
             "GET",
@@ -303,80 +317,69 @@ class ICSTestRunner:
             print("   ❌ Should have returned 404 for unconfirmed match")
             return False
         
-        # 3. Propose time slots for the match
+        # 4. Propose time slots for the match
         propose_data = {
-            "match_id": self.match_id,
-            "proposed_slots": [
+            "slots": [
                 {
-                    "datetime": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-                    "venue": "Test Tennis Court"
+                    "start": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+                    "venue_name": "Test Tennis Court"
                 }
-            ]
+            ],
+            "proposed_by_user_id": self.player_ids[0]
         }
         
         success, response = self.run_test(
             "Propose Time Slots",
             "POST",
-            "doubles/matches/propose-slots",
+            f"doubles/matches/{self.match_id}/propose-slots",
             200,
             data=propose_data
         )
         
-        if not success:
+        if not success or 'slot_ids' not in response:
             print("❌ Failed to propose time slots")
             return False
         
-        # 4. Get all team members to confirm the slot
-        # Get team members for both teams
-        team_members = []
-        for team_id in self.team_ids:
-            success, response = self.run_test(
-                f"Get Team Members for {team_id}",
-                "GET",
-                f"doubles/teams",
-                200,
-                params={"player_id": self.player_ids[0]}  # Use any player to get teams
-            )
-            
-            if success:
-                for team in response:
-                    if team['id'] == team_id:
-                        for member in team['members']:
-                            team_members.append(member['user_id'])
+        slot_id = response['slot_ids'][0]
+        print(f"   Created slot ID: {slot_id}")
         
         # 5. Confirm the slot with all 4 players
-        slot_id = 0  # Assuming first slot
-        for player_id in team_members:
+        for player_id in self.player_ids:
             confirm_data = {
-                "match_id": self.match_id,
-                "slot_index": slot_id,
-                "player_id": player_id
+                "slot_id": slot_id,
+                "user_id": player_id
             }
             
             success, response = self.run_test(
                 f"Confirm Slot by Player {player_id}",
                 "POST",
-                "doubles/matches/confirm-slot",
+                f"doubles/matches/{self.match_id}/confirm-slot",
                 200,
                 data=confirm_data
             )
             
-            if not success:
+            if success:
+                if response.get('locked'):
+                    print(f"   ✅ Match locked after player {player_id} confirmed")
+                    break
+                else:
+                    print(f"   ⏳ Player {player_id} confirmed, waiting for others...")
+            else:
                 print(f"❌ Failed to confirm slot for player {player_id}")
                 # Continue with other players
         
         # 6. Check if match is now confirmed
-        success, response = self.run_test(
+        success, matches_response = self.run_test(
             "Get Match Details After Confirmation",
             "GET",
-            f"doubles/matches",
+            "doubles/matches",
             200,
             params={"rating_tier_id": self.rating_tier_id}
         )
         
-        if success and response:
+        if success and matches_response:
             confirmed_match = None
-            for match in response:
+            for match in matches_response:
                 if match['id'] == self.match_id and match.get('status') == 'confirmed':
                     confirmed_match = match
                     break
@@ -409,6 +412,7 @@ class ICSTestRunner:
                     all_present = all(element in ics_content for element in required_elements)
                     if all_present:
                         print("   ✅ ICS content has valid format")
+                        print(f"   📅 ICS Preview: {ics_content[:200]}...")
                         return True
                     else:
                         print("   ❌ ICS content missing required elements")
