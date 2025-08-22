@@ -3260,7 +3260,7 @@ function App() {
         }
       };
 
-      useEffect(() => { loadTeams(); }, [user]);
+      useEffect(() => { loadTeams(); loadInvites(); }, [user]);
 
       const createInvite = async () => {
         if (!tierCode) {
