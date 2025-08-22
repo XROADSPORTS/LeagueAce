@@ -3381,6 +3381,7 @@ function App() {
           <TabsList className="tabs-list">
             <TabsTrigger value="home">Home</TabsTrigger>
             <TabsTrigger value="leagues">My Leagues</TabsTrigger>
+            <TabsTrigger value="doubles">My Doubles Teams</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="standings">Standings</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
