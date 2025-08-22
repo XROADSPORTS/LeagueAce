@@ -1409,7 +1409,8 @@ class PartnerInviteCreate(BaseModel):
     inviter_user_id: str
     rating_tier_id: Optional[str] = None
     join_code: Optional[str] = None
-    invitee_contact: Optional[str] = None
+    invitee_user_id: Optional[str] = None  # internal delivery
+    invitee_contact: Optional[str] = None  # not used in internal-only mode
 
 class PartnerInviteAccept(BaseModel):
     token: str
