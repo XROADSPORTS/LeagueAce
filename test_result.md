@@ -114,6 +114,18 @@ user_problem_statement: |
   - Doubles partner link flow: create invite, accept invite, show teams
 
 backend:
+  - task: "Doubles Coordinator Phase 1: Partner Link + Teams"
+    implemented: true
+    working: "unknown"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added models PartnerInvite, Team, TeamMember; endpoints: POST /api/doubles/invites, GET /api/doubles/invites/{token}, POST /api/doubles/invites/accept, GET /api/doubles/teams, and stub /api/doubles/invites/send. Enforces doubles-only tier, eligibility by rating, and no duplicate active teams in same tier."
+
   - task: "NEW 3-Tier League Structure API"
     implemented: true
     working: true
