@@ -3136,12 +3136,114 @@ function App() {
       const [linkToken, setLinkToken] = useState('');
       const [tierCode, setTierCode] = useState('');
 
+      const [expanded, setExpanded] = useState({});
+      const [prefsByTeam, setPrefsByTeam] = useState({});
+      const [matchesByTeam, setMatchesByTeam] = useState({});
+      const [standingsByTier, setStandingsByTier] = useState({});
+
       const loadTeams = async () => {
         try {
           const { data } = await axios.get(`${API}/doubles/teams`, { params: { player_id: user.id } });
           setTeams(data || []);
         } catch (e) {
           console.error('Failed to load doubles teams', e);
+        }
+      };
+
+      const loadPrefs = async (team) => {
+        try {
+          const { data } = await axios.get(`${API}/doubles/teams/${team.id}/preferences`);
+          setPrefsByTeam(prev => ({ ...prev, [team.id]: data }));
+        } catch (e) {
+          toast({ title: 'Error', description: 'Failed to load preferences', variant: 'destructive' });
+        }
+      };
+
+      const savePrefs = async (team) => {
+        const pref = prefsByTeam[team.id];
+        try {
+          const { data } = await axios.put(`${API}/doubles/teams/${team.id}/preferences`, pref);
+          setPrefsByTeam(prev => ({ ...prev, [team.id]: data }));
+          toast({ title: 'Saved', description: 'Team preferences updated' });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to save preferences', variant: 'destructive' });
+        }
+      };
+
+      const loadMatches = async (team) => {
+        try {
+          const { data } = await axios.get(`${API}/doubles/matches`, { params: { team_id: team.id } });
+          setMatchesByTeam(prev => ({ ...prev, [team.id]: data || [] }));
+        } catch (e) {
+          toast({ title: 'Error', description: 'Failed to load matches', variant: 'destructive' });
+        }
+      };
+
+      const proposeSlot = async (matchId, slot) => {
+        try {
+          await axios.post(`${API}/doubles/matches/${matchId}/propose-slots`, { slots: [slot], proposed_by_user_id: user.id });
+          toast({ title: 'Proposed', description: 'Slot proposed to both teams' });
+          // reload matches for the team owning this match
+          const team = teams.find(t => matchesByTeam[t.id]?.some(m => m.id === matchId));
+          if (team) await loadMatches(team);
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to propose', variant: 'destructive' });
+        }
+      };
+
+      const confirmSlot = async (matchId, slotId) => {
+        try {
+          const { data } = await axios.post(`${API}/doubles/matches/${matchId}/confirm-slot`, { slot_id: slotId, user_id: user.id });
+          if (data.locked) toast({ title: 'Scheduled', description: 'Match confirmed and scheduled' });
+          else toast({ title: 'Confirmed', description: 'Your confirmation recorded' });
+          const team = teams.find(t => matchesByTeam[t.id]?.some(m => m.id === matchId));
+          if (team) await loadMatches(team);
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to confirm', variant: 'destructive' });
+        }
+      };
+
+      const submitScore = async (matchId, sets) => {
+        try {
+          await axios.post(`${API}/doubles/matches/${matchId}/submit-score`, { sets, submitted_by_user_id: user.id });
+          toast({ title: 'Score submitted', description: 'Awaiting co-sign' });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to submit score', variant: 'destructive' });
+        }
+      };
+
+      const cosignScore = async (matchId) => {
+        try {
+          await axios.post(`${API}/doubles/matches/${matchId}/co-sign`, { user_id: user.id, role: 'partner' });
+          toast({ title: 'Co-signed', description: 'Thanks for confirming' });
+          const team = teams.find(t => matchesByTeam[t.id]?.some(m => m.id === matchId));
+          if (team) await loadMatches(team);
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to co-sign', variant: 'destructive' });
+        }
+      };
+
+      const downloadICS = async (matchId) => {
+        try {
+          const { data } = await axios.get(`${API}/doubles/matches/${matchId}/ics`);
+          const blob = new Blob([data.ics], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `match-${matchId}.ics`;
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          toast({ title: 'Not ready', description: 'ICS available only after match is confirmed', variant: 'destructive' });
+        }
+      };
+
+      const loadStandings = async (tierId) => {
+        try {
+          const { data } = await axios.get(`${API}/doubles/standings`, { params: { rating_tier_id: tierId } });
+          setStandingsByTier(prev => ({ ...prev, [tierId]: data || [] }));
+        } catch (e) {
+          toast({ title: 'Error', description: 'Failed to load standings', variant: 'destructive' });
         }
       };
 
@@ -3166,12 +3268,34 @@ function App() {
 
       const shareUrl = linkToken ? `${window.location.origin}/?partner=${linkToken}` : '';
 
+      const addAvailabilityRow = (teamId) => {
+        setPrefsByTeam(prev => {
+          const p = prev[teamId] || { team_id: teamId, preferred_venues: [], availability: [], max_subs: 0 };
+          const next = { ...p, availability: [...(p.availability||[]), { day: 'Wed', start: '18:00', end: '21:00' }] };
+          return { ...prev, [teamId]: next };
+        });
+      };
+
+      const updatePrefField = (teamId, field, value) => {
+        setPrefsByTeam(prev => ({ ...prev, [teamId]: { ...(prev[teamId]||{ team_id: teamId, availability: [], preferred_venues: [], max_subs: 0 }), [field]: value } }));
+      };
+
+      const updateAvailability = (teamId, idx, key, val) => {
+        setPrefsByTeam(prev => {
+          const p = prev[teamId];
+          if (!p) return prev;
+          const av = [...(p.availability||[])];
+          av[idx] = { ...av[idx], [key]: val };
+          return { ...prev, [teamId]: { ...p, availability: av } };
+        });
+      };
+
       return (
         <div className="player-standings">
           <Card className="glass-card-blue">
             <CardHeader>
               <CardTitle>My Doubles Teams</CardTitle>
-              <CardDescription>Create a partner link and accept invites</CardDescription>
+              <CardDescription>Create a partner link, manage schedules, and score matches</CardDescription>
             </CardHeader>
             <CardContent>
               {teams.length > 0 ? (
@@ -3183,7 +3307,134 @@ function App() {
                         <h5>{t.team_name}</h5>
                         <p>{t.league_name} • {t.rating_tier_name}</p>
                         <p>Members: {t.members?.map(m => m.name).join(', ')}</p>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <Button size="sm" className="btn-outline-ios" onClick={async ()=>{ setExpanded(e=>({...e,[t.id]:!e[t.id]})); if(!expanded[t.id]){ await loadPrefs(t); await loadMatches(t); } }}>
+                            {expanded[t.id] ? 'Hide' : 'Manage'}
+                          </Button>
+                          <Button size="sm" className="btn-outline-ios" onClick={()=> loadStandings(t.rating_tier_id)}>View Standings</Button>
+                          <Button size="sm" className="btn-outline-ios" onClick={()=> loadMatches(t)}>Refresh Matches</Button>
+                        </div>
                       </div>
+
+                      {expanded[t.id] && (
+                        <div className="glass-subcard" style={{ marginTop: 12, width: '100%' }}>
+                          {/* Preferences */}
+                          <div style={{ padding: 12 }}>
+                            <h6 style={{ fontWeight: 600, marginBottom: 8 }}>Team Preferences</h6>
+                            <div className="grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                              <div>
+                                <Label>Preferred Venues (comma separated)</Label>
+                                <Input value={(prefsByTeam[t.id]?.preferred_venues||[]).join(', ')} onChange={(e)=> updatePrefField(t.id, 'preferred_venues', e.target.value.split(',').map(s=>s.trim()).filter(Boolean))} placeholder="Court A, Court B" />
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Label>Weekly Availability</Label>
+                                  <Button size="sm" variant="outline" onClick={()=> addAvailabilityRow(t.id)}>Add Window</Button>
+                                </div>
+                                <div>
+                                  {(prefsByTeam[t.id]?.availability||[]).map((w, idx)=> (
+                                    <div key={idx} style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                                      <select value={w.day} onChange={(e)=> updateAvailability(t.id, idx, 'day', e.target.value)}>
+                                        {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=> <option key={d} value={d}>{d}</option>)}
+                                      </select>
+                                      <Input className="w-28" value={w.start} onChange={(e)=> updateAvailability(t.id, idx, 'start', e.target.value)} placeholder="18:00" />
+                                      <Input className="w-28" value={w.end} onChange={(e)=> updateAvailability(t.id, idx, 'end', e.target.value)} placeholder="21:00" />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Max Subs</Label>
+                                <Input type="number" min={0} value={prefsByTeam[t.id]?.max_subs||0} onChange={(e)=> updatePrefField(t.id, 'max_subs', parseInt(e.target.value||'0',10))} className="w-24" />
+                              </div>
+                              <div>
+                                <Button className="btn-primary-ios" onClick={()=> savePrefs(t)}>Save Preferences</Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Matches */}
+                          <div style={{ padding: 12, marginTop: 8 }}>
+                            <h6 style={{ fontWeight: 600, marginBottom: 8 }}>Matches</h6>
+                            <div className="standings-list">
+                              {(matchesByTeam[t.id]||[]).map(m => (
+                                <div key={m.id} className="standing-item">
+                                  <div className="standing-rank">📅</div>
+                                  <div className="standing-info" style={{ width: '100%' }}>
+                                    <h5>{m.team1_name} vs {m.team2_name}</h5>
+                                    <p>Status: {m.status}</p>
+                                    {m.status === 'CONFIRMED' && (
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <Button size="sm" variant="outline" onClick={()=> downloadICS(m.id)}>Download ICS</Button>
+                                        <span>{m.scheduled_at ? new Date(m.scheduled_at).toLocaleString() : ''} {m.scheduled_venue ? `• ${m.scheduled_venue}` : ''}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Proposed slots */}
+                                    <div style={{ marginTop: 8 }}>
+                                      <Label>Proposed Slots</Label>
+                                      <div>
+                                        {(m.proposed_slots||[]).map(s => (
+                                          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                                            <span>{new Date(s.start).toLocaleString()} {s.venue_name ? `• ${s.venue_name}` : ''}</span>
+                                            <Button size="sm" className="btn-outline-ios" onClick={()=> confirmSlot(m.id, s.id)}>Confirm</Button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                                        <Input type="datetime-local" className="w-60" onChange={(e)=> m._newStart = e.target.value} />
+                                        <Input className="w-48" placeholder="Venue (optional)" onChange={(e)=> m._venue = e.target.value} />
+                                        <Button size="sm" className="btn-primary-ios" onClick={()=> {
+                                          if (!m._newStart) { toast({ title: 'Pick a time', variant: 'destructive' }); return; }
+                                          const iso = new Date(m._newStart).toISOString();
+                                          proposeSlot(m.id, { start: iso, venue_name: m._venue });
+                                        }}>Propose Slot</Button>
+                                      </div>
+                                    </div>
+
+                                    {/* Scoring */}
+                                    <div style={{ marginTop: 12 }}>
+                                      <Label>Submit Score (best-of-3)</Label>
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                                        <Input className="w-16" placeholder="6" onChange={(e)=> m._s1 = parseInt(e.target.value||'0',10)} />
+                                        <Input className="w-16" placeholder="4" onChange={(e)=> m._s2 = parseInt(e.target.value||'0',10)} />
+                                        <Input className="w-16" placeholder="3" onChange={(e)=> m._s3 = parseInt(e.target.value||'0',10)} />
+                                        <Input className="w-16" placeholder="6" onChange={(e)=> m._t3 = parseInt(e.target.value||'0',10)} />
+                                        <Button size="sm" className="btn-primary-ios" onClick={()=> {
+                                          const sets = [];
+                                          if (!isNaN(m._s1) && !isNaN(m._s2)) sets.push({ team1_games: m._s1, team2_games: m._s2 });
+                                          if (!isNaN(m._s3) && !isNaN(m._t3)) sets.push({ team1_games: m._s3, team2_games: m._t3 });
+                                          if (sets.length === 0) { toast({ title: 'Add at least 1 set', variant: 'destructive' }); return; }
+                                          submitScore(m.id, sets);
+                                        }}>Submit</Button>
+                                        <Button size="sm" className="btn-outline-ios" onClick={()=> cosignScore(m.id)}>Co-sign</Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Standings */}
+                          {standingsByTier[t.rating_tier_id] && (
+                            <div style={{ padding: 12, marginTop: 8 }}>
+                              <h6 style={{ fontWeight: 600, marginBottom: 8 }}>Standings</h6>
+                              <div className="standings-list">
+                                {standingsByTier[t.rating_tier_id].map((row)=> (
+                                  <div key={row.id} className="standing-item">
+                                    <div className="standing-rank">🏆</div>
+                                    <div className="standing-info">
+                                      <h5>{row.team_name}</h5>
+                                      <p>Pts: {row.points} • W-L: {row.wins}-{row.losses} • Sets: {row.sets_won}-{row.sets_lost} • Games: {row.games_won}-{row.games_lost}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
