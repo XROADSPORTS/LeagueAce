@@ -1399,6 +1399,7 @@ class PartnerInvite(BaseModel):
     rating_tier_id: str
     league_id: str
     inviter_user_id: str
+    invitee_user_id: Optional[str] = None
     invitee_contact: Optional[str] = None  # email or phone
     status: PartnerInviteStatus = PartnerInviteStatus.PENDING
     expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=14))
