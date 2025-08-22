@@ -111,6 +111,7 @@ user_problem_statement: |
   - Match scheduling and confirmation system
   - Set-by-set scoring and rankings
   - Comprehensive chat system
+  - Doubles partner link flow: create invite, accept invite, show teams
 
 backend:
   - task: "NEW 3-Tier League Structure API"
