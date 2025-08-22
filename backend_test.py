@@ -4404,6 +4404,472 @@ class LeagueAceAPITester:
         
         return True
 
+    def test_internal_only_invites_comprehensive(self):
+        """Test new internal-only invites for Doubles - comprehensive test suite"""
+        print("\n🎾 TESTING NEW INTERNAL-ONLY INVITES FOR DOUBLES")
+        print("=" * 60)
+        
+        # Setup: Create users and doubles tier
+        if not self.test_setup_for_internal_invites():
+            print("❌ Failed to setup for internal invites testing")
+            return False
+        
+        # Test 1: Create partner invite with invitee_user_id
+        if not self.test_create_internal_partner_invite():
+            print("❌ Failed to create internal partner invite")
+            return False
+        
+        # Test 2: List incoming/outgoing invites
+        if not self.test_list_incoming_outgoing_invites():
+            print("❌ Failed to list incoming/outgoing invites")
+            return False
+        
+        # Test 3: Accept by ID (should create team)
+        if not self.test_accept_invite_by_id():
+            print("❌ Failed to accept invite by ID")
+            return False
+        
+        # Test 4: Create another invite and reject by ID
+        if not self.test_reject_invite_by_id():
+            print("❌ Failed to reject invite by ID")
+            return False
+        
+        # Test 5: Ensure token-based flow still works
+        if not self.test_token_based_flow_still_works():
+            print("❌ Token-based flow broken")
+            return False
+        
+        print("\n✅ ALL INTERNAL-ONLY INVITES TESTS COMPLETED SUCCESSFULLY!")
+        return True
+    
+    def test_setup_for_internal_invites(self):
+        """Setup users and doubles tier for internal invites testing"""
+        print("\n🔧 Setting up for internal invites testing...")
+        
+        # Create league if needed
+        if not self.league_id:
+            if not self.test_create_league_manager():
+                return False
+            if not self.test_create_league():
+                return False
+        
+        # Create doubles format tier
+        doubles_format_data = {
+            "league_id": self.league_id,
+            "name": "Internal Invites Doubles",
+            "format_type": "Doubles",
+            "description": "Doubles format for internal invites testing"
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Format Tier for Internal Invites",
+            "POST",
+            "format-tiers",
+            200,
+            data=doubles_format_data
+        )
+        
+        if not success:
+            return False
+        
+        self.internal_doubles_format_tier_id = response['id']
+        
+        # Create doubles rating tier
+        doubles_rating_data = {
+            "format_tier_id": self.internal_doubles_format_tier_id,
+            "name": "4.0 Internal Invites",
+            "min_rating": 3.5,
+            "max_rating": 4.5,
+            "max_players": 8,
+            "competition_system": "Team League Format",
+            "playoff_spots": 4
+        }
+        
+        success, response = self.run_test(
+            "Create Doubles Rating Tier for Internal Invites",
+            "POST",
+            "rating-tiers",
+            200,
+            data=doubles_rating_data
+        )
+        
+        if not success:
+            return False
+        
+        self.internal_doubles_rating_tier_id = response['id']
+        
+        # Create two users for testing
+        user1_data = {
+            "name": "Internal User A",
+            "email": f"internal.user.a_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1001",
+            "rating_level": 4.0,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Internal User A",
+            "POST",
+            "users",
+            200,
+            data=user1_data
+        )
+        
+        if not success:
+            return False
+        
+        self.internal_user_a_id = response['id']
+        
+        user2_data = {
+            "name": "Internal User B",
+            "email": f"internal.user.b_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1002",
+            "rating_level": 4.1,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Internal User B",
+            "POST",
+            "users",
+            200,
+            data=user2_data
+        )
+        
+        if not success:
+            return False
+        
+        self.internal_user_b_id = response['id']
+        
+        print(f"   ✅ Setup complete - Rating Tier: {self.internal_doubles_rating_tier_id}")
+        print(f"   ✅ User A: {self.internal_user_a_id}")
+        print(f"   ✅ User B: {self.internal_user_b_id}")
+        
+        return True
+    
+    def test_create_internal_partner_invite(self):
+        """Test creating partner invite with invitee_user_id for internal delivery"""
+        print("\n1️⃣ Testing CREATE PARTNER INVITE with invitee_user_id...")
+        
+        invite_data = {
+            "inviter_user_id": self.internal_user_a_id,
+            "rating_tier_id": self.internal_doubles_rating_tier_id,
+            "invitee_user_id": self.internal_user_b_id  # Internal delivery
+        }
+        
+        success, response = self.run_test(
+            "Create Internal Partner Invite",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if success:
+            self.internal_invite_token = response.get('token')
+            print(f"   ✅ Invite created with token: {self.internal_invite_token}")
+            print(f"   ✅ League: {response.get('league_name')}")
+            print(f"   ✅ Tier: {response.get('tier_name')}")
+            print(f"   ✅ Inviter: {response.get('inviter_name')}")
+            
+            # Verify invite is stored in database with invitee_user_id
+            # We'll check this in the list invites test
+            return True
+        
+        return False
+    
+    def test_list_incoming_outgoing_invites(self):
+        """Test listing incoming invites for invitee and outgoing for inviter"""
+        print("\n2️⃣ Testing LIST INCOMING/OUTGOING INVITES...")
+        
+        # Test incoming invites for invitee (User B)
+        success, response = self.run_test(
+            "List Incoming Invites for Invitee",
+            "GET",
+            "doubles/invites",
+            200,
+            params={"user_id": self.internal_user_b_id, "role": "incoming"}
+        )
+        
+        if success:
+            invites = response.get('invites', [])
+            print(f"   ✅ Incoming invites for User B: {len(invites)}")
+            
+            if len(invites) > 0:
+                invite = invites[0]
+                self.internal_invite_id = invite.get('id')
+                print(f"   ✅ Invite ID: {self.internal_invite_id}")
+                print(f"   ✅ From: {invite.get('inviter', {}).get('name')}")
+                print(f"   ✅ League: {invite.get('league_name')}")
+                print(f"   ✅ Tier: {invite.get('tier_name')}")
+            else:
+                print("   ❌ No incoming invites found")
+                return False
+        else:
+            return False
+        
+        # Test outgoing invites for inviter (User A)
+        success, response = self.run_test(
+            "List Outgoing Invites for Inviter",
+            "GET",
+            "doubles/invites",
+            200,
+            params={"user_id": self.internal_user_a_id, "role": "outgoing"}
+        )
+        
+        if success:
+            invites = response.get('invites', [])
+            print(f"   ✅ Outgoing invites for User A: {len(invites)}")
+            
+            if len(invites) > 0:
+                invite = invites[0]
+                print(f"   ✅ To: {invite.get('invitee', {}).get('name')}")
+                print(f"   ✅ League: {invite.get('league_name')}")
+                print(f"   ✅ Tier: {invite.get('tier_name')}")
+                return True
+            else:
+                print("   ❌ No outgoing invites found")
+                return False
+        
+        return False
+    
+    def test_accept_invite_by_id(self):
+        """Test accepting invite by ID (should create team using existing token logic)"""
+        print("\n3️⃣ Testing ACCEPT INVITE BY ID...")
+        
+        if not hasattr(self, 'internal_invite_id'):
+            print("   ❌ No invite ID available")
+            return False
+        
+        accept_data = {
+            "invite_id": self.internal_invite_id,
+            "user_id": self.internal_user_b_id
+        }
+        
+        success, response = self.run_test(
+            "Accept Partner Invite by ID",
+            "POST",
+            f"doubles/invites/{self.internal_invite_id}/accept",
+            200,
+            data=accept_data
+        )
+        
+        if success:
+            self.internal_team_id = response.get('id')
+            print(f"   ✅ Team created with ID: {self.internal_team_id}")
+            print(f"   ✅ Team name: {response.get('team_name')}")
+            print(f"   ✅ Status: {response.get('status')}")
+            print(f"   ✅ Members: {len(response.get('members', []))}")
+            
+            # Verify team was actually created
+            if self.internal_team_id and response.get('team_name'):
+                print("   ✅ Team creation successful via ID-based accept")
+                return True
+            else:
+                print("   ❌ Team creation failed")
+                return False
+        
+        return False
+    
+    def test_reject_invite_by_id(self):
+        """Test rejecting invite by ID (should set status=CANCELLED, no team created)"""
+        print("\n4️⃣ Testing REJECT INVITE BY ID...")
+        
+        # Create another invite to reject
+        invite_data = {
+            "inviter_user_id": self.internal_user_a_id,
+            "rating_tier_id": self.internal_doubles_rating_tier_id,
+            "invitee_user_id": self.internal_user_b_id
+        }
+        
+        success, response = self.run_test(
+            "Create Another Internal Invite for Rejection",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if not success:
+            print("   ❌ Failed to create invite for rejection test")
+            return False
+        
+        # Get the invite ID from listing
+        success, response = self.run_test(
+            "List Invites to Get ID for Rejection",
+            "GET",
+            "doubles/invites",
+            200,
+            params={"user_id": self.internal_user_b_id, "role": "incoming"}
+        )
+        
+        if not success or not response.get('invites'):
+            print("   ❌ Failed to get invite for rejection")
+            return False
+        
+        # Find the pending invite (not the accepted one)
+        reject_invite_id = None
+        for invite in response.get('invites', []):
+            # This should be a new pending invite
+            if invite.get('id') != getattr(self, 'internal_invite_id', None):
+                reject_invite_id = invite.get('id')
+                break
+        
+        if not reject_invite_id:
+            print("   ❌ No pending invite found for rejection")
+            return False
+        
+        # Reject the invite
+        reject_data = {
+            "invite_id": reject_invite_id,
+            "user_id": self.internal_user_b_id
+        }
+        
+        success, response = self.run_test(
+            "Reject Partner Invite by ID",
+            "POST",
+            f"doubles/invites/{reject_invite_id}/reject",
+            200,
+            data=reject_data
+        )
+        
+        if success:
+            status = response.get('status')
+            print(f"   ✅ Invite status after rejection: {status}")
+            
+            if status == "cancelled":
+                print("   ✅ Invite correctly set to CANCELLED status")
+                
+                # Verify no team was created by checking teams count
+                success, teams_response = self.run_test(
+                    "Verify No Extra Team Created",
+                    "GET",
+                    "doubles/teams",
+                    200,
+                    params={"player_id": self.internal_user_b_id}
+                )
+                
+                if success:
+                    teams = teams_response.get('teams', [])
+                    print(f"   ✅ Total teams for user: {len(teams)}")
+                    # Should still be 1 team (from the accepted invite)
+                    if len(teams) == 1:
+                        print("   ✅ No additional team created from rejected invite")
+                        return True
+                    else:
+                        print(f"   ❌ Unexpected number of teams: {len(teams)}")
+                        return False
+                
+                return True
+            else:
+                print(f"   ❌ Expected 'cancelled' status, got: {status}")
+                return False
+        
+        return False
+    
+    def test_token_based_flow_still_works(self):
+        """Test that previous token-based flow still works"""
+        print("\n5️⃣ Testing TOKEN-BASED FLOW STILL WORKS...")
+        
+        # Create two more users for token-based testing
+        user3_data = {
+            "name": "Token User C",
+            "email": f"token.user.c_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1003",
+            "rating_level": 4.2,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Token User C",
+            "POST",
+            "users",
+            200,
+            data=user3_data
+        )
+        
+        if not success:
+            return False
+        
+        token_user_c_id = response['id']
+        
+        user4_data = {
+            "name": "Token User D",
+            "email": f"token.user.d_{datetime.now().strftime('%H%M%S')}@test.com",
+            "phone": "+1-555-1004",
+            "rating_level": 4.3,
+            "role": "Player"
+        }
+        
+        success, response = self.run_test(
+            "Create Token User D",
+            "POST",
+            "users",
+            200,
+            data=user4_data
+        )
+        
+        if not success:
+            return False
+        
+        token_user_d_id = response['id']
+        
+        # Create invite without invitee_user_id (traditional token-based)
+        invite_data = {
+            "inviter_user_id": token_user_c_id,
+            "rating_tier_id": self.internal_doubles_rating_tier_id
+            # No invitee_user_id - this should work with token-based flow
+        }
+        
+        success, response = self.run_test(
+            "Create Token-Based Partner Invite",
+            "POST",
+            "doubles/invites",
+            200,
+            data=invite_data
+        )
+        
+        if not success:
+            return False
+        
+        token = response.get('token')
+        print(f"   ✅ Token-based invite created: {token}")
+        
+        # Preview invite by token
+        success, response = self.run_test(
+            "Preview Invite by Token",
+            "GET",
+            f"doubles/invites/{token}",
+            200
+        )
+        
+        if not success:
+            return False
+        
+        print(f"   ✅ Token preview works - Inviter: {response.get('inviter_name')}")
+        
+        # Accept invite by token
+        accept_data = {
+            "token": token,
+            "invitee_user_id": token_user_d_id
+        }
+        
+        success, response = self.run_test(
+            "Accept Invite by Token",
+            "POST",
+            "doubles/invites/accept",
+            200,
+            data=accept_data
+        )
+        
+        if success:
+            print(f"   ✅ Token-based team created: {response.get('team_name')}")
+            print(f"   ✅ Team ID: {response.get('id')}")
+            print("   ✅ Token-based flow still works perfectly!")
+            return True
+        
+        return False
+
 def main():
     print("🎾 LeagueAce API Testing Suite")
     print("=" * 50)
