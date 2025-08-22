@@ -328,6 +328,18 @@ backend:
         comment: "✅ SEASON CREATION WORKFLOW FULLY FUNCTIONAL - Comprehensive focused testing completed: 1) POST /seasons endpoint working perfectly with valid league_id validation, 2) Multiple seasons created successfully with different names and date ranges (Spring, Summer, Fall 2025), 3) GET /leagues/{league_id}/seasons endpoint retrieving all seasons correctly, 4) Error handling working properly (404 for invalid league IDs), 5) Season-league association verified (all seasons correctly linked to parent league), 6) Date format validation working (422 for invalid dates). Minor: End-before-start date validation could be improved but doesn't affect core functionality. Overall 96.6% success rate (85/88 tests). Season creation workflow is production-ready."
 
 frontend:
+  - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
+    implemented: true
+    working: "unknown"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "unknown"
+        agent: "main"
+        comment: "Added PlayerDoubles tab with team list, create partner link via join code, share link + QR. Auto-accept partner token from URL and redirect to My Doubles Teams."
+
   - task: "4-Tier League Format UI"
     implemented: true
     working: true
