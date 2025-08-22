@@ -3112,6 +3112,106 @@ function App() {
       </div>
     );
 
+    const PlayerDoubles = () => {
+      const [teams, setTeams] = useState([]);
+      const [creatingInvite, setCreatingInvite] = useState(false);
+      const [invitePreview, setInvitePreview] = useState(null);
+      const [inviteContact, setInviteContact] = useState('');
+      const [linkToken, setLinkToken] = useState('');
+      const [tierCode, setTierCode] = useState('');
+
+      const loadTeams = async () => {
+        try {
+          const { data } = await axios.get(`${API}/doubles/teams`, { params: { player_id: user.id } });
+          setTeams(data || []);
+        } catch (e) {
+          console.error('Failed to load doubles teams', e);
+        }
+      };
+
+      useEffect(() => { loadTeams(); }, [user]);
+
+      const createInvite = async () => {
+        if (!tierCode) {
+          toast({ title: 'Tier required', description: 'Enter the doubles tier join code or select from UI later', variant: 'destructive' });
+          return;
+        }
+        setCreatingInvite(true);
+        try {
+          const { data } = await axios.post(`${API}/doubles/invites`, { inviter_user_id: user.id, join_code: tierCode });
+          setInvitePreview(data);
+          setLinkToken(data.token);
+          toast({ title: 'Invite created', description: 'Share the link or QR with your partner' });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to create invite', variant: 'destructive' });
+        }
+        setCreatingInvite(false);
+      };
+
+      const shareUrl = linkToken ? `${window.location.origin}/?partner=${linkToken}` : '';
+
+      return (
+        <div className="player-standings">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>My Doubles Teams</CardTitle>
+              <CardDescription>Create a partner link and accept invites</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {teams.length > 0 ? (
+                <div className="standings-list">
+                  {teams.map((t) => (
+                    <div key={t.id} className="standing-item">
+                      <div className="standing-rank">🎾</div>
+                      <div className="standing-info">
+                        <h5>{t.team_name}</h5>
+                        <p>{t.league_name} • {t.rating_tier_name}</p>
+                        <p>Members: {t.members?.map(m => m.name).join(', ')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p>No doubles teams yet. Create an invite to pair with your partner.</p>
+                </div>
+              )}
+
+              <div className="tier-creator" style={{ marginTop: 16 }}>
+                <Label>Enter Doubles Tier Join Code</Label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <Input value={tierCode} onChange={(e)=> setTierCode((e.target.value||'').toUpperCase())} maxLength={6} className="blue-input w-32" placeholder="e.g., ABC123" />
+                  <Button className="btn-primary-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={createInvite}>
+                    {creatingInvite ? 'Creating…' : 'Create Partner Link'}
+                  </Button>
+                </div>
+              </div>
+
+              {linkToken && (
+                <div style={{ marginTop: 16 }}>
+                  <div className="join-code-display">
+                    <span>Partner Link:</span>
+                    <code style={{ overflowWrap: 'anywhere' }}>{shareUrl}</code>
+                    <Button size="icon" variant="ghost" title="Copy Link" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <div className="qr-popover">
+                      <Button size="sm" variant="outline" className="blue-outline-button" onClick={(e)=>{
+                        const el = e.currentTarget.nextSibling; if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+                      }}>QR</Button>
+                      <div className="qr-card" style={{ display: 'none' }}>
+                        <QRCode value={shareUrl} size={128} bgColor="transparent" fgColor="#ffffff" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      );
+    };
+
     const PlayerStandings = () => (
       <div className="player-standings">
         <Card className="glass-card-blue">
