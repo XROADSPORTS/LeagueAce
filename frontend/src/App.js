@@ -3495,6 +3495,54 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* Incoming Invites */}
+              <div style={{ marginTop: 24 }}>
+                <h6 style={{ fontWeight: 600, marginBottom: 8 }}>Incoming Invites</h6>
+                {incomingInvites.length === 0 ? (
+                  <p className="muted">No pending invites.</p>
+                ) : (
+                  <div className="standings-list">
+                    {incomingInvites.map(inv => (
+                      <div key={inv.id} className="standing-item">
+                        <div className="standing-rank">📨</div>
+                        <div className="standing-info" style={{ width: '100%' }}>
+                          <h5>{inv.inviter?.name} invited you</h5>
+                          <p>{inv.league_name} • {inv.tier_name}</p>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <Button size="sm" className="btn-primary-ios" onClick={async ()=>{
+                              try { await axios.post(`${API}/doubles/invites/${inv.id}/accept`, { invite_id: inv.id, user_id: user.id }); toast({ title: 'Accepted', description: 'Team created' }); loadTeams(); loadInvites(); } catch(e){ toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to accept', variant: 'destructive' }); }
+                            }}>Accept</Button>
+                            <Button size="sm" className="btn-outline-ios" onClick={async ()=>{
+                              try { await axios.post(`${API}/doubles/invites/${inv.id}/reject`, { invite_id: inv.id, user_id: user.id }); toast({ title: 'Rejected' }); loadInvites(); } catch(e){ toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to reject', variant: 'destructive' }); }
+                            }}>Reject</Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Outgoing Invites */}
+              <div style={{ marginTop: 16 }}>
+                <h6 style={{ fontWeight: 600, marginBottom: 8 }}>Outgoing Invites</h6>
+                {outgoingInvites.length === 0 ? (
+                  <p className="muted">No outgoing invites.</p>
+                ) : (
+                  <div className="standings-list">
+                    {outgoingInvites.map(inv => (
+                      <div key={inv.id} className="standing-item">
+                        <div className="standing-rank">📤</div>
+                        <div className="standing-info" style={{ width: '100%' }}>
+                          <h5>Invited {inv.invitee?.name || '—'}</h5>
+                          <p>{inv.league_name} • {inv.tier_name}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
