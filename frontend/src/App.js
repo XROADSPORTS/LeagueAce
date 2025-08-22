@@ -3262,17 +3262,20 @@ function App() {
 
       useEffect(() => { loadTeams(); loadInvites(); }, [user]);
 
-      const createInvite = async () => {
+      const createInvite = async (inviteeUserId) => {
         if (!tierCode) {
           toast({ title: 'Tier required', description: 'Enter the doubles tier join code or select from UI later', variant: 'destructive' });
           return;
         }
         setCreatingInvite(true);
         try {
-          const { data } = await axios.post(`${API}/doubles/invites`, { inviter_user_id: user.id, join_code: tierCode });
+          const payload = { inviter_user_id: user.id, join_code: tierCode };
+          if (inviteeUserId) payload.invitee_user_id = inviteeUserId;
+          const { data } = await axios.post(`${API}/doubles/invites`, payload);
           setInvitePreview(data);
           setLinkToken(data.token);
-          toast({ title: 'Invite created', description: 'Share the link or QR with your partner' });
+          toast({ title: 'Invite created', description: inviteeUserId ? 'Invite sent in-app' : 'Share the link or QR with your partner' });
+          loadInvites();
         } catch (e) {
           toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to create invite', variant: 'destructive' });
         }
