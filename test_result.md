@@ -147,6 +147,18 @@ backend:
         agent: "testing"
         comment: "✅ DOUBLES COORDINATOR PHASE 1 COMPREHENSIVE TESTING COMPLETE - All newly implemented doubles endpoints are working perfectly! Comprehensive testing results: 1) **POST /api/doubles/invites** - Create partner invites using rating_tier_id or join_code working flawlessly ✅, validates non-doubles tier returns 400 ✅, missing tier returns 404 ✅, inviter rating out-of-range returns 400 ✅, response includes all required fields (token, league_name, tier_name, inviter_name, expires_at) ✅. 2) **GET /api/doubles/invites/{token}** - Preview invite working perfectly ✅, expired/invalid invites return 404 as expected ✅. 3) **POST /api/doubles/invites/accept** - Accept invite functionality working perfectly ✅, creates team with correct name format 'Inviter & Invitee' ✅, adds both members with PRIMARY role ✅, validates same person cannot accept (400) ✅, validates users already on active team in same tier return 400 ✅, validates non-doubles tier errors appropriately ✅. 4) **GET /api/doubles/teams?player_id=...** - Returns all teams for player with complete league/tier names and member details ✅, correctly returns empty array for players with no teams ✅. **SETUP VALIDATION**: Created proper test environment with doubles format tiers, rating tiers with correct rating ranges, and both eligible and ineligible users. **TEST RESULTS**: 24/24 tests passed (100% success rate). All validation scenarios working correctly including edge cases. The doubles coordinator partner link and team creation functionality is fully operational and ready for production use."
 
+  - task: "Internal-Only Invites for Doubles"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎾 INTERNAL-ONLY INVITES COMPREHENSIVE TESTING COMPLETE - ALL TESTS PASSED! **NEW FUNCTIONALITY VERIFIED**: ✅ **1) Create Partner Invite with invitee_user_id**: POST /api/doubles/invites with invitee_user_id parameter working perfectly for internal delivery, invite stored with invitee_user_id and creates proper token. ✅ **2) List Incoming/Outgoing Invites**: GET /api/doubles/invites?user_id=...&role=incoming returns invites for invitee with full details (invite ID, inviter name, league, tier), GET /api/doubles/invites?user_id=...&role=outgoing returns invites for inviter with invitee details. ✅ **3) Accept by ID**: POST /api/doubles/invites/{invite_id}/accept successfully creates team using existing token logic, team created with proper name format and 2 members, reuses accept by token logic perfectly. ✅ **4) Reject by ID**: POST /api/doubles/invites/{invite_id}/reject sets status=cancelled correctly, no team created from rejected invite (verified 0 teams for rejected user). ✅ **5) Token-Based Flow Still Works**: Previous token-based flow (create invite without invitee_user_id, preview by token, accept by token) continues working perfectly alongside new ID-based flow. **TEST RESULTS**: 21/21 tests passed (100% success rate). **COMPREHENSIVE WORKFLOW**: Setup with league/format/rating tiers → Create internal users → Create invite with invitee_user_id → List incoming/outgoing → Accept by ID creates team → Reject by ID cancels invite → Token flow verification. All new internal-only invite functionality working perfectly while maintaining backward compatibility. System ready for production use."
+
   - task: "NEW 3-Tier League Structure API"
     implemented: true
     working: true
