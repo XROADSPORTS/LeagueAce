@@ -2790,7 +2790,23 @@ function App() {
       setJoinCode(code);
       setShowJoinForm(true);
     }
-  }, []);
+    // Partner token acceptance via URL
+    const params = new URLSearchParams(window.location.search);
+    const partnerToken = params.get('partner');
+    if (partnerToken && user?.id) {
+      axios.post(`${API}/doubles/invites/accept`, { token: partnerToken, invitee_user_id: user.id })
+        .then(async ({ data }) => {
+          toast({ title: 'Doubles Team Created', description: `${data.team_name}` });
+          // Clean URL param
+          const url = new URL(window.location.href); url.searchParams.delete('partner'); window.history.replaceState({}, '', url);
+          setActivePlayerTab('doubles');
+        })
+        .catch((e) => {
+          const detail = e?.response?.data?.detail || 'Failed to accept invite';
+          toast({ title: 'Error', description: detail, variant: 'destructive' });
+        });
+    }
+  }, [user]);
     const [joinCode, setJoinCode] = useState("");
     const [upcomingMatches, setUpcomingMatches] = useState([]);
 
