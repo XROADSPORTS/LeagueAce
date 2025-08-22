@@ -411,13 +411,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "CRITICAL BUG FIXES - COMPLETED ✅"
-    - "Player Join-by-Code Functionality - COMPLETED ✅"
-    - "Profile Picture Management - COMPLETED ✅"
-    - "Complete Player Dashboard Workflow - COMPLETED ✅"
-    - "NEW 3-Tier Structure Testing - COMPLETED ✅"
-    - "Format Tier Creation Testing - COMPLETED ✅"
-    - "Season Creation Workflow - COMPLETED ✅"
+    - "Doubles Coordinator Phase 1: Partner Link + Teams (backend)"
+    - "Doubles UI Phase 1: My Doubles Teams + Partner Link (frontend)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
   stuck_tasks: []
   test_all: false
   test_priority: "critical_first"
