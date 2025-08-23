@@ -430,10 +430,6 @@ function App() {
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Continue with Google
-          <div className="signin-row" style={{ marginTop: 8 }}>
-            <small>Already have an account? Use the buttons above to sign in. If you signed up with the form, you can sign in with Google/Apple using the same email — your account will be matched automatically.</small>
-          </div>
-
             </Button>
             <Button 
               onClick={() => {
@@ -449,6 +445,26 @@ function App() {
               </svg>
               Continue with Apple
             </Button>
+          </div>
+
+          {/* Email Sign-In for existing form-based accounts */}
+          <div className="email-signin glass-card-blue" style={{ marginTop: 16, padding: 12, borderRadius: 12 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <strong>Sign in with Email (for accounts created via form)</strong>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Input id="signin-email" placeholder="Email used at signup" className="blue-input" style={{ maxWidth: 280 }} />
+              <Input id="signin-name" placeholder="Your name (optional)" className="blue-input" style={{ maxWidth: 220 }} />
+              <Button onClick={() => {
+                const email = document.getElementById('signin-email').value.trim();
+                const name = document.getElementById('signin-name').value.trim();
+                if (!email) { toast({ title: 'Email required', description: 'Enter the email you used at signup', variant: 'destructive' }); return; }
+                handleEmailSignIn(email, name);
+              }} className="blue-outline-button" disabled={loading}>
+                {loading ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </div>
+            <small style={{ display: 'block', marginTop: 6, opacity: 0.8 }}>Tip: You can always use Google/Apple with the same email — your account will be matched automatically.</small>
           </div>
         </div>
 
