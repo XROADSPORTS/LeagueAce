@@ -218,6 +218,11 @@ async def create_league(league: LeagueCreate, created_by: Optional[str] = None):
         raise HTTPException(status_code=400, detail="created_by (manager_id) is required")
     # verify user exists
     manager = await db.users.find_one({"id": created_by})
+    if not manager:
+        raise HTTPException(status_code=404, detail="Manager user not found")
+    row = League(name=league.name, sport_type=league.sport_type, description=league.description, manager_id=created_by)
+    await db.leagues.insert_one(prepare_for_mongo(row.dict()))
+    return parse_from_mongo(row.dict())
 
 # ========= Join by Code & Memberships =========
 class JoinByCodeRequest(BaseModel):
