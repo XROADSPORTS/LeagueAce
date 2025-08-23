@@ -3280,7 +3280,16 @@ function App() {
             </CardHeader>
             <CardContent>
               <div className="rr-controls">
-                <Input placeholder="Enter Tier ID" className="blue-input" value={rrTierId} onChange={(e)=> setRrTierId(e.target.value)} />
+                <Select value={rrTierId} onValueChange={(v)=> setRrTierId(v)}>
+                  <SelectTrigger className="blue-input" style={{ minWidth: 240 }}>
+                    <SelectValue placeholder={rrMyTiers.length ? 'Select Round Robin Tier' : 'No RR tiers found'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rrMyTiers.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button className="btn-primary-ios" onClick={refreshAll} disabled={!rrTierId || rrLoading}>Load</Button>
                 <Button className="blue-outline-button" onClick={() => fetchRRAvailability(user.id)}>Availability</Button>
               </div>
