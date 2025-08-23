@@ -4464,6 +4464,11 @@ function App() {
                   Enter the 6-character join code provided by your league manager
                 </CardDescription>
               </CardHeader>
+              {loading && (
+                <div className="w-full h-1 rounded bg-blue-500/20 overflow-hidden" style={{ marginTop: -8 }}>
+                  <div className="h-full w-1/3 bg-blue-500 animate-pulse" />
+                </div>
+              )}
               <CardContent>
                 <form onSubmit={handleJoinByCode} className="join-form">
                   <div className="form-group">
