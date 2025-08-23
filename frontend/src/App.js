@@ -169,11 +169,13 @@ function App() {
     try {
       setLoading(true);
       const roleName = selectedType === 'manager' ? 'League Manager' : 'Player';
+      const emailOverride = (document.getElementById('social-email') && document.getElementById('social-email').value.trim()) || '';
+      const nameOverride = (document.getElementById('social-name') && document.getElementById('social-name').value.trim()) || '';
       const mockGoogleResponse = {
         provider: "Google",
         token: "mock_google_token",
-        email: roleName === 'League Manager' ? "manager.user@gmail.com" : "sarah.johnson@gmail.com",
-        name: roleName === 'League Manager' ? "Manager User" : "Sarah Johnson",
+        email: emailOverride || (roleName === 'League Manager' ? "manager.user@gmail.com" : "sarah.johnson@gmail.com"),
+        name: nameOverride || (roleName === 'League Manager' ? "Manager User" : "Sarah Johnson"),
         provider_id: "google_123",
         role: roleName
       };
