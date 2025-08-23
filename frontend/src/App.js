@@ -3840,7 +3840,7 @@ function App() {
             <TabsTrigger value="home">Home</TabsTrigger>
             <TabsTrigger value="leagues">My Leagues</TabsTrigger>
             <TabsTrigger value="doubles">My Doubles Teams</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="rr">Round Robin</TabsTrigger>
             <TabsTrigger value="standings">Standings</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
