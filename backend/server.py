@@ -136,6 +136,12 @@ class RRMatchStatus(str):
     PLAYED = "played"
     DISPUTED = "disputed"
 
+class RRAvailability(BaseModel):
+    user_id: str
+    # Simple weekly availability strings like "Mon AM", "Wed PM", etc.
+    windows: List[str] = Field(default_factory=list)
+    updated_at: datetime = Field(default_factory=now_utc)
+
 class RRMatch(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     tier_id: str
