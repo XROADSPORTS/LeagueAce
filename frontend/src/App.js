@@ -467,13 +467,15 @@ function App() {
               <strong>Sign in with Email (for accounts created via form)</strong>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Input id="signin-email" placeholder="Email used at signup" className="blue-input" style={{ maxWidth: 280 }} />
-              <Input id="signin-name" placeholder="Your name (optional)" className="blue-input" style={{ maxWidth: 220 }} />
+              <Input id="signin-email" placeholder="Email used at signup" className="blue-input" style={{ maxWidth: 240 }} />
+              <Input id="signin-password" type="password" placeholder="Password" className="blue-input" style={{ maxWidth: 200 }} />
+              <Input id="signin-name" placeholder="Your name (optional)" className="blue-input" style={{ maxWidth: 200 }} />
               <Button onClick={() => {
                 const email = document.getElementById('signin-email').value.trim();
+                const pwd = document.getElementById('signin-password').value;
                 const name = document.getElementById('signin-name').value.trim();
                 if (!email) { toast({ title: 'Email required', description: 'Enter the email you used at signup', variant: 'destructive' }); return; }
-                handleEmailSignIn(email, name);
+                handleEmailSignIn(email, name, pwd);
               }} className="blue-outline-button" disabled={loading}>
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
