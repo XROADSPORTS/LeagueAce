@@ -663,14 +663,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Round Robin UI Integration"
-    - "User Authentication UI"
-    - "Group Management UI"
-    - "Competition System UI"
-    - "Match Management UI"
+    - "Rating Tier Membership counts and Manager Tier 3 members list"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+agent_communication:
+  - agent: "main"
+    message: "User reported Tier 3 card shows 0 players after successful join. Please run backend-only tests focusing on: (1) POST /api/join-by-code/{user_id} should create TierMembership and increment current_players; (2) GET /api/users/{user_id}/joined-tiers should include current_players/max_players for the joined tier; (3) GET /api/format-tiers/{format_tier_id}/rating-tiers should reflect updated current_players; (4) GET /api/rating-tiers/{rating_tier_id}/members should list the joined user with photo_url; (5) SSE /api/events/tier-memberships should emit an event when a new membership is created. Provide findings and any failing endpoint details."
+  - agent: "testing"
+    message: "Awaiting updated test plan and permission to run backend tests." 
+
   - agent: "main"
     message: "Round Robin Phase 1 bundle delivered: 1) Advanced scheduler (greedy+availability constraints) with feasibility score + conflicts; 2) Let’s Play default partner rotation helper; 3) Refined standings: exact % game win computed from per-set games, badges (first_match, finished_all). Please run backend tests for new RR endpoints and standings behavior."
 
