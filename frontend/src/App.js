@@ -1617,13 +1617,30 @@ function App() {
                       try {
                         setMembersLoading(true);
                         if (typeof onRefresh === 'function') { await onRefresh(); }
-                        const { data } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
+                        let dataResp = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
+                        let data = dataResp.data;
+                        // Fallback: if empty, try resolving tier id via join code, then refetch
+                        if (!Array.isArray(data) || data.length === 0) {
+                          try {
+                            const code = (tierState.join_code || tier.join_code || '').trim().toUpperCase();
+                            if (code && code.length === 6) {
+                              const by = await axios.get(`${API}/rating-tiers/by-code/${code}`);
+                              if (by?.data?.id && by.data.id !== tid) {
+                                const second = await axios.get(`${API}/rating-tiers/${by.data.id}/members`, { params: { _ts: Date.now() } });
+                                data = second.data;
+                                // also sync the id if needed
+                                setTierState(prev => ({ ...prev, id: by.data.id }));
+                              }
+                            }
+                          } catch (_) { /* ignore */ }
+                        }
                         setTierState(prev => ({ ...prev, _members: data, current_players: Array.isArray(data) ? data.length : prev.current_players }));
                         if (!data || data.length === 0) {
                           setTimeout(async () => {
                             try {
                               if (typeof onRefresh === 'function') { await onRefresh(); }
-                              const { data: again } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
+                              const idTry = (tierState.id || tier.id);
+                              const { data: again } = await axios.get(`${API}/rating-tiers/${idTry}/members`, { params: { _ts: Date.now() } });
                               setTierState(prev => ({ ...prev, _members: again, current_players: Array.isArray(again) ? again.length : prev.current_players }));
                             } catch (_) {}
                             setMembersLoading(false);
