@@ -141,6 +141,72 @@ async def search_users(q: str):
     rows = await db.users.find({"$or": [{"name": regex}, {"lan": q}]}).limit(20).to_list(20)
     return {"results": [{"id": r.get("id"), "name": r.get("name"), "lan": r.get("lan"), "email": r.get("email")} for r in rows]}
 
+# ======== Auth & Notifications & Sports ========
+class SocialLoginRequest(BaseModel):
+    provider: str
+    token: str
+    email: EmailStr
+    name: str
+    provider_id: str
+
+@app.post("/api/auth/social-login")
+async def social_login(body: SocialLoginRequest):
+    doc = await db.users.find_one({"email": body.email})
+    if not doc:
+        # create a new user with defaults
+        lan_code = await generate_unique_lan()
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": body.email,
+            "name": body.name,
+            "phone": None,
+            "rating_level": 4.0,
+            "lan": lan_code,
+            "role": "Player",
+            "sports_preferences": [],
+            "created_at": now_utc().isoformat(),
+            "auth": {"provider": body.provider, "provider_id": body.provider_id}
+        }
+        await db.users.insert_one(user)
+        return user
+    # update name and defaults if missing
+    updates = {}
+    if not doc.get("lan"):
+        updates["lan"] = await generate_unique_lan()
+    if doc.get("name") != body.name:
+        updates["name"] = body.name
+    if not doc.get("role"):
+        updates["role"] = "Player"
+    if doc.get("sports_preferences") is None:
+        updates["sports_preferences"] = []
+    if updates:
+        await db.users.update_one({"id": doc.get("id")}, {"$set": updates})
+        doc.update(updates)
+    return parse_from_mongo(doc)
+
+@app.get("/api/users/{user_id}")
+async def get_user(user_id: str):
+    doc = await db.users.find_one({"id": user_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    return parse_from_mongo(doc)
+
+@app.get("/api/users/{user_id}/notifications")
+async def get_user_notifications(user_id: str):
+    rows = await db.rr_notifications.find({"user_ids": user_id}).sort("created_at", -1).to_list(200)
+    return [parse_from_mongo(r) for r in rows]
+
+class SportsUpdateRequest(BaseModel):
+    sports_preferences: List[str]
+
+@app.patch("/api/users/{user_id}/sports")
+async def update_user_sports(user_id: str, body: SportsUpdateRequest):
+    await db.users.update_one({"id": user_id}, {"$set": {"sports_preferences": body.sports_preferences}})
+    doc = await db.users.find_one({"id": user_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    return parse_from_mongo(doc)
+
 # ========= Round Robin Models =========
 class RRConfig(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
