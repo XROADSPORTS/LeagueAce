@@ -155,6 +155,8 @@ class RRMatch(BaseModel):
     scheduled_at: Optional[str] = None
     scheduled_venue: Optional[str] = None
     proposed_slot_ids: List[str] = Field(default_factory=list)
+    toss_winner_user_id: Optional[str] = None
+    toss_choice: Optional[str] = None  # e.g., "serve" or "court"
     created_at: datetime = Field(default_factory=now_utc)
 
 class RRSlate(BaseModel):
