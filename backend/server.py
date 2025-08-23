@@ -100,6 +100,7 @@ class UserProfileCreate(BaseModel):
     phone: Optional[str] = None
     rating_level: float = 4.0
     lan: Optional[str] = None
+    role: Optional[str] = "Player"
 
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
