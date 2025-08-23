@@ -527,12 +527,19 @@ function App() {
         e.preventDefault();
         setLoading(true);
         try {
-          await axios.post(`${API}/leagues?created_by=${user.id}`, leagueData);
+          const { data: created } = await axios.post(`${API}/leagues?created_by=${user.id}`, leagueData);
+          toast({ title: "League created", description: `${created.name} (${created.sport_type})` });
+          // Immediately proceed to Tier 2: select this league and open Four-Tier tab
+          setSelectedLeague(created);
+          setActiveManagerTab("four-tier");
+          // Refresh persisted list
           loadManagerData();
           setShowCreateLeague(false);
           setLeagueData({ name: "", sport_type: activeSport, description: "" });
         } catch (error) {
           console.error("Error creating league:", error);
+          const msg = error?.response?.data?.detail || "Failed to create league";
+          toast({ title: "Error", description: msg, variant: "destructive" });
         }
         setLoading(false);
       };
