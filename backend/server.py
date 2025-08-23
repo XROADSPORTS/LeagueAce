@@ -677,7 +677,14 @@ async def rr_approve_scorecard(match_id: str, body: RRApproveRequest):
         raise HTTPException(status_code=404, detail="No scorecard to approve")
     await db.rr_scorecards.update_one({"id": sc.get("id")}, {"$set": {"approved_by_user_id": body.approved_by_user_id}})
     await db.rr_matches.update_one({"id": match_id}, {"$set": {"status": RRMatchStatus.PLAYED}})
+    # Snapshot standings after approval for trend analysis
     await rr_recalc_standings(tier_id=sc.get("tier_id") if sc.get("tier_id") else None, match_id=match_id)
+    await db.rr_snapshots.insert_one({
+        "id": str(uuid.uuid4()),
+        "tier_id": (await db.rr_matches.find_one({"id": match_id})).get("tier_id"),
+        "created_at": now_utc().isoformat(),
+        "rows": await db.rr_standings.find({"tier_id": (await db.rr_matches.find_one({"id": match_id})).get("tier_id")}).to_list(1000)
+    })
     return {"status": "approved"}
 
 async def rr_recalc_standings(tier_id: Optional[str], match_id: Optional[str] = None):
