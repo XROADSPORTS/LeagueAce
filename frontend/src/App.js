@@ -172,11 +172,13 @@ function App() {
         provider_id: "apple_456",
         role: roleName
       };
-      
-      const response = await axios.post(`${API}/auth/social-login`, mockAppleResponse);
-      setUser(response.data);
+      const { data } = await axios.post(`${API}/auth/social-login`, mockAppleResponse);
+      setUser(data);
+      toast({ title: `Signed in as ${data.name}`, description: `${data.role} account created/updated` });
       setCurrentView("sport-selection");
     } catch (error) {
+      const detail = error?.response?.data?.detail || "Apple sign-in failed";
+      toast({ title: "Sign-in error", description: detail, variant: "destructive" });
       console.error("Error with Apple sign-in:", error);
     } finally {
       setLoading(false);
