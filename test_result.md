@@ -657,6 +657,19 @@ frontend:
       - working: "unknown"
         agent: "main"
 
+- task: "Provision QA 4.5 Singles tier with 2 joined players"
+  implemented: true
+  working: false
+  file: "backend/server.py"
+  stuck_count: 0
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "main"
+      comment: "Under QA RR League, create Singles format + QA 4.5 Singles rating tier (min 4.5, max 5.0), create 2 QA players at rating 4.5, join them, and return IDs and join code for manual testing."
+
+
 - task: "Create RR QA Test League dataset"
   implemented: true
   working: false
