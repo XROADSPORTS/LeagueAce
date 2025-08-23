@@ -568,6 +568,10 @@ async def rr_recalc_standings(tier_id: Optional[str], match_id: Optional[str] = 
                 win_games, lose_games = t1, t2
             else:
                 win_games, lose_games = t2, t1
+            # Ensure all winners and losers are in stats (safety check)
+            for pid in winners + losers:
+                if pid not in stats:
+                    stats[pid] = {"matches": 0, "set_pts": 0, "games_won": 0, "games_lost": 0}
             for pid in winners:
                 stats[pid]["set_pts"] += 1
                 stats[pid]["games_won"] += win_games
