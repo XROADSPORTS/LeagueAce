@@ -3329,6 +3329,28 @@ function App() {
               </CardHeader>
               <CardContent>
                 <div className="rr-detail-row">Players: {rrShowMatch.player_ids.join(' • ')}</div>
+                <div className="rr-sets-table">
+                  <div className="set-row header">
+                    <div>Set</div>
+                    <div>Partnerships</div>
+                    <div>Score</div>
+                  </div>
+                  {[1,2,3].map((num, idx) => {
+                    const p = rrShowMatch.partner_override?.sets?.[idx] || null;
+                    const defaultPairs = [
+                      [rrShowMatch.player_ids[0], rrShowMatch.player_ids[1]],
+                      [rrShowMatch.player_ids[2], rrShowMatch.player_ids[3]],
+                    ];
+                    const pairs = p || (idx === 0 ? defaultPairs : idx === 1 ? [[rrShowMatch.player_ids[0], rrShowMatch.player_ids[2]], [rrShowMatch.player_ids[1], rrShowMatch.player_ids[3]]] : [[rrShowMatch.player_ids[0], rrShowMatch.player_ids[3]], [rrShowMatch.player_ids[1], rrShowMatch.player_ids[2]]]);
+                    return (
+                      <div key={num} className="set-row">
+                        <div>Set {num}</div>
+                        <div>{pairs[0].join(' & ')} vs {pairs[1].join(' & ')}</div>
+                        <div className="score-box">—</div>
+                      </div>
+                    );
+                  })}
+                </div>
                 <div className="rr-detail-actions">
                   <Input type="datetime-local" className="blue-input" value={slotDate} onChange={(e)=> setSlotDate(e.target.value)} />
                   <Input placeholder="Venue" className="blue-input" value={slotVenue} onChange={(e)=> setSlotVenue(e.target.value)} />
