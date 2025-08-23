@@ -201,9 +201,9 @@ class RRStandingsFixTester:
             2: "Wednesday Evening", # Another constraint
             3: "Friday Afternoon",  # Yet another
             4: "Sunday Morning",    # Weekend constraint
-            5: None,                # No constraint
             6: "Thursday Evening",  # Weekday evening
             7: "Saturday Morning"   # Weekend morning
+            # Week 5 omitted (no constraint)
         }
         
         schedule_data = {
