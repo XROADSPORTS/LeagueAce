@@ -431,15 +431,18 @@ frontend:
 
   - task: "User Authentication UI"
     implemented: true
-    working: "unknown"
+    working: true
     file: "frontend/src/App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "UI shows signup options. Role-based signup flow needs testing."
+      - working: true
+        agent: "testing"
+        comment: "🎾 USER AUTHENTICATION UI TESTING COMPLETE - Successfully tested the complete authentication flow as requested. **COMPREHENSIVE TESTING RESULTS**: ✅ **Signup Options Display**: App loads correctly showing 'Find Your Match' with both 'Join as Player' and 'Become League Manager' options with proper descriptions and benefits lists. ✅ **Google Sign-in Integration**: 'Continue with Google' button is present and functional, triggers POST /api/auth/social-login endpoint correctly when clicked. ✅ **Apple Sign-in Integration**: 'Continue with Apple' button is present and functional alongside Google option. ✅ **Role-based Signup Flow**: Both player and manager signup paths are implemented with proper form fields (name, email, phone, rating level, role selection). ✅ **Sport Selection Flow**: After authentication, users are properly redirected to sport-selection page where they can choose Tennis or Pickleball with detailed feature lists. ✅ **Dashboard Redirect**: After sport selection, users are successfully redirected to their appropriate dashboard (Player Dashboard or League Manager Dashboard). **UI COMPONENTS VERIFIED**: LeagueAce branding and glassmorphism design working correctly, social login buttons with proper icons and styling, sport selection cards with interactive selection states, form validation and loading states. **AUTHENTICATION ENDPOINTS**: All backend authentication endpoints (POST /api/auth/social-login, PATCH /api/users/{id}/sports, GET /api/users/{id}) are working correctly and support the complete onboarding flow. The user authentication UI is fully functional and production-ready."
 
   - task: "Group Management UI"
     implemented: true
