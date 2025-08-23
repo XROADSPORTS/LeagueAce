@@ -3159,6 +3159,97 @@ function App() {
       </div>
     );
 
+    const RRAdminWizard = () => {
+      const [tierName, setTierName] = useState("");
+      const [tierIdLocal, setTierIdLocal] = useState("");
+      const [playersCSV, setPlayersCSV] = useState("");
+      const [seasonWeeks, setSeasonWeeks] = useState(9);
+      const [weekWindows, setWeekWindows] = useState({});
+      const [subgroups, setSubgroups] = useState([]);
+      const [wizardLoading, setWizardLoading] = useState(false);
+
+      const configureTier = async () => {
+        if (!tierIdLocal) { toast({ title: 'Enter a Tier ID', variant: 'destructive' }); return; }
+        setWizardLoading(true);
+        try {
+          await axios.post(`${API}/rr/tiers/${tierIdLocal}/configure`, { season_length: seasonWeeks, name: tierName });
+          toast({ title: 'Configured', description: 'Tier configured' });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to configure', variant: 'destructive' });
+        }
+        setWizardLoading(false);
+      };
+
+      const generateSubgroups = async () => {
+        if (!tierIdLocal) return;
+        const ids = (playersCSV || '').split(',').map(s => s.trim()).filter(Boolean);
+        setWizardLoading(true);
+        try {
+          const { data } = await axios.post(`${API}/rr/tiers/${tierIdLocal}/subgroups/generate`, { player_ids: ids });
+          setSubgroups(data.subgroups || []);
+          toast({ title: 'Subgroups', description: `Created ${data.subgroups?.length || 0} subgroup(s)` });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to subgroup', variant: 'destructive' });
+        }
+        setWizardLoading(false);
+      };
+
+      const scheduleTier = async () => {
+        if (!tierIdLocal) return;
+        const ids = (playersCSV || '').split(',').map(s => s.trim()).filter(Boolean);
+        const ww = Object.fromEntries(Object.entries(weekWindows).map(([k,v]) => [parseInt(k), v]));
+        setWizardLoading(true);
+        try {
+          const { data } = await axios.post(`${API}/rr/tiers/${tierIdLocal}/schedule`, { player_ids: ids, week_windows: ww });
+          const meta = await fetchRRScheduleMeta(tierIdLocal);
+          setRrMeta(meta);
+          toast({ title: 'Scheduled', description: `Weeks: ${data.weeks}, Quality: ${data.schedule_quality}` });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to schedule', variant: 'destructive' });
+        }
+        setWizardLoading(false);
+      };
+
+      return (
+        <Card className="glass-card-blue rr-admin">
+          <CardHeader>
+            <CardTitle>RR Admin Wizard</CardTitle>
+            <CardDescription>Configure, subgroup, and schedule</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="admin-row">
+              <Input placeholder="Tier Name" className="blue-input" value={tierName} onChange={(e)=> setTierName(e.target.value)} />
+              <Input placeholder="Tier ID" className="blue-input" value={tierIdLocal} onChange={(e)=> setTierIdLocal(e.target.value)} />
+              <Input placeholder="Player IDs (comma separated)" className="blue-input" value={playersCSV} onChange={(e)=> setPlayersCSV(e.target.value)} />
+            </div>
+            <div className="admin-row">
+              <Input type="number" className="blue-input" value={seasonWeeks} onChange={(e)=> setSeasonWeeks(parseInt(e.target.value || '9'))} />
+              <Button className="btn-primary-ios" onClick={configureTier} disabled={wizardLoading}>Configure</Button>
+              <Button className="blue-outline-button" onClick={generateSubgroups} disabled={wizardLoading}>Subgroups</Button>
+            </div>
+            <div className="admin-row">
+              <div className="week-windows-grid">
+                {[...Array(seasonWeeks)].map((_, idx) => (
+                  <div key={idx} className="week-window">
+                    <div>Week {idx+1}</div>
+                    <Input placeholder="e.g. Mon AM" className="blue-input" value={weekWindows[idx] || ''} onChange={(e)=> setWeekWindows({ ...weekWindows, [idx]: e.target.value })} />
+                  </div>
+                ))}
+              </div>
+              <Button className="btn-primary-ios" onClick={scheduleTier} disabled={wizardLoading}>Schedule</Button>
+            </div>
+            {subgroups && subgroups.length > 0 && (
+              <div className="subgroups">
+                {subgroups.map((sg, i) => (
+                  <div key={i} className="subgroup glass-layer-1">{sg.join(' • ')}</div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
+
     const RoundRobinDashboard = () => {
       const [weekTab, setWeekTab] = useState(0);
       const [proposing, setProposing] = useState(false);
