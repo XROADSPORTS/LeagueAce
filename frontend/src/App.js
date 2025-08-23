@@ -3396,6 +3396,9 @@ function App() {
               <CardDescription>9-week schedule, rotating partners each match</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <RRAdminWizard />
+              </div>
               <div className="rr-controls">
                 <Select value={rrTierId} onValueChange={(v)=> setRrTierId(v)}>
                   <SelectTrigger className="blue-input" style={{ minWidth: 240 }}>
