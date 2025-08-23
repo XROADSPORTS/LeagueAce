@@ -94,6 +94,16 @@ function App() {
     }
   }, [user, activeSport]);
 
+
+  // Persist last selected manager league in localStorage
+  const lastLeagueKey = (uid, sport) => `la:lastManagerLeague:${uid}:${sport}`;
+  const saveLastManagerLeague = (uid, sport, leagueId) => {
+    try { localStorage.setItem(lastLeagueKey(uid, sport), leagueId || ''); } catch (_) {}
+  };
+  const getLastManagerLeague = (uid, sport) => {
+    try { return localStorage.getItem(lastLeagueKey(uid, sport)) || ''; } catch (_) { return ''; }
+  };
+
   // Profile Picture Upload
   const handleProfilePictureUpload = async (file) => {
     if (!file) return;
