@@ -3344,6 +3344,7 @@ function App() {
               </CardHeader>
               <CardContent>
                 <div className="rr-detail-row">Players: {rrShowMatch.player_ids.join(' • ')}</div>
+                <div className="rr-detail-row">Status: <Badge variant="outline">{rrShowMatch.status || 'proposed'}</Badge>{rrShowMatch.scheduled_at && (<span style={{ marginLeft: 8 }}>• {new Date(rrShowMatch.scheduled_at).toLocaleString()} @ {rrShowMatch.scheduled_venue || 'TBD'}</span>)}</div>
                 <div className="rr-sets-table">
                   <div className="set-row header">
                     <div>Set</div>
