@@ -131,7 +131,7 @@ class JoinByCodeTester:
             data=format_data
         )
         
-        if not success or 'id' not in response:
+        if not success or not response or 'id' not in response:
             print("❌ Failed to create Doubles Format Tier")
             return False
         
