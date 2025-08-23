@@ -2791,6 +2791,12 @@ function App() {
     const [rrAvailability, setRrAvailability] = useState([]);
     const [rrShowMatch, setRrShowMatch] = useState(null); // active match for detail modal
     const [rrMyTiers, setRrMyTiers] = useState([]); // player's RR tiers for dropdown
+    const [rrMeta, setRrMeta] = useState(null); // schedule meta (feasibility, quality, conflicts)
+    const [setInputs, setSetInputs] = useState([
+      { team1_games: '', team2_games: '', winnerIdx: null },
+      { team1_games: '', team2_games: '', winnerIdx: null },
+      { team1_games: '', team2_games: '', winnerIdx: null },
+    ]);
 
   useEffect(() => {
     const code = getPendingJoinCodeFromURL();
