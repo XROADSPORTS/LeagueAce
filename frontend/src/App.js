@@ -1402,7 +1402,7 @@ function App() {
               <div className="edit-range" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <div>
                   <Label>Min</Label>
-                  <Input type="number" step="0.1" min="3.0" max="5.5" className="blue-input" value={minInput} onChange={(e)=> setMinInput(parseFloat(e.target.value))} />
+                  <Input type="number" step="0.5" min="3.0" max="5.0" className="blue-input" value={minInput} onChange={(e)=> setMinInput(Math.round(Math.min(5.0, Math.max(3.0, parseFloat(e.target.value))) * 2) / 2)} />
                 </div>
                 <div>
                   <Label>Max</Label>
