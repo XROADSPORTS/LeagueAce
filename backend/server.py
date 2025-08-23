@@ -119,6 +119,8 @@ async def create_user(user_data: UserProfileCreate):
     data = user_data.dict()
     if not data.get("lan"):
         data["lan"] = await generate_unique_lan()
+    if not data.get("role"):
+        data["role"] = "Player"
     user = UserProfile(**data)
     await db.users.insert_one(prepare_for_mongo(user.dict()))
     return user
