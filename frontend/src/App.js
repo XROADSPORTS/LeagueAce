@@ -2735,6 +2735,8 @@ function App() {
                         setSelectedLeague(league);
                         saveLastManagerLeague(user.id, activeSport, league.id);
                         setActiveManagerTab('four-tier');
+                        // Ensure Tier 2 content loads
+                        setSelectedFormatTier(null);
                       }}
                     >
                       <CardHeader>
