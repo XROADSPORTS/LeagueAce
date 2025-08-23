@@ -509,6 +509,10 @@ async def rr_submit_scorecard(match_id: str, body: RRSubmitScorecard):
     m = await db.rr_matches.find_one({"id": match_id})
     if not m:
         raise HTTPException(status_code=404, detail="Match not found")
+    players = m.get("player_ids") or []
+    if body.use_default_pairings:
+        # no-op here; frontend can still submit scores reflecting default pairings
+        _ = rr_default_pairings(players)
     if len(body.sets) != 3:
         raise HTTPException(status_code=400, detail="Exactly 3 sets required")
     # Validate winners/losers disjoint and size 2 each
