@@ -458,13 +458,42 @@ class RRImprovementsAPITester:
             print("❌ Skipping - No match ID or insufficient users")
             return False
         
-        # Test partner override proposal
+        # Get the actual match to find the correct player IDs
+        success, weeks_response = self.run_test(
+            "Get Match Details for Override",
+            "GET",
+            "rr/weeks",
+            200,
+            params={"player_id": self.user_ids[0], "tier_id": self.tier_id}
+        )
+        
+        if not success:
+            print("❌ Failed to get match details")
+            return False
+        
+        # Find our match and get the actual player IDs
+        match_players = None
+        for week in weeks_response.get('weeks', []):
+            for match in week.get('matches', []):
+                if match['id'] == self.match_id:
+                    match_players = match.get('player_ids', [])
+                    break
+            if match_players:
+                break
+        
+        if not match_players or len(match_players) != 4:
+            print(f"❌ Could not find 4 players for match, found: {match_players}")
+            return False
+        
+        print(f"   Using match players: {match_players}")
+        
+        # Test partner override proposal with correct player IDs
         override_data = {
-            "actor_user_id": self.user_ids[0],
+            "actor_user_id": match_players[0],
             "sets": [
-                [[self.user_ids[0], self.user_ids[1]], [self.user_ids[2], self.user_ids[3]]],
-                [[self.user_ids[0], self.user_ids[2]], [self.user_ids[1], self.user_ids[3]]],
-                [[self.user_ids[0], self.user_ids[3]], [self.user_ids[1], self.user_ids[2]]]
+                [[match_players[0], match_players[1]], [match_players[2], match_players[3]]],
+                [[match_players[0], match_players[2]], [match_players[1], match_players[3]]],
+                [[match_players[0], match_players[3]], [match_players[1], match_players[2]]]
             ]
         }
         
