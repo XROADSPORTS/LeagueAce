@@ -504,30 +504,32 @@ function App() {
                     className="blue-input"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="rating">Current Skill Rating (3.0 – 5.0)</Label>
-                  <div className="rating-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Input
-                      id="rating"
-                      type="number"
-                      min="3.0"
-                      max="5.0"
-                      step="0.5"
-                      value={formData.rating_level}
-                      onChange={(e) => {
-                        const val = clampRound(e.target.value);
-                        setFormData({...formData, rating_level: val});
-                      }}
-                      required
-                      className="blue-input"
-                      style={{ width: 120 }}
-                    />
-                    <Badge className="badge">{ratingToLabel(formData.rating_level)}</Badge>
+                {role === 'Player' && (
+                  <div>
+                    <Label htmlFor="rating">Current Skill Rating (3.0 – 5.0)</Label>
+                    <div className="rating-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <Input
+                        id="rating"
+                        type="number"
+                        min="3.0"
+                        max="5.0"
+                        step="0.5"
+                        value={formData.rating_level}
+                        onChange={(e) => {
+                          const val = clampRound(e.target.value);
+                          setFormData({...formData, rating_level: val});
+                        }}
+                        required
+                        className="blue-input"
+                        style={{ width: 120 }}
+                      />
+                      <Badge className="badge">{ratingToLabel(formData.rating_level)}</Badge>
+                    </div>
+                    <p className="rating-help-blue">
+                      3.0 → Starter • 3.5 → Rising • 4.0 → Challenger • 4.5 → Competitor • 5.0 → Pro
+                    </p>
                   </div>
-                  <p className="rating-help-blue">
-                    3.0 → Starter • 3.5 → Rising • 4.0 → Challenger • 4.5 → Competitor • 5.0 → Pro
-                  </p>
-                </div>
+                )}
               </CardContent>
               <CardFooter>
                 <Button type="submit" className="btn-primary-ios w-full" disabled={loading}>
