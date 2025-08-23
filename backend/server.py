@@ -592,9 +592,39 @@ async def rr_recalc_standings(tier_id: Optional[str], match_id: Optional[str] = 
 @app.get("/api/rr/standings")
 async def rr_get_standings(tier_id: str):
     rows = await db.rr_standings.find({"tier_id": tier_id}).to_list(1000)
+    # badges
+    first_match_ids = set()
+    finished_all_ids = set()
+    # infer participants from matches
+    matches = await db.rr_matches.find({"tier_id": tier_id}).to_list(5000)
+    participants = set()
+    for m in matches:
+        for pid in m.get("player_ids") or []:
+            participants.add(pid)
+    # first match badge: anyone with matches_played >=1
+    for r in rows:
+        if int(r.get("matches_played", 0)) >= 1:
+            first_match_ids.add(r.get("player_id"))
+    # finished all badge: players with matches_played equal to number of weeks they were scheduled
+    weeks = set([int(m.get("week_index", 0)) for m in matches])
+    total_weeks = len(weeks) if weeks else 0
+    for r in rows:
+        if total_weeks > 0 and int(r.get("matches_played", 0)) >= total_weeks:
+            finished_all_ids.add(r.get("player_id"))
+
     # Sort by set_points desc, then pct_game_win desc
     rows_sorted = sorted(rows, key=lambda r: (-int(r.get("set_points", 0)), -float(r.get("pct_game_win", 0.0))))
-    out = [parse_from_mongo(r) for r in rows_sorted]
+    out = []
+    for r in rows_sorted:
+        row = parse_from_mongo(r)
+        pid = row.get("player_id")
+        row["badges"] = []
+        if pid in first_match_ids:
+            row["badges"].append("first_match")
+        if pid in finished_all_ids:
+            row["badges"].append("finished_all")
+        out.append(row)
+
     return {"rows": out, "top8": out[:8]}
 
 # ========= Health =========
