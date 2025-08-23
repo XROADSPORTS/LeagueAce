@@ -138,6 +138,25 @@ async def create_user(user_data: UserProfileCreate):
 
 @app.patch("/api/users/{user_id}", response_model=UserProfile)
 async def update_user(user_id: str, payload: UserProfileUpdate):
+
+@app.post("/api/users/{user_id}/upload-picture")
+async def upload_picture(user_id: str, file: UploadFile = File(...)):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Save file
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    fname = f"{user_id}{ext}"
+    path = os.path.join(UPLOAD_DIR, fname)
+    content = await file.read()
+    with open(path, "wb") as f:
+        f.write(content)
+    url = f"/api/uploads/{fname}"
+    await db.users.update_one({"id": user_id}, {"$set": {"photo_url": url}})
+    return {"url": url}
+
     data = {k: v for k, v in payload.dict().items() if v is not None}
     if "lan" in data and data["lan"]:
         ex = await db.users.find_one({"lan": data["lan"]})
