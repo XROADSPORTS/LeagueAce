@@ -3749,6 +3749,7 @@ function App() {
       const resetChanges = () => {
         setEditName(user.name || "");
         setEditPhone(user.phone || "");
+        setEditLAN(user.lan || "");
       };
 
       return (
