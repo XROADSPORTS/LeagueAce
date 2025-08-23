@@ -435,12 +435,12 @@ metadata:
   run_ui: false
 
 - task: "League Manager Flow: League/Format/Rating Tier APIs"
-  implemented: false
-  working: false
+  implemented: true
+  working: true
   file: "backend/server.py"
   stuck_count: 0
   priority: "high"
-  needs_retesting: true
+  needs_retesting: false
   status_history:
     - working: false
       agent: "user"
@@ -448,6 +448,9 @@ metadata:
     - working: false
       agent: "main"
       comment: "Identified missing endpoints: POST /api/leagues, GET /api/leagues/{id}/format-tiers, POST /api/format-tiers, GET /api/format-tiers/{id}/rating-tiers, POST/PATCH rating-tiers, and groups endpoints. Implementing now."
+    - working: true
+      agent: "testing"
+      comment: "🎉 LEAGUE/FORMAT/RATING TIER ENDPOINTS COMPREHENSIVE TESTING COMPLETE - ALL TESTS PASSED! **COMPLETE END-TO-END WORKFLOW VERIFIED**: ✅ **1) Manager User Creation**: POST /api/auth/social-login with role:'League Manager' working perfectly, creates user with correct role and returns all required fields (id, lan, role, sports_preferences) ✅ **2) League Creation**: POST /api/leagues?created_by={manager_id} with {name:'City Tennis League', sport_type:'Tennis', description:'Test'} returns 200 with league ID successfully ✅ **3) Manager Leagues List**: GET /api/users/{manager_id}/leagues?sport_type=Tennis returns array correctly including the newly created league ✅ **4) Format Tier Creation**: POST /api/format-tiers with {league_id, name:'Doubles', format_type:'Doubles', description:'Doubles play'} returns 200 with format tier ID ✅ **5) Format Tiers List**: GET /api/leagues/{league_id}/format-tiers returns the created format tier correctly ✅ **6) Rating Tier Creation**: POST /api/rating-tiers with all specified fields (format_tier_id, name:'4.0', min_rating:3.5, max_rating:4.5, max_players:36, competition_system:'Team League Format', playoff_spots:8, region:'General', surface:'Hard Court') returns 200 with unique join_code (FPV04K) ✅ **7) Rating Tiers List**: GET /api/format-tiers/{format_tier_id}/rating-tiers returns created tier with min_rating/max_rating properly rounded to 0.5 increments (3.5/4.5) ✅ **8) Rating Tier Range Update**: PATCH /api/rating-tiers/{id} with {min_rating:3.0, max_rating:5.0} successfully updates and returns properly rounded values ✅ **9) Groups Creation**: POST /api/rating-tiers/{id}/create-groups with {group_size:12, custom_names:['Group A','Group B']} creates exactly 2 groups with custom names ✅ **10) Groups Retrieval**: GET /api/rating-tiers/{id}/player-groups returns the created groups correctly. **API COMPLIANCE**: All endpoints properly under /api prefix per ingress rules. **TEST RESULTS**: 10/10 tests passed (100% success rate). The complete League Manager workflow from user creation through league/format/rating tier setup to player groups is fully operational and production-ready."
 
 
 test_plan:
