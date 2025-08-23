@@ -1654,7 +1654,7 @@ function App() {
                                       const { data } = await axios.get(`${API}/rating-tiers/${tier.id}/members`);
                                       setTierState(prev => ({ ...prev, _members: data }));
                                       // refresh counts too
-                                      loadRatingTiers(selectedFormatTier.id);
+                                      if (typeof onRefresh === 'function') { await onRefresh(); }
                                       toast({ title: 'Removed', description: 'Player removed from this tier' });
                                     } catch (err) {
                                       toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to remove player', variant: 'destructive' });
