@@ -826,6 +826,22 @@ function App() {
           setFormatTiers(response.data);
         } catch (error) {
           console.error("Error loading format tiers:", error);
+
+      // Poll rating tiers for live updates when a league is selected
+      useEffect(() => {
+        let timer;
+        if (selectedLeague?.id) {
+          timer = setInterval(() => {
+            // refresh format tiers, and if a format is selected, refresh rating tiers as well
+            loadFormatTiers(selectedLeague.id);
+            if (selectedFormatTier?.id) {
+              loadRatingTiers(selectedFormatTier.id);
+            }
+          }, 8000); // every 8s
+        }
+        return () => { if (timer) clearInterval(timer); };
+      }, [selectedLeague?.id, selectedFormatTier?.id]);
+
         }
       };
 
