@@ -91,6 +91,7 @@ class UserProfile(BaseModel):
     phone: Optional[str] = None
     rating_level: float = 4.0
     lan: Optional[str] = None
+    role: Optional[str] = "Player"
     created_at: datetime = Field(default_factory=now_utc)
 
 class UserProfileCreate(BaseModel):
