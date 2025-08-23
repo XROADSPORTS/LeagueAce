@@ -287,6 +287,24 @@ async def rr_weeks(player_id: str, tier_id: Optional[str] = None):
     weeks = [{"week_index": k, "matches": v} for k, v in sorted(by_week.items(), key=lambda x: x[0])]
     return {"weeks": weeks}
 
+# ========= RR Availability =========
+class RRAvailabilityRequest(BaseModel):
+    user_id: str
+    windows: List[str]
+
+@app.get("/api/rr/availability")
+async def rr_get_availability(user_id: str):
+    doc = await db.rr_availability.find_one({"user_id": user_id})
+    if not doc:
+        return {"user_id": user_id, "windows": []}
+    return parse_from_mongo(doc)
+
+@app.put("/api/rr/availability")
+async def rr_put_availability(body: RRAvailabilityRequest):
+    rec = RRAvailability(user_id=body.user_id, windows=body.windows, updated_at=now_utc())
+    await db.rr_availability.update_one({"user_id": body.user_id}, {"$set": prepare_for_mongo(rec.dict())}, upsert=True)
+    return {"status": "ok"}
+
 # ========= RR Propose / Confirm / ICS =========
 class ProposeSlotsRequest(BaseModel):
     slots: List[Dict[str, Any]]
