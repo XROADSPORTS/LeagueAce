@@ -1613,8 +1613,17 @@ function App() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button size="sm" className="blue-outline-button" onClick={async ()=>{
                       try {
-                        const { data } = await axios.get(`${API}/rating-tiers/${tier.id}/members`);
+                        const { data } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
                         setTierState(prev => ({ ...prev, _members: data }));
+                        if (!data || data.length === 0) {
+                          // short re-poll in case of immediate post-join consistency delay
+                          setTimeout(async () => {
+                            try {
+                              const { data: again } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
+                              setTierState(prev => ({ ...prev, _members: again }));
+                            } catch (_) {}
+                          }, 1500);
+                        }
                         setMemberListOpen(true);
                       } catch (err) {
                         toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to load members', variant: 'destructive' });
