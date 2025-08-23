@@ -354,23 +354,38 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
     players = list(body.player_ids)
     if len(players) < 4:
         raise HTTPException(status_code=400, detail="Need at least 4 players")
+
+    # Preload availability for all players
+    avail_map = await _availability_map(players)
+
     # Clear old
     await db.rr_slates.delete_many({"tier_id": tier_id})
     await db.rr_matches.delete_many({"tier_id": tier_id})
 
-    # Very simple greedy: for each week, shuffle and group into 4s
+    # Greedy+backtracking-lite: use weekly greedy with state memory
+    state = _GreedyState(partner_counts={}, opponent_counts={})
+    conflicts: Dict[int, List[str]] = {}
+    feasibility_score = 0
+
     for w in range(weeks):
-        week_players = players[:]
-        random.shuffle(week_players)
+        desired_window = None
+        if body.week_windows and isinstance(body.week_windows, dict):
+            desired_window = body.week_windows.get(w)
+        result = await _schedule_week(players, desired_window, state, avail_map)
         match_ids: List[str] = []
-        for i in range(0, len(week_players) - (len(week_players) % 4), 4):
-            group = week_players[i: i + 4]
+        for group in result["matches"]:
             m = RRMatch(tier_id=tier_id, week_index=w, player_ids=group)
             await db.rr_matches.insert_one(prepare_for_mongo(m.dict()))
             match_ids.append(m.id)
         slate = RRSlate(tier_id=tier_id, week_index=w, match_ids=match_ids)
         await db.rr_slates.insert_one(prepare_for_mongo(slate.dict()))
-    return {"status": "ok", "weeks": weeks}
+
+        if result["infeasible"]:
+            conflicts[w] = result["infeasible"]
+        # simple feasibility: +1 per fully formed match of 4
+        feasibility_score += len(result["matches"]) 
+
+    return {"status": "ok", "weeks": weeks, "feasibility_score": feasibility_score, "conflicts": conflicts}
 
 @app.get("/api/rr/weeks")
 async def rr_weeks(player_id: str, tier_id: Optional[str] = None):
