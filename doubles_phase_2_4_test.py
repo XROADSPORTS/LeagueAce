@@ -11,7 +11,7 @@ from datetime import datetime, timezone, timedelta
 
 class DoublesPhase24Tester:
     def __init__(self):
-        self.api_url = "https://doubles-master.preview.emergentagent.com/api"
+        self.api_url = "https://leagueace-rr.preview.emergentagent.com/api"
         self.tests_run = 0
         self.tests_passed = 0
         

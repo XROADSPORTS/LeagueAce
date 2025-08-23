@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 
 # Test the standings endpoint structure
-base_url = "https://doubles-master.preview.emergentagent.com"
+base_url = "https://leagueace-rr.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Create a simple test to verify standings structure

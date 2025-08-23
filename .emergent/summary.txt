@@ -1,91 +1,87 @@
 <analysis>
-The trajectory details the continued development of the LeagueAce application, with a significant focus on implementing the complex Round Robin (RR) league format. Initially, the AI engineer established core backend functionality for RR availability and a advanced scheduler (greedy with backtracking, conflict detection, quality scoring). This was followed by features like 3-set partner rotation, coin toss, 4-player confirmation for partner overrides, and refined standings with trends and badges.
-
-Frontend development for Round Robin then began, introducing a dedicated RR tab with interactive match cards, a detailed 3-set score table, and an Admin Wizard for configuration. Automated frontend testing revealed blockers in core authentication and user profile endpoints, which the AI engineer resolved by implementing necessary social login and user data APIs. The latest interaction involved the user reporting a login as league manager bug, which the AI engineer traced to a frontend compilation error (duplicate  declaration) and successfully fixed. The work is currently paused for the user to re-verify the manager login and overall RR features.
+The AI engineer's work primarily involved an intensive bug-fixing and feature-enhancement phase for the LeagueAce application, with a strong focus on the Round Robin (RR) module and core user flows. Initial work established RR backend logic and a frontend dashboard. Key efforts included resolving a frontend compilation error (), fixing manager login redirection, implementing dynamic skill progression labels, and addressing multiple issues with league creation and persistence for managers. Critical bugs related to player Join by Code and the display of joined leagues were resolved, followed by real-time updates for player counts via Server-Sent Events (SSE). The most recent development centered on integrating user profile pictures across various UI components and fixing the profile picture upload functionality. The approach was iterative, confirming fixes with the user and asking for explicit testing permissions.
 </analysis>
 
 <product_requirements>
-LeagueAce is a tennis and pickleball league management application, providing comprehensive tools for league administration and player engagement. Its UI features an iOS-inspired Glassmorphism design and PWA capabilities for mobile readiness.
+LeagueAce is a tennis and pickleball league management application, emphasizing an iOS-inspired Glassmorphism UI and PWA capabilities. Its core functionality includes dashboard and chat fixes, a secure league joining system with shareable codes and manager approval, and comprehensive player profile management (name, mobile, LAN, search). Manager tools allow rating tier modification and join request approval. The Doubles Coordinator provides verified partnerships, scheduling, and dual-confirmation scoring.
 
-Key implemented features include:
--   **UI/Mobile**: Modern iOS-style glassmorphism interface and Progressive Web App functionality.
--   **Core Fixes**: Resolution of various bugs affecting dashboard visibility, chat, scoring, and profile picture loading.
--   **League Joining**: System for shareable join codes (links and QR) and a player-centric join flow with live previews and manager approvals.
--   **Profile Management**: Players can edit their name, mobile number, and a unique LeagueAce Number (LAN); search functionality by name or LAN.
--   **Manager Tools**: Functionality for managers to modify rating tier ranges and approve/reject player join requests.
--   **Doubles Coordinator**: A complete system for verified doubles partnerships, including external and in-app invite mechanisms, team creation, preferences, match scheduling, dual-confirmation scoring, and team standings.
-
-**Ongoing Development: Round Robin League Format**:
-This is a complex system for doubles-only round robin leagues, requiring configurable seasons, optional subgroups, and active/reserve player roles. Core requirements include an advanced scheduler (minimizing repeat partners, balancing opponents, respecting availability), 3-set matches with partner rotation, coin toss, manual overrides, detailed scoring (set points, game points, tiebreaks), a live leaderboard (Top-8, trends, badges), playoff bracket generation, in-app notifications, and audit trails. Development adheres to extensive acceptance tests and wireframe notes.
+Current major development focuses on the complex Round Robin (RR) league format. This system supports configurable seasons, optional subgroups, active/reserve player roles, advanced scheduling (minimizing repeat partners, balancing opponents, availability), 3-set matches with partner rotation, coin toss, manual overrides, detailed scoring, live leaderboards with trends and badges, playoff bracket generation, in-app notifications, and audit trails. The application also now includes robust social login (Google/Apple) for both Players and League Managers, with role-based navigation and persistence. Managers can create and manage leagues with auto-loading format and rating tiers, view player lists with real-time updates, and upload profile pictures, which are rendered across various UI components for enhanced user experience.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Architecture**: React.js (frontend), FastAPI (backend), MongoDB (database).
 -   **UI/UX**: Tailwind CSS, Shadcn UI, iOS-style Glassmorphism, PWA.
--   **Backend Data Handling**: Pydantic models, Motor (async MongoDB), UUIDs.
+-   **Backend Data Handling**: Pydantic models, Motor (async MongoDB), UUIDs, Server-Sent Events (SSE).
 -   **Scheduling**: Greedy+backtracking algorithms.
 -   **Deployment**: Kubernetes container, Supervisor.
 </key_technical_concepts>
 
 <code_architecture>
-The application utilizes a standard full-stack architecture with distinct frontend and backend services located within the  root directory.
+The application uses a standard full-stack architecture with distinct frontend and backend services in the  root directory.
 
 
 
 -   ****:
-    -   **Summary of importance**: This file serves as the core FastAPI backend, defining all API routes, business logic, and interactions with MongoDB. It manages user authentication, league creation, Doubles Coordinator features, and now extensive Round Robin (RR) functionalities.
-    -   **Summary of changes**: Heavily modified throughout the trajectory for RR features and unblocking frontend tests.
-        -   **RR Core**: Implemented ,  (with advanced greedy+backtracking scheduler, availability constraints, partner/opponent balancing, , , ). Added  helper, refined standings calculation for  and badges.
-        -   **RR Match Operations**: Endpoints for , ,  (requiring 4 confirmations). Includes  and  stubs.
-        -   **RR Metadata**: New  endpoint to return persisted schedule metadata.
-        -   **Onboarding/User**: Added  (upserts user, sets role), , , and  (for fetching leagues managed by a user).
+    -   **Summary of importance**: Core FastAPI backend for API routes, business logic, and MongoDB interaction. Manages authentication, league, Doubles Coordinator, and extensive Round Robin (RR) features.
+    -   **Summary of changes**: Numerous additions and modifications for bug fixes and new features.
+        -   **Authentication**: Added  to handle Google/Apple sign-ins, upserting users and setting roles.
+        -   **User Data**: , ,  (for managed leagues).
+        -   **League Creation/Management**: Implemented , , , , , , .
+        -   **Player Join**:  (preview), ,  (now includes , , , and filters robustly).
+        -   **Player List (Manager)**:  (returns ), .
+        -   **Profile Picture**:  (stores in ), static file serving for uploaded pictures.
+        -   **Real-time Updates**:  for Server-Sent Events (SSE) to auto-refresh player counts.
+        -   **RR Standings**:  now includes user photo URL.
 -   ****:
-    -   **Summary of importance**: The primary React component, controlling the application's overall UI structure, routing, and integrating all functional components.
-    -   **Summary of changes**: Continuously updated to integrate Round Robin UI.
-        -   **RR Dashboard**: Replaced the generic Schedule tab with a dedicated Round Robin tab. Introduced  component, featuring a tier selection dropdown (auto-detects player's RR tiers), weekly tabs displaying match cards (with Toss, Propose/Confirm Override actions, conflict badges per week), and a Match Detail panel.
-        -   **Interactive Match Detail**: The Match Detail view now includes an interactive 3-set table for score input, visualizes default/override partner rotations, allows ICS download for confirmed matches, and integrates actions for proposing slots, confirming overrides, submitting scores, and approving scores.
-        -   **Admin Wizard**: Integrated a basic RR Admin Wizard for configuring tier details, generating subgroups, and running the scheduler with  inputs, displaying schedule quality/conflicts.
-        -   **Login Flow**: Modified  to pass the  (Player/League Manager) to the backend's social login endpoint.
-        -   **Bug Fix**: Resolved a  caused by a duplicate   declaration.
+    -   **Summary of importance**: Main React component controlling UI structure, routing, and integrating all functional components.
+    -   **Summary of changes**: Extensive modifications for bug fixes and UI enhancements.
+        -   **Login Flow**: Modified  and  to pass . Added guards to social login buttons to ensure role selection, and default to Player if no explicit selection. Added loading indicators and toasts for sign-in feedback.
+        -   **Skill Progression**: Implemented  and  helpers, moved to top-level scope to avoid syntax errors. Updated signup and manager rating inputs to step by 0.5 and display new labels (Starter, Rising, etc.).
+        -   **League Creation/Persistence**: UI now navigates to Tier 2 after league creation, auto-selects the new league, and persists selected league in  across navigation and refreshes. Auto-loads format and rating tiers on league selection.
+        -   **Player Join by Code**: Enhanced  with pre-flight validations, toasts (e.g., Rating out of range), and loading spinners.  component updated to display /. Added a progress bar to the join modal. Fallback to load all joined tiers if the active sport filter yields no results.
+        -   **Manager Player List**: Added Player List button to , opening a modal to display joined players with their avatars, name, LAN, and rating. Implemented player removal functionality with real-time updates.
+        -   **Profile Picture**: Integrated  into the user context and rendered avatars in Manager Player List, RR Standings, and RR Match cards.
+        -   **Real-time Updates**: Subscribed to SSE for  to auto-refresh player counts in Tier 3 manager view.
+        -   **Bug Fixes**: Resolved a  due to duplicate   declaration and another  due to helper functions being inside JSX. Fixed Sport Selection state handling.
 -   ****:
-    -   **Summary of importance**: Holds global CSS styles, crucial for maintaining the consistent iOS-style Glassmorphism aesthetic across the application.
-    -   **Summary of changes**: Modified to style new Round Robin UI elements, including conflict badges, match cards, and Admin Wizard components.
+    -   **Summary of importance**: Global CSS styles for the iOS-style Glassmorphism aesthetic.
+    -   **Summary of changes**: Modified to style new UI elements like conflict badges, match cards, Admin Wizard components, and avatar placeholders.
 -   ****:
-    -   **Summary of importance**: The main HTML entry point for the React application, responsible for linking the manifest and setting PWA properties.
-    -   **Summary of changes**: Updated to include  link and iOS-specific web-app meta tags to enhance PWA functionality.
+    -   **Summary of importance**: Main HTML entry point for the React application.
+    -   **Summary of changes**: Updated to include  link and iOS-specific web-app meta tags for PWA.
 -   ****:
-    -   **Summary of importance**: The PWA manifest file, essential for enabling Add to Home Screen functionality and defining the application's metadata for mobile devices.
+    -   **Summary of importance**: PWA manifest file.
     -   **Summary of changes**: Created to scaffold and enable PWA capabilities.
 -   ****:
     -   **Summary of importance**: Manages all frontend dependencies.
-    -   **Summary of changes**:  dependency was added earlier for QR generation. No new notable changes in the current trajectory.
-
+    -   **Summary of changes**:  added previously. No new relevant changes in this trajectory.
 </code_architecture>
 
 <pending_tasks>
 -   **Doubles Coordinator**: Enable Email + SMS sending for partner invites, requiring SendGrid and Twilio API keys.
 -   **Round Robin**:
-    -   Further enhance the Admin Wizard: add export/download of schedule meta (CSV/JSON) and a compare-history view for multiple runs, improve visuals (progress steps, inline summary).
+    -   Further enhance the Admin Wizard: add export/download of schedule meta (CSV/JSON), a compare-history view, and improved visuals.
     -   Implement specific polish: per-week conflict drill-down, substitute management UI, chat integration in match detail.
--   **User Search**: Replace the current prompt-based user search for in-app invites with a more polished, glass-styled modal.
+-   **User Search**: Replace prompt-based user search for in-app invites with a polished, glass-styled modal.
+-   **Profile Picture**: Add image cropping to square and size limit validation on the frontend.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing a critical bug reported by the user: login as league manager isnt working. This issue manifested as a frontend compilation error: .
+Immediately before this summary request, the AI engineer had completed the extensive task of integrating user profile pictures across various parts of the LeagueAce application. This included ensuring that profile picture uploads work correctly after social sign-in (specifically Google).
 
-The AI engineer successfully identified and fixed the root cause of the compilation error in  by removing a duplicate declaration of . This fix now allows the frontend to compile successfully.
+The backend was updated to:
+-   Provide a  endpoint for uploading  files, storing them in a dedicated  directory, and serving them via .
+-   Modify existing APIs, such as  and , to include the  for each user, so the frontend can render actual images instead of placeholders.
 
-Prior to this bug, a significant set of Round Robin features had been implemented and tested:
-1.  **Backend Enhancements**:
-    *   Persisted schedule metadata (feasibility, quality, conflicts) via a new  endpoint.
-2.  **Frontend UI for Round Robin**:
-    *   **Dashboard**: Displayed per-week conflict badges (e.g., 2⚠︎) in week tabs, and a Conflicts/Quality button showing a toast with scheduling metrics.
-    *   **Match Detail**: The 3-set match table became interactive, allowing users to input team scores and select winners per set, which then correctly posts to . It visually shows default or override partner rotations.
-    *   **Admin Wizard**: Fully integrated into the RR tab, allowing configuration of tier details (season length, name), generation of subgroups, scheduling with  inputs, and displaying updated schedule metadata.
+The frontend () was updated to:
+-   Utilize the  from user data to display actual profile pictures in the Manager's Tier 3 Player List modal, next to players' names, LANs, and ratings.
+-   Render avatars in the Round Robin Standings leaderboard and on individual Round Robin match cards for all four players.
+-   Ensure that after a profile picture upload, the user object is refreshed, making the new avatar available application-wide.
+-   Automated frontend tests were run to verify the profile upload flow, the Tier 3 Player List with avatars, RR leaderboard avatars, and RR match card avatars, successfully passing after a minor JSX key wrapper issue was fixed.
 
-Crucially, earlier frontend testing blockers (404 errors on onboarding/user endpoints) were resolved by implementing , , , and  on the backend, ensuring a complete and tested onboarding and user data flow, which in turn unblocked end-to-end frontend UI testing. The current status is that the compilation issue is resolved, and the system is ready for the user to re-verify the login as league manager functionality and the full Round Robin features.
+The current state is that profile pictures are integrated and displaying in key areas, and the upload functionality is verified. The AI engineer is now awaiting user input on further enhancements related to avatar rendering and manager controls.
 </current_work>
 
 <optional_next_step>
-Verify the login as league manager functionality and the entire Round Robin Admin Wizard and Dashboard features.
+The next step is to get user confirmation on whether to add an Edit Avatar button per player in the Manager's Player List modal (A), or show avatars in Non-RR Player Standings (B), or both (C), and the policy for manager photo edits.
 </optional_next_step>

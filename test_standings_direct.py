@@ -1,7 +1,7 @@
 import requests
 
 # Test the standings endpoint directly
-base_url = "https://doubles-master.preview.emergentagent.com"
+base_url = "https://leagueace-rr.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Use the tier ID from our test
