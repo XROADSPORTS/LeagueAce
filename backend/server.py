@@ -340,6 +340,7 @@ class UserProfile(BaseModel):
     name: str
     phone: Optional[str] = None
     rating_level: float = Field(ge=3.0, le=5.5)
+    lan: Optional[str] = None  # LeagueAce Number
     photo_url: Optional[str] = None
     profile_picture: Optional[str] = None
     role: UserRole = UserRole.PLAYER
