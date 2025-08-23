@@ -1257,6 +1257,17 @@ async def rr_recalc_standings(tier_id: Optional[str], match_id: Optional[str] = 
 @app.get("/api/rr/standings")
 async def rr_get_standings(tier_id: str):
     rows = await db.rr_standings.find({"tier_id": tier_id}).to_list(1000)
+    # attach user info for avatars
+    for r in rows:
+        u = await db.users.find_one({"id": r.get("player_id")})
+        if u:
+            r["user"] = {
+                "id": u.get("id"),
+                "name": u.get("name"),
+                "photo_url": u.get("photo_url"),
+                "lan": u.get("lan"),
+                "rating_level": u.get("rating_level"),
+            }
     # compute badges
     first_match_ids = set()
     finished_all_ids = set()
