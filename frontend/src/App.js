@@ -3236,14 +3236,23 @@ function App() {
 
       const submitScore = async (matchId) => {
         try {
-          // Demo submission with default pairings winners
           const match = rrWeeks.flatMap(w => w.matches).find(m => m.id === matchId);
           if (!match) return;
-          const sets = [
-            { team1_games: 6, team2_games: 4, winners: [match.player_ids[0], match.player_ids[1]], losers: [match.player_ids[2], match.player_ids[3]] },
-            { team1_games: 3, team2_games: 6, winners: [match.player_ids[2], match.player_ids[3]], losers: [match.player_ids[0], match.player_ids[1]] },
-            { team1_games: 6, team2_games: 2, winners: [match.player_ids[0], match.player_ids[3]], losers: [match.player_ids[1], match.player_ids[2]] },
-          ];
+          // Build sets from inputs
+          const sets = [0,1,2].map((i) => {
+            const p = rrShowMatch?.partner_override?.sets?.[i] || null;
+            const pairs = p || (i === 0 ? [[match.player_ids[0], match.player_ids[1]], [match.player_ids[2], match.player_ids[3]]] : i === 1 ? [[match.player_ids[0], match.player_ids[2]], [match.player_ids[1], match.player_ids[3]]] : [[match.player_ids[0], match.player_ids[3]], [match.player_ids[1], match.player_ids[2]]]);
+            const t1 = parseInt(setInputs[i].team1_games || '0');
+            const t2 = parseInt(setInputs[i].team2_games || '0');
+            const wIdx = setInputs[i].winnerIdx;
+            const winners = wIdx === 0 ? pairs[0] : pairs[1];
+            const losers = wIdx === 0 ? pairs[1] : pairs[0];
+            return { team1_games: t1, team2_games: t2, winners, losers };
+          });
+          if (sets.some(s => (s.team1_games === s.team2_games))) {
+            toast({ title: 'Invalid score', description: 'Set games cannot tie without tiebreak', variant: 'destructive' });
+            return;
+          }
           await axios.post(`${API}/rr/matches/${matchId}/submit-scorecard`, { sets, submitted_by_user_id: user.id, use_default_pairings: true });
           toast({ title: 'Scorecard submitted', description: 'Awaiting approval' });
         } catch (e) {
