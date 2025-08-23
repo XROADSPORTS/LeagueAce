@@ -491,6 +491,8 @@ metadata:
 agent_communication:
   - agent: "main"
     message: "Preparing to run frontend automated tests to validate: (1) Social sign-in progress and default Player role, (2) Join-by-code flow with spinner and dashboard refresh, (3) Manager league persistence and Tier 3 visibility after navigation."
+  - agent: "testing"
+    message: "🚨 CRITICAL FRONTEND BLOCKING ISSUE FOUND: All three requested test flows are blocked by a fundamental sport selection bug. **ROOT CAUSE**: After successful social sign-in (Google/Apple working correctly with 200 API responses), users reach sport selection screen but cannot progress to dashboards. The 'Continue' button shows 'Continue with 0 sports' even after selecting Tennis, indicating selectedSports state is not updating properly in React component. **IMPACT**: This blocks access to both Player Dashboard (preventing join-by-code modal testing) and Manager Dashboard (preventing league persistence testing). **TECHNICAL DETAILS**: Backend authentication APIs working correctly (/api/auth/social-login returns 200), issue is in frontend SportSelection component state management. **IMMEDIATE ACTION NEEDED**: Fix sport selection state tracking in SportSelection component before any dashboard functionality can be tested."
 
 # Update test metadata
 metadata:
