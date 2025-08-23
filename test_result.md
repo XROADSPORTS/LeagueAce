@@ -433,6 +433,72 @@ agent_communication:
 # Increment test metadata
 metadata:
   created_by: "main_agent"
+
+- task: "Frontend: Social sign-in (Player) and default role feedback"
+  implemented: true
+  working: unknown
+  file: "frontend/src/App.js"
+  stuck_count: 0
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "user"
+      comment: "Google and Apple sign-in for Join as Player shows no progress."
+    - working: unknown
+      agent: "main"
+      comment: "Added default-to-Player behavior on first screen, success/error toasts, and loading disable. Needs UI retest."
+
+- task: "Frontend: Join-by-code modal UX and post-join refresh"
+  implemented: true
+  working: unknown
+  file: "frontend/src/App.js"
+  stuck_count: 0
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "user"
+      comment: "After clicking Join League, no outcome; My Leagues still shows 0."
+    - working: unknown
+      agent: "main"
+      comment: "Hardened handler with validation toasts, loading spinner, progress bar, and immediate dashboard refresh on success. Needs UI retest."
+
+- task: "Frontend: Manager league persistence across tabs"
+  implemented: true
+  working: unknown
+  file: "frontend/src/App.js"
+  stuck_count: 0
+  priority: "medium"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "user"
+      comment: "League disappears after switching tabs; clicking card should show Tier 3 record."
+    - working: unknown
+      agent: "main"
+      comment: "Persisted last selected league in localStorage and auto-load formats/ratings when re-selecting. Needs UI retest."
+
+agent_communication:
+  - agent: "main"
+    message: "Preparing to run frontend automated tests to validate: (1) Social sign-in progress and default Player role, (2) Join-by-code flow with spinner and dashboard refresh, (3) Manager league persistence and Tier 3 visibility after navigation."
+
+# Update test metadata
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Frontend: Social sign-in (Player) and default role feedback"
+    - "Frontend: Join-by-code modal UX and post-join refresh"
+    - "Frontend: Manager league persistence across tabs"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
   version: "1.0"
   test_sequence: 1
   run_ui: false
