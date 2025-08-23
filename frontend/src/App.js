@@ -1613,12 +1613,14 @@ function App() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button size="sm" className="blue-outline-button" onClick={async ()=>{
                       try {
+                        if (typeof onRefresh === 'function') { await onRefresh(); }
                         const { data } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
                         setTierState(prev => ({ ...prev, _members: data }));
                         if (!data || data.length === 0) {
                           // short re-poll in case of immediate post-join consistency delay
                           setTimeout(async () => {
                             try {
+                              if (typeof onRefresh === 'function') { await onRefresh(); }
                               const { data: again } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
                               setTierState(prev => ({ ...prev, _members: again }));
                             } catch (_) {}
