@@ -271,6 +271,15 @@ async def join_by_code(user_id: str, body: JoinByCodeRequest):
         raise HTTPException(status_code=400, detail="Already joined this tier")
     seat = TierMembership(rating_tier_id=tier.get("id"), user_id=user_id, status="Active")
     await db.tier_memberships.insert_one(prepare_for_mongo(seat.dict()))
+    # Publish SSE events for listeners (format and rating scopes)
+    try:
+        fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")})
+        await publish_event("tier_memberships", {"rating_tier_id": tier.get("id")})
+        await publish_event(f"tier_memberships:rating:{tier.get('id')}", {"rating_tier_id": tier.get("id")})
+        if fmt:
+            await publish_event(f"tier_memberships:format:{fmt.get('id')}", {"rating_tier_id": tier.get("id")})
+    except Exception:
+        pass
     return parse_from_mongo(seat.dict())
 
 @app.get("/api/users/{user_id}/joined-tiers")
