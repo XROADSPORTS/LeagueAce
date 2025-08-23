@@ -398,6 +398,41 @@ backend:
         agent: "testing"
         comment: "🎾 END-TO-END FRONTEND TESTING COMPLETE - Successfully tested the complete onboarding and Round Robin flow as requested in review. **COMPREHENSIVE TESTING RESULTS**: ✅ **1) Signup/Login & Onboarding Flow**: Google sign-in button triggers POST /api/auth/social-login correctly, redirects to sport-selection page, Tennis selection works, dashboard loads successfully with proper user authentication. ✅ **2) Round Robin Tab Navigation**: Successfully navigated to Player Dashboard → Round Robin tab, verified all controls render correctly including tier dropdown (shows 'No RR tiers found' empty state), Load button (properly disabled when no tier selected), Availability button, and Conflicts/Quality button. ✅ **3) Round Robin Controls Functionality**: All requested controls are present and functional - tier dropdown shows appropriate empty state, Load button is disabled until tier selection (correct behavior), Availability and Conflicts/Quality buttons are clickable and responsive. ✅ **4) Match Actions Testing**: Tested best-effort UI validation for match actions (Toss, Override, Confirm Override, Open detail) - no matches found which is expected for empty backend data, but UI structure is ready. ✅ **5) Standings Tab**: Successfully navigated to Standings tab, verified Round Robin Leaderboard structure is ready for SP/GP/% columns, trend arrows, and badges display. **SCREENSHOTS CAPTURED**: (a) Player Dashboard main view, (b) Round Robin tab with controls, (c) Leaderboard view. **TOLERANCE FOR EMPTY DATA**: Testing was appropriately tolerant of empty backend data (no tiers/matches) while still verifying all controls and UI components render correctly. **AUTHENTICATION FLOW**: Complete end-to-end authentication flow working from Google sign-in through sport selection to dashboard access. The Round Robin UI integration is fully functional and production-ready."
 
+
+- task: "Role-aware Social Login Flow (Frontend)"
+  implemented: true
+  working: false
+  file: "frontend/src/App.js"
+  stuck_count: 1
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "user"
+      comment: "When signing in as manager, it signs into player section rather than manager."
+    - working: false
+      agent: "main"
+      comment: "Identified bug: Apple sign-in path ignores selected role (does not pass role to /api/auth/social-login). Also added guard to prevent sign-in without selecting Player/Manager. Will fix and request retest."
+
+agent_communication:
+  - agent: "main"
+    message: "Starting Phase A: debugging role flow. Will fix Apple sign-in to pass role and add guard for missing selection. Then run backend tests focusing on social-login role escalation and RR endpoints."
+
+# Increment test metadata
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "User Authentication & Profiles: verify /api/auth/social-login role escalation works"
+    - "Role-aware Social Login Flow (Frontend): ensure role persists (Manager vs Player)"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
 frontend:
   - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
     implemented: true
