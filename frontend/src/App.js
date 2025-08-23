@@ -2781,7 +2781,15 @@ function App() {
   const PlayerDashboard = () => {
     const [activePlayerTab, setActivePlayerTab] = useState('home');
     const [showJoinForm, setShowJoinForm] = useState(false);
-  const pendingURLJoinCode = useRef(null);
+    const pendingURLJoinCode = useRef(null);
+
+    // Round Robin state
+    const [rrLoading, setRrLoading] = useState(false);
+    const [rrWeeks, setRrWeeks] = useState([]);
+    const [rrTierId, setRrTierId] = useState("");
+    const [rrStandings, setRrStandings] = useState(null);
+    const [rrAvailability, setRrAvailability] = useState([]);
+    const [rrShowMatch, setRrShowMatch] = useState(null); // active match for detail modal
 
   useEffect(() => {
     const code = getPendingJoinCodeFromURL();
