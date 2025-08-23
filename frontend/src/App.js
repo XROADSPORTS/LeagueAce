@@ -2820,7 +2820,16 @@ function App() {
 
     useEffect(() => {
       loadUpcomingMatches();
-    }, [user, activeSport]);
+      if (user) {
+        // Attempt to load RR weeks for default tier selection if any
+        // rrTierId will be selected via a simple input for now
+        if (rrTierId) {
+          fetchRRWeeks(rrTierId);
+          fetchRRStandings(rrTierId);
+          fetchRRAvailability(user.id);
+        }
+      }
+    }, [user, activeSport, rrTierId]);
 
     const loadUpcomingMatches = async () => {
       if (user) {
