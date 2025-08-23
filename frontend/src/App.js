@@ -116,6 +116,31 @@ function App() {
     try { return localStorage.getItem(lastLeagueKey(uid, sport)) || ''; } catch (_) { return ''; }
   };
 
+  // Email Sign-In for form-based accounts
+  const handleEmailSignIn = async (email, nameInput) => {
+    try {
+      setLoading(true);
+      const name = (nameInput && nameInput.trim()) || "User";
+      const payload = {
+        provider: "Email",
+        token: "form_login",
+        email,
+        name,
+        provider_id: `email_${Date.now()}`
+      };
+      const { data } = await axios.post(`${API}/auth/social-login`, payload);
+      setUser(data);
+      toast({ title: `Signed in as ${data.name}`, description: `${data.role} account found` });
+      setCurrentView("sport-selection");
+    } catch (error) {
+      const detail = error?.response?.data?.detail || "Email sign-in failed";
+      toast({ title: "Sign-in error", description: detail, variant: "destructive" });
+      console.error("Error with Email sign-in:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Profile Picture Upload
   const handleProfilePictureUpload = async (file) => {
     if (!file) return;
