@@ -366,17 +366,6 @@ function App() {
           </div>
         </div>
 
-      // Skill rating helpers
-      const ratingToLabel = (val) => {
-        const map = { 3.0: "Starter", 3.5: "Rising", 4.0: "Challenger", 4.5: "Competitor", 5.0: "Pro" };
-        const rounded = Math.round((parseFloat(val) || 0) * 2) / 2;
-        return map[rounded] || "";
-      };
-      const clampRound = (val) => {
-        if (isNaN(val)) return 4.0;
-        const clamped = Math.min(5.0, Math.max(3.0, val));
-        return Math.round(clamped * 2) / 2;
-      };
 
       </div>
     );
