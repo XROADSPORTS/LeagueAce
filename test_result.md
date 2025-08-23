@@ -434,6 +434,22 @@ metadata:
   test_sequence: 1
   run_ui: false
 
+- task: "League Manager Flow: League/Format/Rating Tier APIs"
+  implemented: false
+  working: false
+  file: "backend/server.py"
+  stuck_count: 0
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "user"
+      comment: "Can't create league after 1st tier data input; it doesn't create or proceed to step 2."
+    - working: false
+      agent: "main"
+      comment: "Identified missing endpoints: POST /api/leagues, GET /api/leagues/{id}/format-tiers, POST /api/format-tiers, GET /api/format-tiers/{id}/rating-tiers, POST/PATCH rating-tiers, and groups endpoints. Implementing now."
+
+
 test_plan:
   current_focus:
     - "Role-aware Social Login Flow (Frontend): ensure role persists (Manager vs Player)"
