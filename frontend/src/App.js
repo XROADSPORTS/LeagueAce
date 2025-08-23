@@ -52,12 +52,8 @@ function App() {
         const response = await axios.get(`${API}/users/${user.id}/leagues?sport_type=${activeSport}`);
         const list = response.data || [];
         setLeagues(list);
-        // try to restore last selected league if still present
-        const lastId = getLastManagerLeague(user.id, activeSport);
-        if (lastId && list.some(l => l.id === lastId)) {
-          const found = list.find(l => l.id === lastId);
-          if (found) setSelectedLeague(found);
-        }
+        // selection is handled inside LeagueManagerDashboard with local state persistence
+        // (auto-restore from localStorage when leagues load)
       } catch (error) {
         console.error("Error loading manager data:", error);
       }
