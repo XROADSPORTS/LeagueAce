@@ -370,12 +370,15 @@ backend:
 
   - task: "Round Robin UI Integration"
     implemented: true
-    working: "NA"
+    working: false
     file: "frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
+      - working: false
+        agent: "testing"
+        comment: "🎾 ROUND ROBIN UI TESTING COMPLETE - **IMPLEMENTATION VERIFIED BUT ACCESS BLOCKED**: Comprehensive testing reveals Round Robin UI is fully implemented in frontend/src/App.js with all requested components: ✅ **RoundRobinDashboard component** (lines 3156-3399) with tier dropdown, Load/Availability/Conflicts buttons, week tabs, match cards ✅ **Match card actions** implemented: Toss, Override, Confirm Override, Open detail buttons ✅ **Match Detail view** with 3-set table, partnerships, Add to Calendar functionality ✅ **Round Robin tab** integrated in Player Dashboard (line 4150) ✅ **Leaderboard rendering** with set/game/% columns, trend arrows, badges (lines 4174-4200). **CRITICAL ISSUE**: Cannot access dashboard due to backend API failures - multiple 404 errors for /api/auth/social-login, /api/users/{id}/notifications, /api/users/{id}/sports endpoints prevent authentication flow completion. **RECOMMENDATION**: Main agent needs to fix authentication API endpoints to enable full UI testing. Round Robin UI code structure is complete and ready for use once authentication is resolved."
       - working: false
         agent: "testing"
         comment: "🎾 ROUND ROBIN NEW FEATURES TESTING COMPLETE - Comprehensive testing of new RR features delivered in this bundle. **EXCELLENT RESULTS**: 28/29 tests passed (96.6% success rate). **✅ WORKING FEATURES**: 1) Scheduler with 8 players and week_windows mapping returns correct response structure and creates RR slates/matches ✅, 2) Availability constraints working - users not available for assigned windows appear in conflicts ✅, 3) Let's Play helper with use_default_pairings=true works without error, normal validation remains ✅, 4) Standings endpoint has correct structure ready for pct_game_win and badges ✅, 5) Re-run schedule clears old data and replaces with new ✅, 6) Availability endpoints GET/PUT working perfectly ✅. **❌ CRITICAL BUG**: POST /api/rr/matches/{mid}/approve-scorecard returns 500 Internal Server Error due to KeyError in rr_recalc_standings function - player ID '72e9e875-0c7a-4ec3-baa7-6d2d1c084c28' not found in stats dictionary. This prevents testing of pct_game_win calculation with 4-decimal rounding and badges (first_match, finished_all). **ROOT CAUSE**: The standings recalculation logic has a bug where it tries to access player IDs that don't exist in the stats dictionary when processing scorecard sets. **IMPACT**: Cannot verify standings computation and badge functionality until this bug is fixed."
