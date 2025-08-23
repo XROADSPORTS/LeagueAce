@@ -195,6 +195,9 @@ async def social_login(body: SocialLoginRequest):
     # allow role escalation if provided
     if body.role and doc.get("role") != body.role:
         updates["role"] = body.role
+    # allow rating_level update if provided
+    if body.rating_level is not None and doc.get("rating_level") != body.rating_level:
+        updates["rating_level"] = body.rating_level
     if updates:
         await db.users.update_one({"id": doc.get("id")}, {"$set": updates})
         doc.update(updates)
