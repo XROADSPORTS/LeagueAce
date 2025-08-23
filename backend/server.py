@@ -280,7 +280,8 @@ async def get_joined_tiers(user_id: str, sport_type: Optional[str] = None):
             continue
         fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")})
         league = await db.leagues.find_one({"id": fmt.get("league_id")}) if fmt else None
-        if sport_type and league and league.get("sport_type") != sport_type:
+        # Only apply sport_type filter when league has a sport_type stored
+        if sport_type and league and league.get("sport_type") and league.get("sport_type") != sport_type:
             continue
         out.append({
             "id": tier.get("id"),
@@ -290,6 +291,7 @@ async def get_joined_tiers(user_id: str, sport_type: Optional[str] = None):
             "join_code": tier.get("join_code"),
             "league_name": league.get("name") if league else None,
             "sport_type": league.get("sport_type") if league else None,
+            "competition_system": tier.get("competition_system"),
             "joined_at": m.get("created_at"),
             "status": m.get("status")
         })
