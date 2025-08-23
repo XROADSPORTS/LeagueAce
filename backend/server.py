@@ -252,6 +252,7 @@ async def rr_generate_subgroups(tier_id: str, body: RRSubgroupRequest):
 # ========= RR Scheduling =========
 class RRScheduleRequest(BaseModel):
     player_ids: List[str]  # Active players only
+    week_windows: Optional[Dict[int, str]] = None  # optional per-week window label
 
 @app.post("/api/rr/tiers/{tier_id}/schedule")
 async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
