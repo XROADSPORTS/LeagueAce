@@ -400,19 +400,51 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
         desired_window = None
         if body.week_windows and isinstance(body.week_windows, dict):
             desired_window = body.week_windows.get(w)
+        # First greedy pass
         result = await _schedule_week(players, desired_window, state, avail_map)
-        match_ids: List[str] = []
-        for group in result["matches"]:
-            m = RRMatch(tier_id=tier_id, week_index=w, player_ids=group)
-            await db.rr_matches.insert_one(prepare_for_mongo(m.dict()))
-            match_ids.append(m.id)
+        # Light local improvement: try swap pairs across leftover players if conflicts exist
+        if result["infeasible"]:
+            pool = result["infeasible"][:]
+            # attempt to find any two swaps that enable a match
+            tried = set()
+            for i in range(len(pool)):
+                for j in range(i+1, len(pool)):
+                    a, b = pool[i], pool[j]
+                    key = tuple(sorted([a, b]))
+                    if key in tried:
+                        continue
+                    tried.add(key)
+                    # try to create a match with any two compatible others from players
+                    others = [p for p in players if p not in [a, b] and _window_compatible(avail_map.get(p, []), desired_window)]
+                    if len(others) < 2:
+                        continue
+                    # pick two others that minimize opponent cost
+                    best_pair = None
+                    best_cost = 1e9
+                    for x in range(len(others)):
+                        for y in range(x+1, len(others)):
+                            c, d = others[x], others[y]
+                            cost = state.opponent_cost(a, c) + state.opponent_cost(a, d) + state.opponent_cost(b, c) + state.opponent_cost(b, d)
+                            if cost < best_cost:
+                                best_cost = cost
+                                best_pair = (c, d)
+                    if best_pair:
+                        # record this extra match
+                        c, d = best_pair
+                        m = RRMatch(tier_id=tier_id, week_index=w, player_ids=[a, b, c, d])
+                        await db.rr_matches.insert_one(prepare_for_mongo(m.dict()))
+                        state.inc_partner(a, b)
+                        state.inc_opponents(a, c); state.inc_opponents(a, d)
+                        state.inc_opponents(b, c); state.inc_opponents(b, d)
+        # Query matches we created this week to build slate
+        week_matches = await db.rr_matches.find({"tier_id": tier_id, "week_index": w}).to_list(5000)
+        match_ids: List[str] = [m.get("id") for m in week_matches]
         slate = RRSlate(tier_id=tier_id, week_index=w, match_ids=match_ids)
         await db.rr_slates.insert_one(prepare_for_mongo(slate.dict()))
 
         if result["infeasible"]:
             conflicts[w] = result["infeasible"]
-        # simple feasibility: +1 per fully formed match of 4
-        feasibility_score += len(result["matches"]) 
+        feasibility_score += len([1 for _ in week_matches])
 
         # compute a simple schedule_quality metric
     schedule_quality = 0
