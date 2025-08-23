@@ -168,7 +168,18 @@ async def social_login(body: SocialLoginRequest):
             "auth": {"provider": body.provider, "provider_id": body.provider_id}
         }
         await db.users.insert_one(user)
-        return user
+        # Return clean user data without MongoDB artifacts
+        return {
+            "id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "phone": user["phone"],
+            "rating_level": user["rating_level"],
+            "lan": user["lan"],
+            "role": user["role"],
+            "sports_preferences": user["sports_preferences"],
+            "created_at": user["created_at"]
+        }
     # update name and defaults if missing
     updates = {}
     if not doc.get("lan"):
@@ -182,7 +193,18 @@ async def social_login(body: SocialLoginRequest):
     if updates:
         await db.users.update_one({"id": doc.get("id")}, {"$set": updates})
         doc.update(updates)
-    return parse_from_mongo(doc)
+    # Return clean user data without MongoDB artifacts
+    return {
+        "id": doc.get("id"),
+        "email": doc.get("email"),
+        "name": doc.get("name"),
+        "phone": doc.get("phone"),
+        "rating_level": doc.get("rating_level"),
+        "lan": doc.get("lan"),
+        "role": doc.get("role"),
+        "sports_preferences": doc.get("sports_preferences", []),
+        "created_at": doc.get("created_at")
+    }
 
 @app.get("/api/users/{user_id}")
 async def get_user(user_id: str):
