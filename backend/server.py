@@ -978,6 +978,11 @@ async def update_user_profile(user_id: str, updates: UserProfileUpdate):
         existing = await db.users.find_one({"email": data["email"]})
         if existing and existing["id"] != user_id:
             raise HTTPException(status_code=400, detail="Email already in use")
+    if "lan" in data and data["lan"]:
+        # enforce uniqueness
+        existing = await db.users.find_one({"lan": data["lan"]})
+        if existing and existing.get("id") != user_id:
+            raise HTTPException(status_code=400, detail="LAN already in use")
     if data:
         await db.users.update_one({"id": user_id}, {"$set": data})
     updated_user = await db.users.find_one({"id": user_id})
