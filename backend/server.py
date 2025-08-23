@@ -917,6 +917,8 @@ async def social_login(login_data: SocialLoginRequest):
     )
     
     user_dict = user_data.dict()
+    if not user_dict.get("lan"):
+        user_dict["lan"] = await generate_unique_lan()
     user_obj = UserProfile(**user_dict)
     user_mongo = prepare_for_mongo(user_obj.dict())
     await db.users.insert_one(user_mongo)
@@ -924,7 +926,7 @@ async def social_login(login_data: SocialLoginRequest):
     welcome_notification = NotificationCreate(
         user_id=user_obj.id,
         title="Welcome to LeagueAce!",
-        message=f"Welcome {user_obj.name}! Tennis. Organized. Ready to join leagues?",
+        message=f"Welcome {user_obj.name}! Tennis. Organized. Your LAN is {user_obj.lan}.",
         type=NotificationType.LEAGUE_INVITE
     )
     await create_notification(welcome_notification)
