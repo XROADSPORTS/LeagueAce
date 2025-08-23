@@ -499,6 +499,7 @@ def rr_default_pairings(players: List[str]) -> List[List[List[str]]]:
 class RRSubmitScorecard(BaseModel):
     sets: List[RRScoreSet]
     submitted_by_user_id: str
+    use_default_pairings: Optional[bool] = False
 
 class RRApproveRequest(BaseModel):
     approved_by_user_id: str
