@@ -270,6 +270,8 @@ function App() {
   const SignupView = () => {
     const [signupType, setSignupType] = useState(null);
 
+    const [signupType, setSignupType] = useState(null);
+
     const SignupOptions = () => (
       <div className="signup-container">
         <div className="leagueace-logo">
