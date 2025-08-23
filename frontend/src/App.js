@@ -164,6 +164,24 @@ function App() {
     }
   };
 
+  // Skill rating helpers (global in App component scope)
+  const ratingToLabel = (val) => {
+    const rounded = Math.round((parseFloat(val) || 0) * 2) / 2;
+    switch (rounded) {
+      case 3: return "Starter";
+      case 3.5: return "Rising";
+      case 4: return "Challenger";
+      case 4.5: return "Competitor";
+      case 5: return "Pro";
+      default: return "";
+    }
+  };
+  const clampRound = (val) => {
+    if (isNaN(val)) return 4.0;
+    const clamped = Math.min(5.0, Math.max(3.0, parseFloat(val)));
+    return Math.round(clamped * 2) / 2;
+  };
+
   // Sport Selection Component (same as before)
   const SportSelection = () => {
     const [selectedSports, setSelectedSports] = useState([]);
