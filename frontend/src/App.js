@@ -3169,6 +3169,8 @@ function App() {
         if (rrTierId) {
           await fetchRRWeeks(rrTierId);
           await fetchRRStandings(rrTierId);
+          const meta = await fetchRRScheduleMeta(rrTierId);
+          setRrMeta(meta);
         }
       };
 
