@@ -50,7 +50,14 @@ function App() {
     if (user && user.role === "League Manager") {
       try {
         const response = await axios.get(`${API}/users/${user.id}/leagues?sport_type=${activeSport}`);
-        setLeagues(response.data);
+        const list = response.data || [];
+        setLeagues(list);
+        // try to restore last selected league if still present
+        const lastId = getLastManagerLeague(user.id, activeSport);
+        if (lastId && list.some(l => l.id === lastId)) {
+          const found = list.find(l => l.id === lastId);
+          if (found) setSelectedLeague(found);
+        }
       } catch (error) {
         console.error("Error loading manager data:", error);
       }
