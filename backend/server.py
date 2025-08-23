@@ -222,6 +222,26 @@ async def get_user_notifications(user_id: str):
     rows = await db.rr_notifications.find({"user_ids": user_id}).sort("created_at", -1).to_list(200)
     return [parse_from_mongo(r) for r in rows]
 
+@app.get("/api/users/{user_id}/leagues")
+async def get_manager_leagues(user_id: str, sport_type: Optional[str] = None):
+    # Return leagues managed by this user; gracefully handle when none exist
+    filt = {"manager_id": user_id}
+    if sport_type:
+        filt["sport_type"] = sport_type
+    try:
+        leagues = await db.leagues.find(filt).to_list(1000)
+    except Exception:
+        leagues = []
+    out = []
+    for l in leagues:
+        out.append({
+            "id": l.get("id"),
+            "name": l.get("name"),
+            "sport_type": l.get("sport_type"),
+            "created_at": l.get("created_at"),
+        })
+    return out
+
 class SportsUpdateRequest(BaseModel):
     sports_preferences: List[str]
 
