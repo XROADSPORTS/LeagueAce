@@ -1490,7 +1490,7 @@ function App() {
               <Badge variant="outline">Players: {tierState.current_players || 0}/{tierState.max_players}</Badge>
               <Button size="sm" variant="outline" className="blue-outline-button" onClick={async ()=>{
                 try {
-                  if (selectedFormatTier?.id) { await loadRatingTiers(selectedFormatTier.id); toast({ title: 'Refreshed', description: 'Updated player counts' }); }
+                  if (typeof onRefresh === 'function') { await onRefresh(); toast({ title: 'Refreshed', description: 'Updated player counts' }); }
                 } catch (err) { console.error('Refresh error', err); }
               }}>
                 Refresh
