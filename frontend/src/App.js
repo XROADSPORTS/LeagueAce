@@ -968,8 +968,8 @@ function App() {
               <div className="rating-info">
                 <Card className="glass-card-blue info-card">
                   <CardContent>
-                    <p>Each rating tier will get a <strong>unique 6-character join code</strong> that players use to join. 
-                    You can create as many rating levels as needed (4.0, 4.5, 5.0, etc.).</p>
+                    <p>Each rating tier will get a <strong>unique 6-character join code</strong> that players use to join.
+                    Standard skill steps: 3.0 → 3.5 → 4.0 → 4.5 → 5.0.</p>
                   </CardContent>
                 </Card>
               </div>
