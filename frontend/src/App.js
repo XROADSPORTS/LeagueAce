@@ -1486,6 +1486,14 @@ function App() {
               </div>
             </div>
             <div className="tier-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Badge variant="outline">Players: {tierState.current_players || 0}/{tierState.max_players}</Badge>
+              <Button size="sm" variant="outline" className="blue-outline-button" onClick={async ()=>{
+                try {
+                  if (selectedFormatTier?.id) { await loadRatingTiers(selectedFormatTier.id); toast({ title: 'Refreshed', description: 'Updated player counts' }); }
+                } catch (err) { console.error('Refresh error', err); }
+              }}>
+                Refresh
+              </Button>
               <Button size="sm" variant="outline" className="blue-outline-button" onClick={()=> setShowEditRange(v => !v)}>
                 {showEditRange ? 'Close' : 'Edit Range'}
               </Button>
