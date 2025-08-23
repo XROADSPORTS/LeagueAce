@@ -373,6 +373,10 @@ backend:
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎯 PHASE A RR CORE REGRESSION TESTING COMPLETE - Comprehensive testing of Round Robin core endpoints for stability as requested in review. **SCOPE B RESULTS (2/2 PASSED)**: ✅ **6) RR Availability Endpoints Reachable**: PUT /api/rr/availability with {user_id, windows:['Sat 9-12']} returns 200 successfully, GET /api/rr/availability?user_id=... returns same structure with correct user_id and windows data persisted ✅ **7) RR Standings Empty Graceful**: GET /api/rr/standings?tier_id=empty_tier returns 200 with proper structure {rows:[], top8:[]} without 500 errors, handles empty data gracefully. **TECHNICAL VERIFICATION**: Fixed initial test issue with RR availability API structure (expects windows as List[str], not complex object), all endpoints now working correctly with proper request/response formats. **OVERALL PHASE A RESULTS**: 7/7 tests passed (100% success rate) covering both role-aware social login functionality and Round Robin core stability. All requested endpoints are reachable and working correctly without regressions."
 
   - task: "Round Robin UI Integration"
     implemented: true
