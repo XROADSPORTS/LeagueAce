@@ -4002,7 +4002,7 @@ function App() {
                 <img src={user.profile_picture} alt="Profile" className="nav-profile-picture" />
               )}
               <Badge className="user-badge-blue">
-                {user.name} ({user.role})
+                {user.name} ({user.role}) • LAN: {user.lan || '—'}
               </Badge>
             </div>
           </div>
