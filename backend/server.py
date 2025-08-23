@@ -137,6 +137,16 @@ async def create_user(user_data: UserProfileCreate):
 
 @app.patch("/api/users/{user_id}", response_model=UserProfile)
 async def update_user(user_id: str, payload: UserProfileUpdate):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = {k: v for k, v in payload.dict(exclude_unset=True).items() if v is not None}
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+        user.update(update_data)
+    
+    return UserProfile(**user)
 
 @app.post("/api/users/{user_id}/upload-picture")
 async def upload_picture(user_id: str, file: UploadFile = File(...)):
