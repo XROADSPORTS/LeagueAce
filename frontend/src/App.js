@@ -3294,9 +3294,13 @@ function App() {
                 {rrWeeks.length === 0 ? (
                   <div className="empty-state">No matches to show</div>
                 ) : (
-                  rrWeeks.filter(w => w.week_index === weekTab).flatMap(w => w.matches).map((m) => (
-                    <RRMatchCard key={m.id} match={m} />
-                  ))
+                  rrWeeks.filter(w => w.week_index === weekTab).flatMap(w => w.matches).length === 0 ? (
+                    <div className="empty-state">No matches scheduled this week</div>
+                  ) : (
+                    rrWeeks.filter(w => w.week_index === weekTab).flatMap(w => w.matches).map((m) => (
+                      <RRMatchCard key={m.id} match={m} />
+                    ))
+                  )
                 )}
               </div>
             </CardContent>
