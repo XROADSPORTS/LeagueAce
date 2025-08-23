@@ -29,8 +29,13 @@ const getPendingJoinCodeFromURL = () => {
 };
 
 function App() {
-  const [currentView, _setCurrentView] = useState("signup");
-  const [user, _setUser] = useState(null);
+  const [currentView, setCurrentView] = useState("signup");
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem('la:auth_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) { return null; }
+  });
   const [activeTab, setActiveTab] = useState("home");
   const [activeSport, setActiveSport] = useState("Tennis");
   const fileInputRef = useRef(null);
