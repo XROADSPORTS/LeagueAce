@@ -3313,16 +3313,20 @@ function App() {
               <div className="rr-week-tabs">
                 <Tabs value={weekTab.toString()} onValueChange={(v)=> setWeekTab(parseInt(v))}>
                   <TabsList>
-                    {rrWeeks.map(w => (
-                      <TabsTrigger key={w.week_index} value={w.week_index.toString()}>
-                        Week {w.week_index+1}
-                      </TabsTrigger>
-                    ))}
+                    {rrWeeks.map(w => {
+                      const count = rrMeta && rrMeta.conflicts ? (rrMeta.conflicts[String(w.week_index)]?.length || 0) : 0;
+                      return (
+                        <TabsTrigger key={w.week_index} value={w.week_index.toString()}>
+                          Week {w.week_index+1} {count > 0 && (<Badge variant="outline" className="ml-2">{count}⚠︎</Badge>)}
+                        </TabsTrigger>
+                      );
+                    })}
                   </TabsList>
                 </Tabs>
                 <div className="rr-conflicts">
                   <Button size="sm" className="blue-outline-button" onClick={async ()=> {
                     const meta = await fetchRRScheduleMeta(rrTierId);
+                    setRrMeta(meta);
                     const totalConflicts = meta && meta.conflicts ? Object.values(meta.conflicts).reduce((acc, arr) => acc + (arr?.length || 0), 0) : 0;
                     toast({ title: 'Schedule Quality', description: `Feasibility: ${meta.feasibility_score || 0}, Quality: ${meta.schedule_quality || 0}, Conflicts: ${totalConflicts}` });
                   }}>Conflicts/Quality</Button>
