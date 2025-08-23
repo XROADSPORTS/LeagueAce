@@ -459,6 +459,18 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
         schedule_quality += max(0, 5 - (state.opponent_cost(a, c) + state.opponent_cost(a, d)))
         schedule_quality += max(0, 5 - (state.opponent_cost(b, c) + state.opponent_cost(b, d)))
 
+    # Persist schedule meta for UI
+    meta = {
+        "id": str(uuid.uuid4()),
+        "tier_id": tier_id,
+        "feasibility_score": feasibility_score,
+        "schedule_quality": schedule_quality,
+        "conflicts": conflicts,
+        "created_at": now_utc().isoformat(),
+    }
+    await db.rr_schedule_meta.delete_many({"tier_id": tier_id})
+    await db.rr_schedule_meta.insert_one(meta)
+
     return {"status": "ok", "weeks": weeks, "feasibility_score": feasibility_score, "conflicts": conflicts, "schedule_quality": schedule_quality}
 
 @app.get("/api/rr/weeks")
