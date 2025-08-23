@@ -148,6 +148,7 @@ class SocialLoginRequest(BaseModel):
     email: EmailStr
     name: str
     provider_id: str
+    role: Optional[str] = None
 
 @app.post("/api/auth/social-login")
 async def social_login(body: SocialLoginRequest):
