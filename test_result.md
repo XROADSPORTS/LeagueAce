@@ -360,6 +360,18 @@ backend:
         agent: "testing"
         comment: "✅ SEASON CREATION WORKFLOW FULLY FUNCTIONAL - Comprehensive focused testing completed: 1) POST /seasons endpoint working perfectly with valid league_id validation, 2) Multiple seasons created successfully with different names and date ranges (Spring, Summer, Fall 2025), 3) GET /leagues/{league_id}/seasons endpoint retrieving all seasons correctly, 4) Error handling working properly (404 for invalid league IDs), 5) Season-league association verified (all seasons correctly linked to parent league), 6) Date format validation working (422 for invalid dates). Minor: End-before-start date validation could be improved but doesn't affect core functionality. Overall 96.6% success rate (85/88 tests). Season creation workflow is production-ready."
 
+  - task: "Round Robin New Features Bundle"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🎾 ROUND ROBIN NEW FEATURES TESTING COMPLETE - Comprehensive testing of new RR features delivered in this bundle. **EXCELLENT RESULTS**: 28/29 tests passed (96.6% success rate). **✅ WORKING FEATURES**: 1) Scheduler with 8 players and week_windows mapping returns correct response structure and creates RR slates/matches ✅, 2) Availability constraints working - users not available for assigned windows appear in conflicts ✅, 3) Let's Play helper with use_default_pairings=true works without error, normal validation remains ✅, 4) Standings endpoint has correct structure ready for pct_game_win and badges ✅, 5) Re-run schedule clears old data and replaces with new ✅, 6) Availability endpoints GET/PUT working perfectly ✅. **❌ CRITICAL BUG**: POST /api/rr/matches/{mid}/approve-scorecard returns 500 Internal Server Error due to KeyError in rr_recalc_standings function - player ID '72e9e875-0c7a-4ec3-baa7-6d2d1c084c28' not found in stats dictionary. This prevents testing of pct_game_win calculation with 4-decimal rounding and badges (first_match, finished_all). **ROOT CAUSE**: The standings recalculation logic has a bug where it tries to access player IDs that don't exist in the stats dictionary when processing scorecard sets. **IMPACT**: Cannot verify standings computation and badge functionality until this bug is fixed."
+
 frontend:
   - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
     implemented: true
