@@ -549,7 +549,7 @@ test_plan:
 
 test_plan:
   current_focus:
-    - "Role-aware Social Login Flow (Frontend): ensure role persists (Manager vs Player)"
+    - "Avatar rendering and profile upload functionality testing completed"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
