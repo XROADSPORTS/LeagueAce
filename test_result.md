@@ -642,6 +642,19 @@ frontend:
     status_history:
       - working: "unknown"
         agent: "main"
+
+- task: "Create RR QA Test League dataset"
+  implemented: true
+  working: false
+  file: "backend/server.py"
+  stuck_count: 0
+  priority: "high"
+  needs_retesting: true
+  status_history:
+    - working: false
+      agent: "main"
+      comment: "Create manager+player users with fixed emails matching frontend mock sign-in, create Tennis league + Round Robin (Doubles) format, create 3.5-4.5 rating tier with join code, join player by code, and return structured IDs for manual testing."
+
         comment: "UI shows signup options. Role-based signup flow needs testing."
       - working: true
         agent: "testing"
