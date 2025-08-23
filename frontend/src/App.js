@@ -1252,11 +1252,11 @@ function App() {
                   <Input
                     id="min-rating"
                     type="number"
-                    step="0.1"
+                    step="0.5"
                     min="3.0"
-                    max="5.5"
+                    max="5.0"
                     value={tierData.min_rating}
-                    onChange={(e) => setTierData({...tierData, min_rating: parseFloat(e.target.value)})}
+                    onChange={(e) => setTierData({...tierData, min_rating: Math.round(Math.min(5.0, Math.max(3.0, parseFloat(e.target.value))) * 2) / 2})}
                     className="blue-input"
                     required
                   />
