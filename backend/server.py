@@ -413,6 +413,7 @@ async def list_tier_members(rating_tier_id: str):
             "email": uo.get("email"),
             "rating_level": uo.get("rating_level", 4.0),
             "lan": uo.get("lan"),
+            "photo_url": uo.get("photo_url"),
             "joined_at": m.get("created_at"),
         })
     return users
