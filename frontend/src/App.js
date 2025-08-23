@@ -1671,11 +1671,24 @@ function App() {
                           <Button size="icon" variant="ghost" onClick={()=> setMemberListOpen(false)}>✕</Button>
                         </div>
                         <div className="modal-content">
-                          {(members || tierState._members || []).length === 0 ? (
-                            <div className="empty-state">No players joined yet</div>
-                          ) : (
-                            <div className="member-list">
-                              {(members.length ? members : (tierState._members || [])).map((m) => (
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                          <small style={{ opacity:0.8 }}>Tier ID: {currentTierId} • Code: {currentJoinCode}</small>
+                          <Button size="sm" variant="outline" className="blue-outline-button" onClick={()=> setShowDebug(v=>!v)}>{showDebug ? 'Hide Debug' : 'Debug JSON'}</Button>
+                        </div>
+                        {showDebug && (
+                          <pre className="glass-layer-1" style={{ maxHeight: 160, overflow:'auto', padding:8, borderRadius:8 }}>
+                            {JSON.stringify({
+                              used_tier_id: currentTierId,
+                              used_join_code: currentJoinCode,
+                              members: (members.length ? members : (tierState._members || []))
+                            }, null, 2)}
+                          </pre>
+                        )}
+                        {(members || tierState._members || []).length === 0 ? (
+                          <div className="empty-state">No players joined yet</div>
+                        ) : (
+                          <div className="member-list">
+                            {(members.length ? members : (tierState._members || [])).map((m) => (
                                 <div key={m.user_id} className="member-row">
                                   <div className="avatar">
                                     { (tierState._members?.find(x=>x.user_id===m.user_id)?.photo_url || user?.photo_url) ? (
