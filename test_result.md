@@ -454,6 +454,9 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  - agent: "main"
+    message: "Phase 1 start: Implementing Round Robin backend upgrades (scheduler greedy+backtracking, Let's Play partner rotation + coin toss persistence, subs rules, refined standings incl. % game win and badges, notifications & audit). Request backend-only testing after commit."
+
 
 agent_communication:
   - agent: "main"
