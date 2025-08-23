@@ -1615,6 +1615,51 @@ function App() {
                       } catch (err) {
                         toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to load members', variant: 'destructive' });
                       }
+
+                {/* Members Modal */}
+                {memberListOpen && (
+                  <div className="modal-overlay" onClick={()=> setMemberListOpen(false)}>
+                    <div className="modal-card glass-card-blue" onClick={(e)=> e.stopPropagation()}>
+                      <div className="modal-header">
+                        <h4>Players in {tier.name}</h4>
+                        <Button size="icon" variant="ghost" onClick={()=> setMemberListOpen(false)}>✕</Button>
+                      </div>
+                      <div className="modal-content">
+                        {(tierState._members || []).length === 0 ? (
+                          <div className="empty-state">No players joined yet</div>
+                        ) : (
+                          <div className="member-list">
+                            {(tierState._members || []).map((m) => (
+                              <div key={m.user_id} className="member-row">
+                                <div className="avatar" />
+                                <div className="info">
+                                  <div className="name">{m.name}</div>
+                                  <div className="meta">Rating {m.rating_level} • {m.lan}</div>
+                                </div>
+                                <div className="actions">
+                                  <Button size="sm" variant="destructive" className="danger-outline-button" onClick={async ()=>{
+                                    if (!confirm('Remove this player from the tier?')) return;
+                                    try {
+                                      await axios.delete(`${API}/rating-tiers/${tier.id}/members/${m.user_id}`);
+                                      const { data } = await axios.get(`${API}/rating-tiers/${tier.id}/members`);
+                                      setTierState(prev => ({ ...prev, _members: data }));
+                                      // refresh counts too
+                                      loadRatingTiers(selectedFormatTier.id);
+                                      toast({ title: 'Removed', description: 'Player removed from this tier' });
+                                    } catch (err) {
+                                      toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to remove player', variant: 'destructive' });
+                                    }
+                                  }}>Delete</Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                     }}>Player List</Button>
                   </div>
                 </div>
