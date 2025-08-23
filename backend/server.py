@@ -4,6 +4,7 @@ import random
 import string
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any, Literal
+from collections import Counter
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
