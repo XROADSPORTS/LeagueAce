@@ -139,6 +139,187 @@ async def update_user(user_id: str, payload: UserProfileUpdate):
         raise HTTPException(status_code=404, detail="User not found")
     return UserProfile(**parse_from_mongo(doc))
 
+# ========= League/Format/Rating Tier Models =========
+class LeagueCreate(BaseModel):
+    name: str
+    sport_type: Literal["Tennis", "Pickleball"]
+    description: Optional[str] = None
+
+class League(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    sport_type: str
+    description: Optional[str] = None
+    manager_id: str
+    created_at: datetime = Field(default_factory=now_utc)
+
+class FormatTierCreate(BaseModel):
+    league_id: str
+    name: str
+    format_type: Literal["Singles", "Doubles", "Round Robin"]
+    description: Optional[str] = None
+
+class FormatTier(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    league_id: str
+    name: str
+    format_type: str
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=now_utc)
+
+class RatingTierCreate(BaseModel):
+    format_tier_id: str
+    name: str
+    min_rating: float = 3.0
+    max_rating: float = 5.0
+    max_players: int = 36
+    competition_system: Literal["Team League Format", "Knockout System"] = "Team League Format"
+    playoff_spots: Optional[int] = 8
+    region: Optional[str] = None
+    surface: Optional[str] = None
+
+class RatingTier(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    format_tier_id: str
+    name: str
+    min_rating: float
+    max_rating: float
+    max_players: int
+    competition_system: str
+    playoff_spots: Optional[int] = None
+    region: Optional[str] = None
+    surface: Optional[str] = None
+    join_code: str
+    created_at: datetime = Field(default_factory=now_utc)
+
+class RatingTierUpdate(BaseModel):
+    min_rating: Optional[float] = None
+    max_rating: Optional[float] = None
+
+class CreateGroupsRequest(BaseModel):
+    group_size: Optional[int] = None
+    custom_names: Optional[List[str]] = None
+
+class PlayerGroup(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_tier_id: str
+    name: str
+    group_size: int
+    created_at: datetime = Field(default_factory=now_utc)
+
+
+def generate_join_code() -> str:
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+# ========= League/Format/Rating Tier Endpoints =========
+@app.post("/api/leagues")
+async def create_league(league: LeagueCreate, created_by: Optional[str] = None):
+    if not created_by:
+        raise HTTPException(status_code=400, detail="created_by (manager_id) is required")
+    # verify user exists
+    manager = await db.users.find_one({"id": created_by})
+    if not manager:
+        raise HTTPException(status_code=404, detail="Manager user not found")
+    row = League(name=league.name, sport_type=league.sport_type, description=league.description, manager_id=created_by)
+    await db.leagues.insert_one(prepare_for_mongo(row.dict()))
+    return parse_from_mongo(row.dict())
+
+@app.get("/api/leagues/{league_id}/format-tiers")
+async def list_format_tiers(league_id: str):
+    rows = await db.format_tiers.find({"league_id": league_id}).sort("created_at", 1).to_list(1000)
+    return [parse_from_mongo(r) for r in rows]
+
+@app.post("/api/format-tiers")
+async def create_format_tier(payload: FormatTierCreate):
+    # validate league
+    league = await db.leagues.find_one({"id": payload.league_id})
+    if not league:
+        raise HTTPException(status_code=404, detail="League not found")
+    row = FormatTier(**payload.dict())
+    await db.format_tiers.insert_one(prepare_for_mongo(row.dict()))
+    return parse_from_mongo(row.dict())
+
+@app.get("/api/format-tiers/{format_tier_id}/rating-tiers")
+async def list_rating_tiers(format_tier_id: str):
+    rows = await db.rating_tiers.find({"format_tier_id": format_tier_id}).sort("created_at", 1).to_list(1000)
+    return [parse_from_mongo(r) for r in rows]
+
+@app.post("/api/rating-tiers")
+async def create_rating_tier(payload: RatingTierCreate):
+    # validate format tier
+    fmt = await db.format_tiers.find_one({"id": payload.format_tier_id})
+    if not fmt:
+        raise HTTPException(status_code=404, detail="Format tier not found")
+    # normalize rating bounds to 0.5 steps between 3.0 and 5.0
+    def clamp_round(v: float) -> float:
+        v = max(3.0, min(5.0, v))
+        return round(v * 2) / 2
+    min_r = clamp_round(payload.min_rating)
+    max_r = clamp_round(payload.max_rating)
+    if min_r > max_r:
+        raise HTTPException(status_code=400, detail="min_rating must be <= max_rating")
+    code = generate_join_code()
+    row = RatingTier(
+        format_tier_id=payload.format_tier_id,
+        name=payload.name,
+        min_rating=min_r,
+        max_rating=max_r,
+        max_players=payload.max_players,
+        competition_system=payload.competition_system,
+        playoff_spots=(payload.playoff_spots if payload.competition_system == "Team League Format" else None),
+        region=payload.region,
+        surface=payload.surface,
+        join_code=code,
+    )
+    await db.rating_tiers.insert_one(prepare_for_mongo(row.dict()))
+    return parse_from_mongo(row.dict())
+
+@app.patch("/api/rating-tiers/{rating_tier_id}")
+async def update_rating_tier(rating_tier_id: str, payload: RatingTierUpdate):
+    updates: Dict[str, Any] = {}
+    if payload.min_rating is not None:
+        updates["min_rating"] = round(max(3.0, min(5.0, payload.min_rating)) * 2) / 2
+    if payload.max_rating is not None:
+        updates["max_rating"] = round(max(3.0, min(5.0, payload.max_rating)) * 2) / 2
+    if updates:
+        await db.rating_tiers.update_one({"id": rating_tier_id}, {"$set": updates})
+    doc = await db.rating_tiers.find_one({"id": rating_tier_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Rating tier not found")
+    return parse_from_mongo(doc)
+
+@app.get("/api/rating-tiers/{rating_tier_id}/player-groups")
+async def list_player_groups(rating_tier_id: str):
+    rows = await db.player_groups.find({"rating_tier_id": rating_tier_id}).sort("created_at", 1).to_list(1000)
+    return [parse_from_mongo(r) for r in rows]
+
+@app.get("/api/rating-tiers/{rating_tier_id}/groups")
+async def list_groups_alias(rating_tier_id: str):
+    # compatibility alias used by older UI
+    return await list_player_groups(rating_tier_id)
+
+@app.post("/api/rating-tiers/{rating_tier_id}/create-groups")
+async def create_groups(rating_tier_id: str, body: Dict[str, Any]):
+    # support both camelCase and snake_case keys
+    group_size = body.get("group_size") or body.get("groupSize") or 12
+    custom_names = body.get("custom_names") or body.get("customNames")
+    names: List[str]
+    if isinstance(custom_names, list) and custom_names:
+        names = [str(n) for n in custom_names]
+    elif isinstance(custom_names, str) and custom_names.strip():
+        names = [n.strip() for n in custom_names.split(',') if n.strip()]
+    else:
+        # default A, B, C ... based on rough count
+        count = max(1, (group_size and 1) or 1)
+        names = [f"Group {chr(65+i)}" for i in range(count)]
+    created = []
+    for nm in names:
+        rec = PlayerGroup(rating_tier_id=rating_tier_id, name=nm, group_size=int(group_size))
+        await db.player_groups.insert_one(prepare_for_mongo(rec.dict()))
+        created.append(parse_from_mongo(rec.dict()))
+    return created
+
+
 @app.get("/api/users/search")
 async def search_users(q: str):
     regex = {"$regex": q, "$options": "i"}
