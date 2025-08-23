@@ -182,6 +182,7 @@ class RRMatch(BaseModel):
     proposed_slot_ids: List[str] = Field(default_factory=list)
     toss_winner_user_id: Optional[str] = None
     toss_choice: Optional[str] = None  # e.g., "serve" or "court"
+    partner_override: Optional[Dict[str, Any]] = None  # {sets:[[pA,pB],[pC,pD]], confirmations:[user_ids]}
     created_at: datetime = Field(default_factory=now_utc)
 
 class RRSlate(BaseModel):
