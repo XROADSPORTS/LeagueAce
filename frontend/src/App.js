@@ -1668,11 +1668,11 @@ function App() {
                           <Button size="icon" variant="ghost" onClick={()=> setMemberListOpen(false)}>✕</Button>
                         </div>
                         <div className="modal-content">
-                          {(tierState._members || []).length === 0 ? (
+                          {(members || tierState._members || []).length === 0 ? (
                             <div className="empty-state">No players joined yet</div>
                           ) : (
                             <div className="member-list">
-                              {(tierState._members || []).map((m) => (
+                              {(members.length ? members : (tierState._members || [])).map((m) => (
                                 <div key={m.user_id} className="member-row">
                                   <div className="avatar">
                                     { (tierState._members?.find(x=>x.user_id===m.user_id)?.photo_url || user?.photo_url) ? (
