@@ -459,20 +459,27 @@ function App() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="rating">Current Skill Rating (3.0-5.5)</Label>
-                  <Input
-                    id="rating"
-                    type="number"
-                    min="3.0"
-                    max="5.5"
-                    step="0.1"
-                    value={formData.rating_level}
-                    onChange={(e) => setFormData({...formData, rating_level: parseFloat(e.target.value)})}
-                    required
-                    className="blue-input"
-                  />
+                  <Label htmlFor="rating">Current Skill Rating (3.0 – 5.0)</Label>
+                  <div className="rating-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Input
+                      id="rating"
+                      type="number"
+                      min="3.0"
+                      max="5.0"
+                      step="0.5"
+                      value={formData.rating_level}
+                      onChange={(e) => {
+                        const val = clampRound(parseFloat(e.target.value));
+                        setFormData({...formData, rating_level: val});
+                      }}
+                      required
+                      className="blue-input"
+                      style={{ width: 120 }}
+                    />
+                    <Badge className="badge">{ratingToLabel(formData.rating_level)}</Badge>
+                  </div>
                   <p className="rating-help-blue">
-                    Rate yourself honestly: 3.0 = Beginner, 4.0 = Intermediate, 5.0+ = Advanced
+                    3.0 → Starter • 3.5 → Rising • 4.0 → Challenger • 4.5 → Competitor • 5.0 → Pro
                   </p>
                 </div>
               </CardContent>
