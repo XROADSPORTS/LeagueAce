@@ -413,7 +413,20 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
         # simple feasibility: +1 per fully formed match of 4
         feasibility_score += len(result["matches"]) 
 
-    return {"status": "ok", "weeks": weeks, "feasibility_score": feasibility_score, "conflicts": conflicts}
+        # compute a simple schedule_quality metric
+    schedule_quality = 0
+    # Recreate quality by iterating the created matches this run
+    all_matches = await db.rr_matches.find({"tier_id": tier_id}).to_list(5000)
+    for m in all_matches:
+        a, b, c, d = m.get("player_ids", [None]*4)
+        if not all([a,b,c,d]):
+            continue
+        # lower is better, so invert to quality by subtracting from a baseline (we'll just add inverse costs)
+        schedule_quality += max(0, 5 - state.partner_cost(a, b))
+        schedule_quality += max(0, 5 - (state.opponent_cost(a, c) + state.opponent_cost(a, d)))
+        schedule_quality += max(0, 5 - (state.opponent_cost(b, c) + state.opponent_cost(b, d)))
+
+    return {"status": "ok", "weeks": weeks, "feasibility_score": feasibility_score, "conflicts": conflicts, "schedule_quality": schedule_quality}
 
 @app.get("/api/rr/weeks")
 async def rr_weeks(player_id: str, tier_id: Optional[str] = None):
