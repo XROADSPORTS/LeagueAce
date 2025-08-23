@@ -1615,7 +1615,7 @@ function App() {
                     <Button size="sm" className="blue-outline-button" onClick={async ()=>{
                       const tid = tierState.id || tier.id;
                       try {
-                        toast({ title: 'Loading members…' });
+                        setMembersLoading(true);
                         if (typeof onRefresh === 'function') { await onRefresh(); }
                         const { data } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
                         setTierState(prev => ({ ...prev, _members: data, current_players: Array.isArray(data) ? data.length : prev.current_players }));
@@ -1625,17 +1625,19 @@ function App() {
                               if (typeof onRefresh === 'function') { await onRefresh(); }
                               const { data: again } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
                               setTierState(prev => ({ ...prev, _members: again, current_players: Array.isArray(again) ? again.length : prev.current_players }));
-                              toast({ title: `Loaded ${Array.isArray(again) ? again.length : 0} players` });
                             } catch (_) {}
-                          }, 1500);
+                            setMembersLoading(false);
+                            setMemberListOpen(true);
+                          }, 1200);
                         } else {
-                          toast({ title: `Loaded ${data.length} players` });
+                          setMembersLoading(false);
+                          setMemberListOpen(true);
                         }
-                        setMemberListOpen(true);
                       } catch (err) {
+                        setMembersLoading(false);
                         toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to load members', variant: 'destructive' });
                       }
-                    }}>Player List</Button>
+                    }}>{membersLoading ? 'Loading…' : 'Player List'}</Button>
                   </div>
 
                   {/* Members Modal */}
