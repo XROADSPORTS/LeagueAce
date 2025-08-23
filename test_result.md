@@ -558,11 +558,11 @@ frontend:
 
   - task: "Rating Tier Membership counts and Manager Tier 3 members list"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "user"
@@ -570,6 +570,9 @@ frontend:
       - working: "unknown"
         agent: "main"
         comment: "Investigate GET /api/format-tiers/{id}/rating-tiers current_players and GET /api/rating-tiers/{id}/members returning joined players with photo_url; verify that POST /api/join-by-code/{user_id} increments counts and that SSE /api/events/tier-memberships emits tier-membership events for auto-refresh."
+      - working: true
+        agent: "testing"
+        comment: "🎉 RATING TIER MEMBERSHIP COMPREHENSIVE TESTING COMPLETE - ALL FUNCTIONALITY WORKING PERFECTLY! **COMPLETE END-TO-END WORKFLOW VERIFIED**: ✅ **Step 1 Setup**: Created League Manager via POST /api/auth/social-login with role:'League Manager' → Created Tennis League → Singles Format Tier → Rating Tier (min_rating=3.5, max_rating=4.5, max_players=36, competition_system='Team League Format') with unique join_code (0ZUYET) ✅ **Step 2 Join Flow**: Created Player via POST /api/auth/social-login with role:'Player' and rating_level=4.0 → PATCH /api/users/{id}/sports to Tennis → Preview join code via GET /api/rating-tiers/by-code/{join_code} returns tier and league_name='Tennis League' correctly → POST /api/join-by-code/{player_id} with {join_code} returns 200 with TierMembership containing rating_tier_id ✅ **Step 3 Validate Counts and Lists**: GET /api/users/{player_id}/joined-tiers?sport_type=Tennis returns the joined tier with current_players=1, max_players=36, competition_system='Team League Format' ✅ GET /api/format-tiers/{format_tier_id}/rating-tiers shows the specific rating tier with current_players=1 (correctly incremented after join) ✅ GET /api/rating-tiers/{rating_tier_id}/members returns the player in the list with id, name='Test Player', rating_level=4.0, and photo_url=null ✅ **Step 4 SSE Verification**: SSE connection established to GET /api/events/tier-memberships?format_tier_id={format_tier_id} → Created second player and joined by code → SSE event received with rating_tier_id confirming real-time updates ✅ **Step 5 Negative Check**: Duplicate join attempt for same player correctly returns 400 'Already joined this tier'. **TEST RESULTS**: 15/15 tests passed (100% success rate). All membership counts and member lists update correctly in real-time after players join by code. The reported defect has been resolved - Manager Tier 3 cards will now show accurate current player counts and the member list will populate correctly after players join."
 
   - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
     implemented: true
