@@ -551,7 +551,8 @@ test_plan:
 
 test_plan:
   current_focus:
-    - "Avatar rendering and profile upload functionality testing completed"
+    - "Manager Tier 3 card shows joined player counts and auto-refreshes"
+    - "Player List modal displays the joined player"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
