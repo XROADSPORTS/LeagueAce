@@ -382,6 +382,7 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[EmailStr] = None
+    lan: Optional[str] = None  # admin/users might set custom LAN, ensure uniqueness
 
 class SocialLoginRequest(BaseModel):
     provider: AuthProvider
