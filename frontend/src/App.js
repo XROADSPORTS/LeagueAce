@@ -1612,18 +1612,23 @@ function App() {
                   <h5>Members</h5>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button size="sm" className="blue-outline-button" onClick={async ()=>{
+                      const tid = tierState.id || tier.id;
                       try {
+                        toast({ title: 'Loading members…' });
                         if (typeof onRefresh === 'function') { await onRefresh(); }
-                        const { data } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
-                        setTierState(prev => ({ ...prev, _members: data }));
+                        const { data } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
+                        setTierState(prev => ({ ...prev, _members: data, current_players: Array.isArray(data) ? data.length : prev.current_players }));
                         if (!data || data.length === 0) {
                           setTimeout(async () => {
                             try {
                               if (typeof onRefresh === 'function') { await onRefresh(); }
-                              const { data: again } = await axios.get(`${API}/rating-tiers/${tierState.id || tier.id}/members`, { params: { _ts: Date.now() } });
-                              setTierState(prev => ({ ...prev, _members: again }));
+                              const { data: again } = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
+                              setTierState(prev => ({ ...prev, _members: again, current_players: Array.isArray(again) ? again.length : prev.current_players }));
+                              toast({ title: `Loaded ${Array.isArray(again) ? again.length : 0} players` });
                             } catch (_) {}
                           }, 1500);
+                        } else {
+                          toast({ title: `Loaded ${data.length} players` });
                         }
                         setMemberListOpen(true);
                       } catch (err) {
