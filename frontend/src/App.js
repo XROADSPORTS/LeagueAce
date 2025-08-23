@@ -117,7 +117,7 @@ function App() {
   };
 
   // Email Sign-In for form-based accounts
-  const handleEmailSignIn = async (email, nameInput) => {
+  const handleEmailSignIn = async (email, nameInput, password) => {
     try {
       setLoading(true);
       const name = (nameInput && nameInput.trim()) || "User";
