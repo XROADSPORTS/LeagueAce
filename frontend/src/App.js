@@ -1439,12 +1439,12 @@ function App() {
       const [maxInput, setMaxInput] = useState(tier.max_rating);
 
       useEffect(() => {
-        // Sync local state whenever the parent tier prop updates (counts, ranges, join_code, etc.)
-        setTierState(tier);
+        // Sync local state when tier id changes, but preserve already-fetched members
+        setTierState(prev => ({ ...(tier || {}), _members: prev?._members || [] }));
         setMinInput(tier.min_rating);
         setMaxInput(tier.max_rating);
         loadGroups();
-      }, [tier]);
+      }, [tier.id]);
 
       const loadGroups = async () => {
         try {
