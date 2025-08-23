@@ -3650,6 +3650,12 @@ function App() {
                   ) : (
                     rrWeeks.filter(w => w.week_index === weekTab).flatMap(w => w.matches).map((m) => (
                       <RRMatchCard key={m.id} match={m} />
+                      <div className="match-players">
+                        {(m.player_objs || []).map(p => (
+                          <img key={p.id} src={p.photo_url || ''} alt={p.name || 'avatar'} className="avatar-img" onError={(e)=> e.currentTarget.style.display='none'} />
+                        ))}
+                      </div>
+
                     ))
                   )
                 )}
