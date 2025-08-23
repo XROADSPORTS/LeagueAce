@@ -460,12 +460,14 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
         schedule_quality += max(0, 5 - (state.opponent_cost(b, c) + state.opponent_cost(b, d)))
 
     # Persist schedule meta for UI
+    # Convert conflicts dict keys to strings for MongoDB compatibility
+    conflicts_str_keys = {str(k): v for k, v in conflicts.items()}
     meta = {
         "id": str(uuid.uuid4()),
         "tier_id": tier_id,
         "feasibility_score": feasibility_score,
         "schedule_quality": schedule_quality,
-        "conflicts": conflicts,
+        "conflicts": conflicts_str_keys,
         "created_at": now_utc().isoformat(),
     }
     await db.rr_schedule_meta.delete_many({"tier_id": tier_id})
