@@ -332,7 +332,7 @@ function App() {
           </div>
           <div className="social-login-buttons">
             <Button 
-              onClick={handleGoogleSignIn}
+              onClick={() => handleGoogleSignIn(signupType)}
               className="social-login-button google-button"
               disabled={loading}
             >
