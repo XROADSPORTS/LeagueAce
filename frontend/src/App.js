@@ -3016,23 +3016,26 @@ function App() {
     }, [joinCode]);
 
     const handleJoinByCode = async (e) => {
-      e.preventDefault();
+      if (e && e.preventDefault) e.preventDefault();
+      const code = (joinCode || '').trim().toUpperCase();
+      if (!user || !user.id) {
+        toast({ title: 'Sign in required', description: 'Please sign in as Player before joining', variant: 'destructive' });
+        return;
+      }
+      if (code.length !== 6) {
+        toast({ title: 'Invalid code', description: 'Join code must be 6 characters', variant: 'destructive' });
+        return;
+      }
+      // Client-side rating guard for better UX
+      if (joinPreview && user && (user.rating_level < joinPreview.min_rating || user.rating_level > joinPreview.max_rating)) {
+        toast({ title: 'Rating out of range', description: `Your rating ${user.rating_level} is outside this tier (${joinPreview.min_rating}-${joinPreview.max_rating})`, variant: 'destructive' });
+        return;
+      }
       setLoading(true);
       try {
-        const code = (joinCode || '').trim().toUpperCase();
-        if (code.length !== 6) {
-          toast({ title: 'Invalid code', description: 'Join code must be 6 characters', variant: 'destructive' });
-          setLoading(false);
-          return;
-        }
-        // Optional: pre-validate code so we can show league name before joining
-        try {
-          const { data: tierSummary } = await axios.get(`${API}/rating-tiers/by-code/${code}`);
-          if (tierSummary?.league_name) {
-            toast({ title: `Joining ${tierSummary.league_name}`, description: `${tierSummary.name} • Rating ${tierSummary.min_rating}-${tierSummary.max_rating}` });
-          }
-        } catch (err) {
-          /* no-op, backend will give exact reason on join */
+        // Optional preview toast
+        if (joinPreview?.league_name) {
+          toast({ title: `Joining ${joinPreview.league_name}`, description: `${joinPreview.name} • Rating ${joinPreview.min_rating}-${joinPreview.max_rating}` });
         }
         await axios.post(`${API}/join-by-code/${user.id}`, { join_code: code });
         await loadPlayerData();
