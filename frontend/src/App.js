@@ -2831,6 +2831,36 @@ function App() {
       }
     }, [user, activeSport, rrTierId]);
 
+    const fetchRRWeeks = async (tierId) => {
+      try {
+        setRrLoading(true);
+        const { data } = await axios.get(`${API}/rr/weeks`, { params: { player_id: user.id, tier_id: tierId } });
+        setRrWeeks(data.weeks || []);
+      } catch (e) {
+        console.error('Failed to load RR weeks', e);
+      } finally {
+        setRrLoading(false);
+      }
+    };
+
+    const fetchRRStandings = async (tierId) => {
+      try {
+        const { data } = await axios.get(`${API}/rr/standings`, { params: { tier_id: tierId } });
+        setRrStandings(data);
+      } catch (e) {
+        console.error('Failed to load RR standings', e);
+      }
+    };
+
+    const fetchRRAvailability = async (uid) => {
+      try {
+        const { data } = await axios.get(`${API}/rr/availability`, { params: { user_id: uid } });
+        setRrAvailability(data.windows || []);
+      } catch (e) {
+        console.error('Failed to load RR availability', e);
+      }
+    };
+
     const loadUpcomingMatches = async () => {
       if (user) {
         try {
