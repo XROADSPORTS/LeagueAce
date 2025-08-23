@@ -418,7 +418,7 @@ async def social_login(body: SocialLoginRequest):
             "email": body.email,
             "name": body.name,
             "phone": None,
-            "rating_level": 4.0,
+            "rating_level": (body.rating_level if body.rating_level is not None else 4.0),
             "lan": lan_code,
             "role": (body.role or "Player"),
             "sports_preferences": [],
