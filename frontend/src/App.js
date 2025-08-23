@@ -67,11 +67,15 @@ function App() {
   const loadPlayerData = async () => {
     if (user && user.role === "Player") {
       try {
-        const [joinedTiersRes, standingsRes] = await Promise.all([
-          axios.get(`${API}/users/${user.id}/joined-tiers?sport_type=${activeSport}`),
-          axios.get(`${API}/users/${user.id}/standings?sport_type=${activeSport}`)
-        ]);
-        setUserJoinedTiers(joinedTiersRes.data);
+        // Try with sport filter, then fallback to all sports if empty (to avoid mismatch issues)
+        const joinedRes = await axios.get(`${API}/users/${user.id}/joined-tiers?sport_type=${activeSport}`);
+        let joined = joinedRes.data || [];
+        if (joined.length === 0) {
+          const allRes = await axios.get(`${API}/users/${user.id}/joined-tiers`);
+          joined = allRes.data || [];
+        }
+        setUserJoinedTiers(joined);
+        const standingsRes = await axios.get(`${API}/users/${user.id}/standings?sport_type=${activeSport}`);
         setUserStandings(standingsRes.data);
       } catch (error) {
         console.error("Error loading player data:", error);
