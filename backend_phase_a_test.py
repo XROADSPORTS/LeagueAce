@@ -318,14 +318,10 @@ class PhaseABackendTester:
         user_data = list(self.created_users.values())[0]
         user_id = user_data['id']
         
-        # Create a dummy tier_id for testing
-        self.tier_id = "test_tier_123"
-        
-        # PUT availability
+        # PUT availability - correct format based on RRAvailabilityRequest
         availability_data = {
             "user_id": user_id,
-            "tier_id": self.tier_id,
-            "availability": {"0": ["Sat 9-12"]}
+            "windows": ["Sat 9-12"]
         }
         
         success, response = self.run_test(
@@ -345,7 +341,7 @@ class PhaseABackendTester:
                 "GET",
                 "rr/availability",
                 200,
-                params={"user_id": user_id, "tier_id": self.tier_id}
+                params={"user_id": user_id}
             )
             
             if success2:
@@ -355,6 +351,11 @@ class PhaseABackendTester:
                 # Verify structure matches what we set
                 if response2.get('user_id') == user_id:
                     print(f"   ✅ User ID matches: {response2.get('user_id')}")
+                    if response2.get('windows') == ["Sat 9-12"]:
+                        print(f"   ✅ Windows match: {response2.get('windows')}")
+                    else:
+                        print(f"   ❌ Windows mismatch: expected ['Sat 9-12'], got {response2.get('windows')}")
+                        return False
                 else:
                     print(f"   ❌ User ID mismatch: expected {user_id}, got {response2.get('user_id')}")
                     return False
