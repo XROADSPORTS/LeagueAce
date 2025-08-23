@@ -3712,6 +3712,7 @@ function App() {
     const PlayerProfile = () => {
       const [editName, setEditName] = useState(user.name || "");
       const [editPhone, setEditPhone] = useState(user.phone || "");
+      const [editLAN, setEditLAN] = useState(user.lan || "");
       const [saving, setSaving] = useState(false);
 
       useEffect(() => {
