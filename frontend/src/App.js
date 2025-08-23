@@ -118,16 +118,17 @@ function App() {
   };
 
   // Authentication functions (same as before)
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (selectedType) => {
     try {
       setLoading(true);
+      const roleName = selectedType === 'manager' ? 'League Manager' : 'Player';
       const mockGoogleResponse = {
         provider: "Google",
         token: "mock_google_token",
-        email: signupType === 'manager' ? "manager.user@gmail.com" : "sarah.johnson@gmail.com",
-        name: signupType === 'manager' ? "Manager User" : "Sarah Johnson",
+        email: roleName === 'League Manager' ? "manager.user@gmail.com" : "sarah.johnson@gmail.com",
+        name: roleName === 'League Manager' ? "Manager User" : "Sarah Johnson",
         provider_id: "google_123",
-        role: signupType === 'manager' ? "League Manager" : "Player"
+        role: roleName
       };
       
       const response = await axios.post(`${API}/auth/social-login`, mockGoogleResponse);
