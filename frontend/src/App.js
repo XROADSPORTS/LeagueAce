@@ -4089,6 +4089,41 @@ function App() {
 
           <TabsContent value="standings" className="tab-content">
             <PlayerStandings />
+            {rrTierId && rrStandings && (
+              <div className="rr-leaderboard">
+                <Card className="glass-card-blue mt-4">
+                  <CardHeader>
+                    <CardTitle>Round Robin Leaderboard</CardTitle>
+                    <CardDescription>Top-8 seeding, trend arrows, and badges</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {rrStandings.top8 && rrStandings.top8.length > 0 ? (
+                      <div className="leaderboard-list">
+                        {rrStandings.rows.map((row, idx) => (
+                          <div key={row.id || row.player_id} className="leaderboard-row">
+                            <div className="rank">#{idx+1}</div>
+                            <div className="player">{row.player_id}</div>
+                            <div className="metrics">
+                              <Badge className="badge">SP {row.set_points}</Badge>
+                              <Badge className="badge">GP {row.game_points}</Badge>
+                              <Badge className="badge">% {Math.round((row.pct_game_win || 0)*10000)/100}%</Badge>
+                            </div>
+                            <div className="trend">{typeof row.trend === 'number' ? (row.trend > 0 ? '⬆︎' : row.trend < 0 ? '⬇︎' : '→') : ''}</div>
+                            <div className="badges">
+                              {(row.badges || []).map(b => (
+                                <Badge key={b} className="badge">{b}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="empty-state">No standings yet</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="profile" className="tab-content">
