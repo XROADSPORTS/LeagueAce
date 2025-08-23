@@ -3718,6 +3718,7 @@ function App() {
       useEffect(() => {
         setEditName(user.name || "");
         setEditPhone(user.phone || "");
+        setEditLAN(user.lan || "");
       }, [user]);
 
       const sanitizePhone = (val) => {
