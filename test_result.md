@@ -455,6 +455,9 @@ test_plan:
   test_all: false
   test_priority: "high_first"
   - agent: "main"
+    message: "Round Robin Phase 1 bundle delivered: 1) Advanced scheduler (greedy+availability constraints) with feasibility score + conflicts; 2) Let’s Play default partner rotation helper; 3) Refined standings: exact % game win computed from per-set games, badges (first_match, finished_all). Please run backend tests for new RR endpoints and standings behavior."
+
+  - agent: "main"
     message: "Phase 1 start: Implementing Round Robin backend upgrades (scheduler greedy+backtracking, Let's Play partner rotation + coin toss persistence, subs rules, refined standings incl. % game win and badges, notifications & audit). Request backend-only testing after commit."
 
 
