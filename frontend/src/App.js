@@ -3782,6 +3782,11 @@ function App() {
                       {!phoneValid && (<div className="join-error">Please enter at least 7 digits (digits and + only)</div>)}
                     </div>
                     <div className="info-item">
+                      <Label htmlFor="edit-lan">LAN (LeagueAce Number)</Label>
+                      <Input id="edit-lan" value={editLAN} className="blue-input" onChange={(e)=> setEditLAN((e.target.value||'').toUpperCase())} placeholder="LAN-ABC123" />
+                      <p className="muted">Shown publicly. Must be unique.</p>
+                    </div>
+                    <div className="info-item">
                       <Label>Rating Level</Label>
                       <p>{user.rating_level}</p>
                     </div>
