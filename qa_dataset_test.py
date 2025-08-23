@@ -63,7 +63,7 @@ class QADatasetProvisioner:
         manager_data = {
             "provider": "Google",
             "token": "qa_manager_token",
-            "email": "manager.qa@leagueace.test",
+            "email": "manager.qa@gmail.com",
             "name": "QA Manager",
             "provider_id": "qa_manager_123",
             "role": "League Manager"
