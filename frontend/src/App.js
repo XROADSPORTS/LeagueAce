@@ -147,11 +147,13 @@ function App() {
         provider_id: "google_123",
         role: roleName
       };
-      
-      const response = await axios.post(`${API}/auth/social-login`, mockGoogleResponse);
-      setUser(response.data);
+      const { data } = await axios.post(`${API}/auth/social-login`, mockGoogleResponse);
+      setUser(data);
+      toast({ title: `Signed in as ${data.name}`, description: `${data.role} account created/updated` });
       setCurrentView("sport-selection");
     } catch (error) {
+      const detail = error?.response?.data?.detail || "Google sign-in failed";
+      toast({ title: "Sign-in error", description: detail, variant: "destructive" });
       console.error("Error with Google sign-in:", error);
     } finally {
       setLoading(false);
