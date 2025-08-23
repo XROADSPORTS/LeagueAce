@@ -528,7 +528,7 @@ async def rr_submit_scorecard(match_id: str, body: RRSubmitScorecard):
 
 @app.post("/api/rr/matches/{match_id}/approve-scorecard")
 async def rr_approve_scorecard(match_id: str, body: RRApproveRequest):
-    sc = await db.rr_scorecards.find_one({"match_id": match_id}, sort=[("created_at", -1)])
+    sc = await db.rr_scorecards.find_one({"match_id": match_id}, sort=[["created_at", -1]])
     if not sc:
         raise HTTPException(status_code=404, detail="No scorecard to approve")
     await db.rr_scorecards.update_one({"id": sc.get("id")}, {"$set": {"approved_by_user_id": body.approved_by_user_id}})
