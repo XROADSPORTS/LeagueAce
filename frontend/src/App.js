@@ -826,6 +826,8 @@ function App() {
           setFormatTiers(response.data);
         } catch (error) {
           console.error("Error loading format tiers:", error);
+        }
+      };
 
       // Poll rating tiers for live updates when a league is selected
       useEffect(() => {
@@ -841,9 +843,6 @@ function App() {
         }
         return () => { if (timer) clearInterval(timer); };
       }, [selectedLeague?.id, selectedFormatTier?.id]);
-
-        }
-      };
 
       // SSE: Live membership updates for selected format tier
       useEffect(() => {
