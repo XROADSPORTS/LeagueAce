@@ -235,7 +235,7 @@ class QASinglesProvisionTester:
         player1_data = {
             "provider": "Google",
             "token": "mock_token_qa_singles1",
-            "email": "qa.singles1@leagueace.test",
+            "email": "qa.singles1@gmail.com",
             "name": "QA Singles Player 1",
             "provider_id": "qa_singles1_provider_id",
             "role": "Player",
