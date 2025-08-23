@@ -392,8 +392,9 @@ function App() {
             </Button>
             <Button 
               onClick={() => {
-                if (!signupType) { toast({ title: "Select account type", description: "Choose Player or League Manager first", variant: "destructive" }); return; }
-                handleAppleSignIn(signupType);
+                const effectiveType = signupType || 'player';
+                if (!signupType) { toast({ title: "Continuing as Player", description: "You can switch to League Manager above if needed" }); }
+                handleAppleSignIn(effectiveType);
               }}
               className="social-login-button apple-button"
               disabled={loading}
