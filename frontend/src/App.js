@@ -2849,6 +2849,15 @@ function App() {
       }
     };
 
+    const fetchRRScheduleMeta = async (tierId) => {
+      try {
+        const { data } = await axios.get(`${API}/rr/schedule-meta`, { params: { tier_id: tierId } });
+        return data || {};
+      } catch (e) {
+        return {};
+      }
+    };
+
     const fetchRRStandings = async (tierId) => {
       try {
         const { data } = await axios.get(`${API}/rr/standings`, { params: { tier_id: tierId } });
