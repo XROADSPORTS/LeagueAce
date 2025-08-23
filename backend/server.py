@@ -250,6 +250,97 @@ async def rr_generate_subgroups(tier_id: str, body: RRSubgroupRequest):
     return {"status": "ok"}
 
 # ========= RR Scheduling =========
+
+def _window_compatible(user_windows: List[str], desired: Optional[str]) -> bool:
+    # If no desired window specified, treat as compatible
+    if not desired:
+        return True
+    # Empty user windows means no constraint
+    if user_windows is None or len(user_windows) == 0:
+        return True
+    return desired in set(user_windows)
+
+async def _availability_map(user_ids: List[str]) -> Dict[str, List[str]]:
+    avail = await db.rr_availability.find({"user_id": {"$in": user_ids}}).to_list(1000)
+    by_user = {a.get("user_id"): (a.get("windows") or []) for a in avail}
+    return {uid: by_user.get(uid, []) for uid in user_ids}
+
+class _GreedyState(BaseModel):
+    partner_counts: Dict[str, Dict[str, int]] = {}
+    opponent_counts: Dict[str, Dict[str, int]] = {}
+
+    def inc_partner(self, a: str, b: str):
+        self.partner_counts.setdefault(a, {})[b] = self.partner_counts.get(a, {}).get(b, 0) + 1
+        self.partner_counts.setdefault(b, {})[a] = self.partner_counts.get(b, {}).get(a, 0) + 1
+
+    def inc_opponents(self, a: str, b: str):
+        self.opponent_counts.setdefault(a, {})[b] = self.opponent_counts.get(a, {}).get(b, 0) + 1
+        self.opponent_counts.setdefault(b, {})[a] = self.opponent_counts.get(b, {}).get(a, 0) + 1
+
+    def partner_cost(self, a: str, b: str) -> int:
+        return self.partner_counts.get(a, {}).get(b, 0)
+
+    def opponent_cost(self, a: str, b: str) -> int:
+        return self.opponent_counts.get(a, {}).get(b, 0)
+
+async def _schedule_week(players: List[str], desired_window: Optional[str], state: _GreedyState, avail_map: Dict[str, List[str]]) -> Dict[str, Any]:
+    # Greedy pairing within a week minimizing partner repeats; availability is hard constraint
+    pool = players[:]
+    random.shuffle(pool)
+    matches: List[List[str]] = []
+    infeasible_players: List[str] = []
+
+    while len(pool) >= 4:
+        # Try to pick a first player with compatible availability
+        a = None
+        for candidate in pool:
+            if _window_compatible(avail_map.get(candidate, []), desired_window):
+                a = candidate
+                break
+        if a is None:
+            # none of remaining players match desired window
+            infeasible_players.extend(pool)
+            break
+        pool.remove(a)
+
+        # Choose best partner b for a
+        candidates_b = [x for x in pool if _window_compatible(avail_map.get(x, []), desired_window)]
+        if len(candidates_b) == 0:
+            infeasible_players.append(a)
+            continue
+        b = min(candidates_b, key=lambda x: state.partner_cost(a, x))
+        pool.remove(b)
+
+        # Choose opponents c,d to minimize opponent repeats
+        candidates_cd = [x for x in pool if _window_compatible(avail_map.get(x, []), desired_window)]
+        if len(candidates_cd) < 2:
+            # can’t form a full match; return leftover to infeasible
+            infeasible_players.extend([a, b] + candidates_cd)
+            break
+        # naive: pick two that minimize sum of opponent costs vs a and b
+        best_pair = None
+        best_cost = 1e9
+        for i in range(len(candidates_cd)):
+            for j in range(i + 1, len(candidates_cd)):
+                c, d = candidates_cd[i], candidates_cd[j]
+                cost = state.opponent_cost(a, c) + state.opponent_cost(a, d) + state.opponent_cost(b, c) + state.opponent_cost(b, d)
+                if cost < best_cost:
+                    best_cost = cost
+                    best_pair = (c, d)
+        if best_pair is None:
+            infeasible_players.extend([a, b])
+            break
+        c, d = best_pair
+        pool.remove(c); pool.remove(d)
+
+        # record match and update counts
+        matches.append([a, b, c, d])
+        state.inc_partner(a, b)
+        state.inc_opponents(a, c); state.inc_opponents(a, d)
+        state.inc_opponents(b, c); state.inc_opponents(b, d)
+
+    return {"matches": matches, "infeasible": infeasible_players}
+
 class RRScheduleRequest(BaseModel):
     player_ids: List[str]  # Active players only
     week_windows: Optional[Dict[int, str]] = None  # optional per-week window label
