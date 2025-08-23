@@ -4532,7 +4532,10 @@ function App() {
                         {rrStandings.rows.map((row, idx) => (
                           <div key={row.id || row.player_id} className="leaderboard-row">
                             <div className="rank">#{idx+1}</div>
-                            <div className="player">{row.player_id}</div>
+                            <div className="player">
+                              <img src={row.user?.photo_url || ''} alt={row.user?.name || 'avatar'} className="avatar-img" onError={(e)=> e.currentTarget.style.display='none'} />
+                              {row.user?.name || row.player_id}
+                            </div>
                             <div className="metrics">
                               <Badge className="badge">SP {row.set_points}</Badge>
                               <Badge className="badge">GP {row.game_points}</Badge>
