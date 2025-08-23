@@ -1406,7 +1406,7 @@ function App() {
                 </div>
                 <div>
                   <Label>Max</Label>
-                  <Input type="number" step="0.1" min="3.0" max="5.5" className="blue-input" value={maxInput} onChange={(e)=> setMaxInput(parseFloat(e.target.value))} />
+                  <Input type="number" step="0.5" min="3.0" max="5.0" className="blue-input" value={maxInput} onChange={(e)=> setMaxInput(Math.round(Math.min(5.0, Math.max(3.0, parseFloat(e.target.value))) * 2) / 2)} />
                 </div>
                 <Button className="btn-primary-ios" onClick={async ()=>{
                   if (isNaN(minInput) || isNaN(maxInput) || minInput > maxInput) { toast({ title: 'Invalid range', description: 'Min must be <= Max', variant: 'destructive' }); return; }
