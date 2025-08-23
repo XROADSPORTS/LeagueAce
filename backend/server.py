@@ -371,6 +371,41 @@ async def list_rating_tiers(format_tier_id: str):
         out.append(doc)
     return out
 
+@app.get("/api/rating-tiers/{rating_tier_id}/members")
+async def list_tier_members(rating_tier_id: str):
+    memberships = await db.tier_memberships.find({"rating_tier_id": rating_tier_id, "status": "Active"}).to_list(1000)
+    users = []
+    for m in memberships:
+        u = await db.users.find_one({"id": m.get("user_id")})
+        if not u:
+            continue
+        uo = parse_from_mongo(u)
+        users.append({
+            "user_id": uo.get("id"),
+            "name": uo.get("name"),
+            "email": uo.get("email"),
+            "rating_level": uo.get("rating_level", 4.0),
+            "lan": uo.get("lan"),
+            "joined_at": m.get("created_at"),
+        })
+    return users
+
+@app.delete("/api/rating-tiers/{rating_tier_id}/members/{user_id}")
+async def remove_tier_member(rating_tier_id: str, user_id: str):
+    res = await db.tier_memberships.delete_one({"rating_tier_id": rating_tier_id, "user_id": user_id, "status": "Active"})
+    # publish updates
+    try:
+        tier = await db.rating_tiers.find_one({"id": rating_tier_id})
+        fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")}) if tier else None
+        await publish_event("tier_memberships", {"rating_tier_id": rating_tier_id})
+        await publish_event(f"tier_memberships:rating:{rating_tier_id}", {"rating_tier_id": rating_tier_id})
+        if fmt:
+            await publish_event(f"tier_memberships:format:{fmt.get('id')}", {"rating_tier_id": rating_tier_id})
+    except Exception:
+        pass
+    return {"deleted": res.deleted_count}
+
+
 @app.post("/api/rating-tiers")
 async def create_rating_tier(payload: RatingTierCreate):
     # validate format tier
