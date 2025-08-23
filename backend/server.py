@@ -902,6 +902,12 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
             desired_window = body.week_windows.get(w)
         # First greedy pass
         result = await _schedule_week(players, desired_window, state, avail_map)
+        
+        # Insert successful matches from greedy pass
+        for match_players in result["matches"]:
+            m = RRMatch(tier_id=tier_id, week_index=w, player_ids=match_players)
+            await db.rr_matches.insert_one(prepare_for_mongo(m.dict()))
+        
         # Light local improvement: try swap pairs across leftover players if conflicts exist
         if result["infeasible"]:
             pool = result["infeasible"][:]
