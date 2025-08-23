@@ -3727,7 +3727,7 @@ function App() {
       };
       const phoneDigits = editPhone.replace(/\D/g, "");
       const phoneValid = editPhone.length === 0 || phoneDigits.length >= 7; // optional, but if present >=7 digits
-      const changed = (editName.trim() !== (user.name || "")) || (editPhone !== (user.phone || ""));
+      const changed = (editName.trim() !== (user.name || "")) || (editPhone !== (user.phone || "")) || (editLAN !== (user.lan || ""));
 
       const saveProfile = async () => {
         if (!changed || !phoneValid) return;
