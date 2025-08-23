@@ -543,38 +543,50 @@ async def rr_recalc_standings(tier_id: Optional[str], match_id: Optional[str] = 
         if not m:
             return
         tier_id = m.get("tier_id")
-    # Aggregate
+    # Aggregate precise stats per player
     cards = await db.rr_scorecards.find({"approved_by_user_id": {"$ne": None}}).to_list(5000)
-    points: Dict[str, Dict[str, Any]] = {}
+    stats: Dict[str, Dict[str, Any]] = {}
     for sc in cards:
         mid = sc.get("match_id")
         mm = await db.rr_matches.find_one({"id": mid})
         if not mm or mm.get("tier_id") != tier_id:
             continue
+        participants = mm.get("player_ids") or []
+        for pid in participants:
+            stats.setdefault(pid, {"matches": 0, "set_pts": 0, "games_won": 0, "games_lost": 0})
+        # count one match per participant
+        for pid in participants:
+            stats[pid]["matches"] += 1
         for s in sc.get("sets") or []:
             winners = s.get("winners") or []
             losers = s.get("losers") or []
             t1 = int(s.get("team1_games", 0)); t2 = int(s.get("team2_games", 0))
-            wp = 10 * max(t1, t2); lp = 10 * min(t1, t2)
+            # Determine which side won to allocate game counts
+            if t1 > t2:
+                win_games, lose_games = t1, t2
+            else:
+                win_games, lose_games = t2, t1
             for pid in winners:
-                row = points.setdefault(pid, {"matches": 0, "set_pts": 0, "game_pts": 0})
-                row["set_pts"] += 1
-                row["game_pts"] += wp
+                stats[pid]["set_pts"] += 1
+                stats[pid]["games_won"] += win_games
+                stats[pid]["games_lost"] += lose_games
             for pid in losers:
-                row = points.setdefault(pid, {"matches": 0, "set_pts": 0, "game_pts": 0})
-                row["game_pts"] += lp
-        # Count match played for each participant
-        for pid in mm.get("player_ids") or []:
-            row = points.setdefault(pid, {"matches": 0, "set_pts": 0, "game_pts": 0})
-            row["matches"] += 1
+                stats[pid]["games_won"] += lose_games
+                stats[pid]["games_lost"] += win_games
     # Upsert standings
     await db.rr_standings.delete_many({"tier_id": tier_id})
-    for pid, vals in points.items():
-        total_games = vals["game_pts"]
-        # % game win approximated via normalized over max possible; we use ratio winners/(winners+losers)
-        # Here without per-set breakdown, we compute as share of won-game points; simplistic approximation
-        pct = 0.0  # can be refined when storing per-set games by player side
-        row = RRStandingRow(tier_id=tier_id, player_id=pid, matches_played=vals["matches"], set_points=vals["set_pts"], game_points=vals["game_pts"], pct_game_win=pct, updated_at=now_utc())
+    for pid, vals in stats.items():
+        total = vals["games_won"] + vals["games_lost"]
+        pct = (vals["games_won"] / total) if total > 0 else 0.0
+        row = RRStandingRow(
+            tier_id=tier_id,
+            player_id=pid,
+            matches_played=vals["matches"],
+            set_points=vals["set_pts"],
+            game_points=vals["games_won"],
+            pct_game_win=round(pct, 4),
+            updated_at=now_utc(),
+        )
         await db.rr_standings.insert_one(prepare_for_mongo(row.dict()))
 
 @app.get("/api/rr/standings")
