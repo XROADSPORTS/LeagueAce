@@ -272,6 +272,7 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
             m = RRMatch(tier_id=tier_id, week_index=w, player_ids=group)
             await db.rr_matches.insert_one(prepare_for_mongo(m.dict()))
             match_ids.append(m.id)
+            match_ids.append(m.id)
         slate = RRSlate(tier_id=tier_id, week_index=w, match_ids=match_ids)
         await db.rr_slates.insert_one(prepare_for_mongo(slate.dict()))
     return {"status": "ok", "weeks": weeks}
