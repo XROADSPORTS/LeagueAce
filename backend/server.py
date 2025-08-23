@@ -30,6 +30,31 @@ MONGO_URL = os.environ.get("MONGO_URL")
 if not MONGO_URL:
     raise RuntimeError("MONGO_URL not set in backend/.env")
 
+# ========= RR Helpers =========
+async def rr_notify(user_ids: List[str], message: str, meta: Optional[Dict[str, Any]] = None):
+    if not user_ids:
+        return
+    doc = {
+        "id": str(uuid.uuid4()),
+        "user_ids": user_ids,
+        "message": message,
+        "meta": meta or {},
+        "created_at": now_utc().isoformat(),
+        "read_by": []
+    }
+    await db.rr_notifications.insert_one(doc)
+
+async def rr_audit(action: str, match_id: Optional[str], actor_id: Optional[str], meta: Optional[Dict[str, Any]] = None):
+    rec = {
+        "id": str(uuid.uuid4()),
+        "action": action,
+        "match_id": match_id,
+        "actor_id": actor_id,
+        "meta": meta or {},
+        "created_at": now_utc().isoformat(),
+    }
+    await db.rr_audits.insert_one(rec)
+
 client: AsyncIOMotorClient = AsyncIOMotorClient(MONGO_URL)
 db = client.get_default_database()
 
