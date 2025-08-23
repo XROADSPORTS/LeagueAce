@@ -121,6 +121,14 @@ function App() {
     try {
       setLoading(true);
       const name = (nameInput && nameInput.trim()) || "User";
+      // First try password login if provided
+      if (password && password.trim().length > 0) {
+        const { data } = await axios.post(`${API}/auth/login-email`, { email, password });
+        setUser(data);
+        toast({ title: `Signed in as ${data.name}`, description: `${data.role} account found` });
+        setCurrentView("sport-selection");
+        return;
+      }
       const payload = {
         provider: "Email",
         token: "form_login",
