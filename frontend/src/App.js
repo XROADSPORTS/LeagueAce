@@ -1631,7 +1631,13 @@ function App() {
                           <div className="member-list">
                             {(tierState._members || []).map((m) => (
                               <div key={m.user_id} className="member-row">
-                                <div className="avatar" />
+                                <div className="avatar">
+                                  { (tierState._members?.find(x=>x.user_id===m.user_id)?.photo_url || user?.photo_url) ? (
+                                    <img src={tierState._members.find(x=>x.user_id===m.user_id)?.photo_url} alt={m.name} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                                  ) : (
+                                    <div className="avatar-fallback" />
+                                  )}
+                                </div>
                                 <div className="info">
                                   <div className="name">{m.name}</div>
                                   <div className="meta">Rating {m.rating_level} • {m.lan}</div>
