@@ -454,6 +454,9 @@ frontend:
         agent: "main"
         comment: "Added comprehensive MatchCard component with time proposals, player confirmations, toss functionality, and substitute management. Includes TimeProposalForm, ConfirmationForm, and TossButton components."
 
+  - agent: "main"
+    message: "RR Phase 1 bundle expanded with Toss + Partner Override scaffolding (persist fields + endpoints with 4-player confirmations), notifications & audit stubs, enhanced schedule response with schedule_quality, and confirmed refined standings. Proceeding with backend tests."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
