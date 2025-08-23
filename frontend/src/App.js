@@ -1427,7 +1427,7 @@ function App() {
       );
     };
 
-    const EnhancedRatingTierCard = ({ tier }) => {
+    const EnhancedRatingTierCard = ({ tier, onRefresh }) => {
       const [groups, setGroups] = useState([]);
       const [showGroupForm, setShowGroupForm] = useState(false);
       const [tierState, setTierState] = useState(tier);
