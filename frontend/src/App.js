@@ -348,7 +348,10 @@ function App() {
               Continue with Google
             </Button>
             <Button 
-              onClick={handleAppleSignIn}
+              onClick={() => {
+                if (!signupType) { toast({ title: "Select account type", description: "Choose Player or League Manager first", variant: "destructive" }); return; }
+                handleAppleSignIn(signupType);
+              }}
               className="social-login-button apple-button"
               disabled={loading}
             >
