@@ -555,6 +555,22 @@ test_plan:
   test_priority: "high_first"
 
 frontend:
+
+  - task: "Rating Tier Membership counts and Manager Tier 3 members list"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "Manager Tier 3 card shows current players 0 and Player Groups (0) after a player joined by code; list is empty."
+      - working: "unknown"
+        agent: "main"
+        comment: "Investigate GET /api/format-tiers/{id}/rating-tiers current_players and GET /api/rating-tiers/{id}/members returning joined players with photo_url; verify that POST /api/join-by-code/{user_id} increments counts and that SSE /api/events/tier-memberships emits tier-membership events for auto-refresh."
+
   - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
     implemented: true
     working: true
