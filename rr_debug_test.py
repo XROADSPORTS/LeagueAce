@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 def debug_rr_scheduling():
-    base_url = "https://leagueace-rr.preview.emergentagent.com"
+    base_url = "https://teamace.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # QA Tier IDs

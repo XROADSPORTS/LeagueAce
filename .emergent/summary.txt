@@ -1,19 +1,17 @@
 <analysis>
-The AI engineer's work primarily involved an intensive bug-fixing and feature-enhancement phase for the LeagueAce application, with a strong focus on the Round Robin (RR) module and core user flows. Initial work established RR backend logic and a frontend dashboard. Key efforts included resolving a frontend compilation error (), fixing manager login redirection, implementing dynamic skill progression labels, and addressing multiple issues with league creation and persistence for managers. Critical bugs related to player Join by Code and the display of joined leagues were resolved, followed by real-time updates for player counts via Server-Sent Events (SSE). The most recent development centered on integrating user profile pictures across various UI components and fixing the profile picture upload functionality. The approach was iterative, confirming fixes with the user and asking for explicit testing permissions.
+The AI engineer's trajectory involved an iterative debugging and feature implementation cycle for the LeagueAce application. Initially, the focus was on resolving discrepancies in the Manager's view where joined players were not visible or counts were incorrect, despite backend verification. This led to multiple frontend fixes in  to ensure real-time updates via SSE, cache-busting on API calls, stable state management for  modal, and addressing UI rendering inconsistencies. Concurrently, the sign-in/sign-up flow for both players and managers was refactored. This included improving clarity for existing users, implementing session persistence using , hiding skill rating for managers during signup, and finally, integrating robust email+password authentication on the backend ( with ) and frontend. The process involved frequent user interaction, specific bug reports, providing QA datasets, and targeted frontend/backend testing. The ultimate goal was to ensure accurate player visibility for managers and a fully functional, persistent authentication system.
 </analysis>
 
 <product_requirements>
-LeagueAce is a tennis and pickleball league management application, emphasizing an iOS-inspired Glassmorphism UI and PWA capabilities. Its core functionality includes dashboard and chat fixes, a secure league joining system with shareable codes and manager approval, and comprehensive player profile management (name, mobile, LAN, search). Manager tools allow rating tier modification and join request approval. The Doubles Coordinator provides verified partnerships, scheduling, and dual-confirmation scoring.
-
-Current major development focuses on the complex Round Robin (RR) league format. This system supports configurable seasons, optional subgroups, active/reserve player roles, advanced scheduling (minimizing repeat partners, balancing opponents, availability), 3-set matches with partner rotation, coin toss, manual overrides, detailed scoring, live leaderboards with trends and badges, playoff bracket generation, in-app notifications, and audit trails. The application also now includes robust social login (Google/Apple) for both Players and League Managers, with role-based navigation and persistence. Managers can create and manage leagues with auto-loading format and rating tiers, view player lists with real-time updates, and upload profile pictures, which are rendered across various UI components for enhanced user experience.
+LeagueAce is a tennis and pickleball league management application featuring an iOS-inspired UI and PWA capabilities. Key features include dashboard and chat fixes, secure league joining, comprehensive player profile management, manager tools for rating tier modification and join approval, and a Doubles Coordinator. A major focus is the complex Round Robin (RR) league format, supporting configurable seasons, subgroups, scheduling, 3-set matches, scoring, leaderboards, playoffs, and in-app notifications. The application also supports robust social login (Google/Apple) for Players and League Managers, with role-based navigation and persistence. Managers can create/manage leagues, view player lists with real-time updates, and upload profile pictures. The recent work addressed critical issues where managers couldn't see joined players in the Tier 3 card or Player List, and improved the login experience, including implementing secure email+password authentication and session persistence.
 </product_requirements>
 
 <key_technical_concepts>
 -   **Full-stack Architecture**: React.js (frontend), FastAPI (backend), MongoDB (database).
 -   **UI/UX**: Tailwind CSS, Shadcn UI, iOS-style Glassmorphism, PWA.
+-   **Authentication**: Social login (Google/Apple), Email+Password with bcrypt hashing,  for persistence.
 -   **Backend Data Handling**: Pydantic models, Motor (async MongoDB), UUIDs, Server-Sent Events (SSE).
--   **Scheduling**: Greedy+backtracking algorithms.
--   **Deployment**: Kubernetes container, Supervisor.
+-   **Dependencies**: ,  for password hashing.
 </key_technical_concepts>
 
 <code_architecture>
@@ -22,66 +20,60 @@ The application uses a standard full-stack architecture with distinct frontend a
 
 
 -   ****:
-    -   **Summary of importance**: Core FastAPI backend for API routes, business logic, and MongoDB interaction. Manages authentication, league, Doubles Coordinator, and extensive Round Robin (RR) features.
-    -   **Summary of changes**: Numerous additions and modifications for bug fixes and new features.
-        -   **Authentication**: Added  to handle Google/Apple sign-ins, upserting users and setting roles.
-        -   **User Data**: , ,  (for managed leagues).
-        -   **League Creation/Management**: Implemented , , , , , , .
-        -   **Player Join**:  (preview), ,  (now includes , , , and filters robustly).
-        -   **Player List (Manager)**:  (returns ), .
-        -   **Profile Picture**:  (stores in ), static file serving for uploaded pictures.
-        -   **Real-time Updates**:  for Server-Sent Events (SSE) to auto-refresh player counts.
-        -   **RR Standings**:  now includes user photo URL.
+    -   **Summary of importance**: Core FastAPI backend managing API routes, business logic, and MongoDB interactions, including authentication, league, and Round Robin features.
+    -   **Summary of changes**:
+        -   **Authentication**: Extended social login to handle manager roles robustly. Added  for email+password login. Modified  for form-based signup to accept and bcrypt-hash passwords.
+        -   **User Data**: Endpoints like  updated to include .
+        -   **Real-time Updates**:  for SSE.
+-   ****:
+    -   **Summary of importance**: Lists Python dependencies for the backend.
+    -   **Summary of changes**: Added  and  for password hashing.
 -   ****:
     -   **Summary of importance**: Main React component controlling UI structure, routing, and integrating all functional components.
-    -   **Summary of changes**: Extensive modifications for bug fixes and UI enhancements.
-        -   **Login Flow**: Modified  and  to pass . Added guards to social login buttons to ensure role selection, and default to Player if no explicit selection. Added loading indicators and toasts for sign-in feedback.
-        -   **Skill Progression**: Implemented  and  helpers, moved to top-level scope to avoid syntax errors. Updated signup and manager rating inputs to step by 0.5 and display new labels (Starter, Rising, etc.).
-        -   **League Creation/Persistence**: UI now navigates to Tier 2 after league creation, auto-selects the new league, and persists selected league in  across navigation and refreshes. Auto-loads format and rating tiers on league selection.
-        -   **Player Join by Code**: Enhanced  with pre-flight validations, toasts (e.g., Rating out of range), and loading spinners.  component updated to display /. Added a progress bar to the join modal. Fallback to load all joined tiers if the active sport filter yields no results.
-        -   **Manager Player List**: Added Player List button to , opening a modal to display joined players with their avatars, name, LAN, and rating. Implemented player removal functionality with real-time updates.
-        -   **Profile Picture**: Integrated  into the user context and rendered avatars in Manager Player List, RR Standings, and RR Match cards.
-        -   **Real-time Updates**: Subscribed to SSE for  to auto-refresh player counts in Tier 3 manager view.
-        -   **Bug Fixes**: Resolved a  due to duplicate   declaration and another  due to helper functions being inside JSX. Fixed Sport Selection state handling.
+    -   **Summary of changes**:
+        -   **Player List UI**: Implemented robust fetching and display for Manager's Player List modal, including cache-busting, re-polling, and stable state management to prevent data flicker. Added a Debug JSON button for diagnostics.
+        -   **Authentication Flow**: Enhanced  and  for clearer role handling. Implemented session persistence using  for user data and selected league. Updated form signup to include password fields (hidden for managers). Added a new Sign in with Email panel for password-based login. Added optional Override email and Override name fields for manager social sign-in.
+        -   **Bug Fixes**: Addressed UI state issues where fetched member data was overwritten, ensuring member lists remain stable.
 -   ****:
-    -   **Summary of importance**: Global CSS styles for the iOS-style Glassmorphism aesthetic.
-    -   **Summary of changes**: Modified to style new UI elements like conflict badges, match cards, Admin Wizard components, and avatar placeholders.
+    -   **Summary of importance**: Global CSS styles.
+    -   **Summary of changes**: Minor adjustments to accommodate new UI elements like the Debug JSON panel and updated login forms.
 -   ****:
     -   **Summary of importance**: Main HTML entry point for the React application.
-    -   **Summary of changes**: Updated to include  link and iOS-specific web-app meta tags for PWA.
+    -   **Summary of changes**: No relevant changes in this trajectory.
 -   ****:
     -   **Summary of importance**: PWA manifest file.
-    -   **Summary of changes**: Created to scaffold and enable PWA capabilities.
+    -   **Summary of changes**: No relevant changes in this trajectory.
 -   ****:
     -   **Summary of importance**: Manages all frontend dependencies.
-    -   **Summary of changes**:  added previously. No new relevant changes in this trajectory.
+    -   **Summary of changes**: No new relevant changes in this trajectory.
 </code_architecture>
 
 <pending_tasks>
--   **Doubles Coordinator**: Enable Email + SMS sending for partner invites, requiring SendGrid and Twilio API keys.
--   **Round Robin**:
-    -   Further enhance the Admin Wizard: add export/download of schedule meta (CSV/JSON), a compare-history view, and improved visuals.
-    -   Implement specific polish: per-week conflict drill-down, substitute management UI, chat integration in match detail.
--   **User Search**: Replace prompt-based user search for in-app invites with a polished, glass-styled modal.
+-   **Doubles Coordinator**: Enable Email + SMS sending for partner invites (requires SendGrid/Twilio).
+-   **Round Robin**: Further enhance Admin Wizard (export schedule, compare history), implement per-week conflict drill-down, substitute management UI, chat integration in match detail.
+-   **User Search**: Replace prompt-based user search with a polished modal for in-app invites.
 -   **Profile Picture**: Add image cropping to square and size limit validation on the frontend.
+-   **Manager Player List**: Implement a true Pending approval flow for join requests.
+-   **Authentication**: Add a Forgot password placeholder UI to the login screen.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer had completed the extensive task of integrating user profile pictures across various parts of the LeagueAce application. This included ensuring that profile picture uploads work correctly after social sign-in (specifically Google).
+Immediately before this summary request, the AI engineer completed implementing a full email + password authentication system and enhanced session persistence. This addressed user concerns about the lack of a clear sign-in option for form-created accounts and session data disappearing on page refresh.
 
-The backend was updated to:
--   Provide a  endpoint for uploading  files, storing them in a dedicated  directory, and serving them via .
--   Modify existing APIs, such as  and , to include the  for each user, so the frontend can render actual images instead of placeholders.
+**Backend () changes:**
+-   Introduced  and  for secure password hashing.
+-   Created a new endpoint  for authenticating users via email and password, returning the user object upon successful validation.
+-   Modified  (for form-based signup) to accept  and  fields, hashing and storing the password securely.
 
-The frontend () was updated to:
--   Utilize the  from user data to display actual profile pictures in the Manager's Tier 3 Player List modal, next to players' names, LANs, and ratings.
--   Render avatars in the Round Robin Standings leaderboard and on individual Round Robin match cards for all four players.
--   Ensure that after a profile picture upload, the user object is refreshed, making the new avatar available application-wide.
--   Automated frontend tests were run to verify the profile upload flow, the Tier 3 Player List with avatars, RR leaderboard avatars, and RR match card avatars, successfully passing after a minor JSX key wrapper issue was fixed.
+**Frontend () changes:**
+-   Updated the signup form to include  and  fields. The Current Skill Rating field is now correctly hidden for League Manager signups.
+-   The Sign in with Email panel now prominently displays fields for Email and Password (with an optional Name), calling the new  endpoint. A fallback supports email-only login for legacy accounts without passwords.
+-   Session persistence was configured to Session-only (as requested by the user), meaning user data (, , ) is stored in  and rehydrated on page reload within the same browser tab, but cleared when the tab is closed.
+-   Manager social sign-in was improved with Override email and Override name inputs to ensure correct role assignment during Google/Apple sign-in.
 
-The current state is that profile pictures are integrated and displaying in key areas, and the upload functionality is verified. The AI engineer is now awaiting user input on further enhancements related to avatar rendering and manager controls.
+The current state is that the application supports both social and email+password login, with appropriate form fields and session persistence, significantly improving the authentication experience. The AI engineer is now awaiting user confirmation on further UI enhancements or testing.
 </current_work>
 
 <optional_next_step>
-The next step is to get user confirmation on whether to add an Edit Avatar button per player in the Manager's Player List modal (A), or show avatars in Non-RR Player Standings (B), or both (C), and the policy for manager photo edits.
+The next step is to ask the user if they want to add a Forgot password placeholder UI and/or run automated backend tests.
 </optional_next_step>

@@ -21,7 +21,7 @@ async def test_notification_functionality():
     db = client.get_default_database()
     
     # Create a test user first via API
-    api_url = "https://leagueace-rr.preview.emergentagent.com/api"
+    api_url = "https://teamace.preview.emergentagent.com/api"
     
     # Create user via social login
     timestamp = datetime.now().strftime('%H%M%S')

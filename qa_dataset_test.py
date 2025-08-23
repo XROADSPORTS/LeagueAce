@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 class QADatasetProvisioner:
-    def __init__(self, base_url="https://leagueace-rr.preview.emergentagent.com"):
+    def __init__(self, base_url="https://teamace.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.results = {}
@@ -294,7 +294,7 @@ def main():
         print(f"   curl '{summary['members_api_url']}'")
         
         print(f"\n🔗 Test join code preview:")
-        print(f"   curl 'https://leagueace-rr.preview.emergentagent.com/api/rating-tiers/by-code/{summary['join_code']}'")
+        print(f"   curl 'https://teamace.preview.emergentagent.com/api/rating-tiers/by-code/{summary['join_code']}'")
         
         print("\n✅ QA Dataset provisioned successfully!")
         return 0
