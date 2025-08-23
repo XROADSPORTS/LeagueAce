@@ -1071,7 +1071,7 @@ function App() {
               </div>
               <div className="rating-tiers-grid">
                 {ratingTiers.map((tier) => (
-                  <EnhancedRatingTierCard key={tier.id} tier={tier} />
+                  <EnhancedRatingTierCard key={tier.id} tier={tier} onRefresh={()=> selectedFormatTier?.id && loadRatingTiers(selectedFormatTier.id)} />
                 ))}
                 {ratingTiers.length === 0 && (
                   <div className="empty-state">
