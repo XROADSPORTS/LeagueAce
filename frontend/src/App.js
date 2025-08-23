@@ -29,8 +29,8 @@ const getPendingJoinCodeFromURL = () => {
 };
 
 function App() {
-  const [currentView, setCurrentView] = useState("signup");
-  const [user, setUser] = useState(null);
+  const [currentView, _setCurrentView] = useState("signup");
+  const [user, _setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("home");
   const [activeSport, setActiveSport] = useState("Tennis");
   const fileInputRef = useRef(null);
