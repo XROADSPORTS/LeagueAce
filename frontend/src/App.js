@@ -3138,6 +3138,184 @@ function App() {
       </div>
     );
 
+    const RoundRobinDashboard = () => {
+      const [weekTab, setWeekTab] = useState(0);
+      const [proposing, setProposing] = useState(false);
+      const [slotDate, setSlotDate] = useState("");
+      const [slotVenue, setSlotVenue] = useState("");
+
+      const refreshAll = async () => {
+        if (rrTierId) {
+          await fetchRRWeeks(rrTierId);
+          await fetchRRStandings(rrTierId);
+        }
+      };
+
+      const proposeSlot = async (matchId) => {
+        if (!slotDate) { toast({ title: 'Pick a date/time', variant: 'destructive' }); return; }
+        setProposing(true);
+        try {
+          await axios.post(`${API}/rr/matches/${matchId}/propose-slots`, { slots: [{ start: slotDate, venue_name: slotVenue }], proposed_by_user_id: user.id });
+          toast({ title: 'Proposed', description: 'Slot proposed to players' });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to propose slot', variant: 'destructive' });
+        }
+        setProposing(false);
+      };
+
+      const confirmSlot = async (matchId, slotId) => {
+        try {
+          const { data } = await axios.post(`${API}/rr/matches/${matchId}/confirm-slot`, { slot_id: slotId, user_id: user.id });
+          if (data.locked) toast({ title: 'Scheduled', description: 'Match confirmed' });
+          else toast({ title: 'Confirmed', description: 'Your confirmation recorded' });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to confirm', variant: 'destructive' });
+        }
+      };
+
+      const doToss = async (matchId) => {
+        try {
+          const { data } = await axios.post(`${API}/rr/matches/${matchId}/toss`, { actor_user_id: user.id });
+          toast({ title: 'Toss done', description: `${data.winner_user_id} chose ${data.choice}` });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed toss', variant: 'destructive' });
+        }
+      };
+
+      const proposeOverride = async (match) => {
+        try {
+          const players = match.player_ids;
+          const overrideSets = [
+            [[players[0], players[1]], [players[2], players[3]]],
+            [[players[0], players[2]], [players[1], players[3]]],
+            [[players[0], players[3]], [players[1], players[2]]],
+          ];
+          await axios.post(`${API}/rr/matches/${match.id}/partner-override`, { actor_user_id: user.id, sets: overrideSets });
+          toast({ title: 'Override proposed', description: 'Waiting for confirmations' });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to propose override', variant: 'destructive' });
+        }
+      };
+
+      const confirmOverride = async (matchId) => {
+        try {
+          const { data } = await axios.post(`${API}/rr/matches/${matchId}/partner-override/confirm`, { user_id: user.id });
+          toast({ title: data.status === 'locked' ? 'Override locked' : 'Confirmed', description: `${data.confirmations}/4` });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to confirm override', variant: 'destructive' });
+        }
+      };
+
+      const submitScore = async (matchId) => {
+        try {
+          // Demo submission with default pairings winners
+          const match = rrWeeks.flatMap(w => w.matches).find(m => m.id === matchId);
+          if (!match) return;
+          const sets = [
+            { team1_games: 6, team2_games: 4, winners: [match.player_ids[0], match.player_ids[1]], losers: [match.player_ids[2], match.player_ids[3]] },
+            { team1_games: 3, team2_games: 6, winners: [match.player_ids[2], match.player_ids[3]], losers: [match.player_ids[0], match.player_ids[1]] },
+            { team1_games: 6, team2_games: 2, winners: [match.player_ids[0], match.player_ids[3]], losers: [match.player_ids[1], match.player_ids[2]] },
+          ];
+          await axios.post(`${API}/rr/matches/${matchId}/submit-scorecard`, { sets, submitted_by_user_id: user.id, use_default_pairings: true });
+          toast({ title: 'Scorecard submitted', description: 'Awaiting approval' });
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to submit scorecard', variant: 'destructive' });
+        }
+      };
+
+      const approveScore = async (matchId) => {
+        try {
+          await axios.post(`${API}/rr/matches/${matchId}/approve-scorecard`, { approved_by_user_id: user.id });
+          toast({ title: 'Approved', description: 'Scorecard approved' });
+          await refreshAll();
+        } catch (e) {
+          toast({ title: 'Error', description: e?.response?.data?.detail || 'Failed to approve scorecard', variant: 'destructive' });
+        }
+      };
+
+      const RRMatchCard = ({ match }) => (
+        <div className="rr-match glass-layer-1">
+          <div className="rr-head">
+            <div className="rr-title">Week {match.week_index}</div>
+            <div className="rr-sub">{match.scheduled_at ? new Date(match.scheduled_at).toLocaleString() : 'TBD'} • {match.scheduled_venue || 'Venue TBD'}</div>
+          </div>
+          <div className="rr-players">
+            <div className="rr-player-row">{match.player_ids.join(' • ')}</div>
+          </div>
+          <div className="rr-actions">
+            <Button size="sm" className="blue-outline-button" onClick={() => doToss(match.id)}>Toss</Button>
+            <Button size="sm" className="blue-outline-button" onClick={() => proposeOverride(match)}>Override</Button>
+            <Button size="sm" className="blue-outline-button" onClick={() => confirmOverride(match.id)}>Confirm Override</Button>
+            <Button size="sm" className="btn-primary-ios" onClick={() => setRrShowMatch(match)}>Open</Button>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="rr-dashboard">
+          <Card className="glass-card-blue">
+            <CardHeader>
+              <CardTitle>Round Robin</CardTitle>
+              <CardDescription>9-week schedule, rotating partners each match</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rr-controls">
+                <Input placeholder="Enter Tier ID" className="blue-input" value={rrTierId} onChange={(e)=> setRrTierId(e.target.value)} />
+                <Button className="btn-primary-ios" onClick={refreshAll} disabled={!rrTierId || rrLoading}>Load</Button>
+                <Button className="blue-outline-button" onClick={() => fetchRRAvailability(user.id)}>Availability</Button>
+              </div>
+              <div className="rr-week-tabs">
+                <Tabs value={weekTab.toString()} onValueChange={(v)=> setWeekTab(parseInt(v))}>
+                  <TabsList>
+                    {rrWeeks.map(w => (
+                      <TabsTrigger key={w.week_index} value={w.week_index.toString()}>Week {w.week_index+1}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="rr-week-list">
+                {rrWeeks.length === 0 ? (
+                  <div className="empty-state">No matches to show</div>
+                ) : (
+                  rrWeeks.filter(w => w.week_index === weekTab).flatMap(w => w.matches).map((m) => (
+                    <RRMatchCard key={m.id} match={m} />
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {rrShowMatch && (
+            <Card className="glass-card-blue rr-detail">
+              <CardHeader>
+                <CardTitle>Match Detail</CardTitle>
+                <CardDescription>Set rotation, partner override, and score entry</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rr-detail-row">Players: {rrShowMatch.player_ids.join(' • ')}</div>
+                <div className="rr-detail-actions">
+                  <Input type="datetime-local" className="blue-input" value={slotDate} onChange={(e)=> setSlotDate(e.target.value)} />
+                  <Input placeholder="Venue" className="blue-input" value={slotVenue} onChange={(e)=> setSlotVenue(e.target.value)} />
+                  <Button className="blue-outline-button" onClick={() => proposeSlot(rrShowMatch.id)} disabled={proposing}>Propose Slot</Button>
+                  <Button className="blue-outline-button" onClick={() => confirmOverride(rrShowMatch.id)}>Confirm Override</Button>
+                  <Button className="btn-primary-ios" onClick={() => submitScore(rrShowMatch.id)}>Submit Demo Score</Button>
+                  <Button className="btn-primary-ios" onClick={() => approveScore(rrShowMatch.id)}>Approve</Button>
+                </div>
+                <div className="rr-close">
+                  <Button variant="ghost" onClick={()=> setRrShowMatch(null)}>Close</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      );
+    };
+
     const PlayerSchedule = () => (
       <div className="player-schedule">
         <Card className="glass-card-blue">
