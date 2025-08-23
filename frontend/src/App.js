@@ -819,6 +819,26 @@ function App() {
         }
       };
 
+      // Auto-load formats when a league is selected or re-selected
+      useEffect(() => {
+        if (selectedLeague?.id) {
+          loadFormatTiers(selectedLeague.id);
+        } else {
+          setFormatTiers([]);
+          setRatingTiers([]);
+        }
+      }, [selectedLeague?.id]);
+
+      // Auto-load rating tiers when a format tier is selected
+      useEffect(() => {
+        if (selectedFormatTier?.id) {
+          loadRatingTiers(selectedFormatTier.id);
+        } else {
+          setRatingTiers([]);
+        }
+      }, [selectedFormatTier?.id]);
+
+
       const loadRatingTiers = async (formatTierId) => {
         try {
           const response = await axios.get(`${API}/format-tiers/${formatTierId}/rating-tiers`);
