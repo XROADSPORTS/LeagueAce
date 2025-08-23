@@ -441,7 +441,7 @@ metadata:
 
 - task: "Frontend: Social sign-in (Player) and default role feedback"
   implemented: true
-  working: false
+  working: true
   file: "frontend/src/App.js"
   stuck_count: 1
   priority: "high"
@@ -456,6 +456,9 @@ metadata:
     - working: false
       agent: "testing"
       comment: "❌ CRITICAL ISSUE: Social sign-in flow is partially working but gets stuck at sport selection screen. Testing shows: ✅ Google sign-in button works and triggers POST /api/auth/social-login (200 response), ✅ Successfully redirects to sport-selection screen, ❌ After selecting Tennis sport and clicking 'Continue with 1 sport', the app does not progress to Player Dashboard. The continue button shows 'Continue with 0 sports' even after selecting Tennis, indicating sport selection state is not being tracked properly. Backend API calls are working (auth endpoints return 200), but frontend state management for sport selection is broken."
+    - working: true
+      agent: "testing"
+      comment: "✅ PLAYER SOCIAL SIGN-IN FLOW FULLY FUNCTIONAL - Comprehensive testing confirms complete end-to-end player authentication working perfectly! **GOOGLE SIGN-IN**: 'Continue with Google' button working correctly, defaults to Player role when no role pre-selected, POST /api/auth/social-login returns 200 with proper user data (id, name, email, role: 'Player'). **SPORT SELECTION**: Tennis selection working correctly, 'Continue with 1 sport' button enabled and functional, PATCH /api/users/{id}/sports successfully updates preferences, proper redirect to Player Dashboard. **PLAYER DASHBOARD**: Full dashboard access with Profile tab, Standings tab, Round Robin tab, proper user context display (name, rating, avatar placeholder). **PROGRESS FEEDBACK**: Loading states working, success transitions smooth, no stuck states observed. The sport selection state management issue has been resolved. Player social sign-in flow is production-ready."
 
 - task: "Frontend: Join-by-code modal UX and post-join refresh"
   implemented: true
