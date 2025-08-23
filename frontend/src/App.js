@@ -2790,6 +2790,7 @@ function App() {
     const [rrStandings, setRrStandings] = useState(null);
     const [rrAvailability, setRrAvailability] = useState([]);
     const [rrShowMatch, setRrShowMatch] = useState(null); // active match for detail modal
+    const [rrMyTiers, setRrMyTiers] = useState([]); // player's RR tiers for dropdown
 
   useEffect(() => {
     const code = getPendingJoinCodeFromURL();
