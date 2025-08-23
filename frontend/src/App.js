@@ -964,7 +964,7 @@ function App() {
           {/* Tier 3: Rating Tiers (4.0, 4.5, 5.0) with Join Codes */}
           {selectedFormatTier && (
             <div className="tier-section">
-              <h3 className="tier-title">Tier 3: Create Rating Levels for {selectedFormatTier.name}</h3>
+              <h3 className="tier-title">Tier 3: Create Skill Levels for {selectedFormatTier.name}</h3>
               <div className="rating-info">
                 <Card className="glass-card-blue info-card">
                   <CardContent>
