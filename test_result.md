@@ -239,6 +239,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ AUTHENTICATION FULLY FUNCTIONAL - Tested user registration, social login (Google/Apple), profile picture upload, sports preferences update, role-based access control (League Manager vs Player permissions). All endpoints working correctly with proper validation and error handling."
+      - working: true
+        agent: "testing"
+        comment: "✅ FRONTEND ONBOARDING ENDPOINTS VERIFIED - Comprehensive testing of critical authentication endpoints for frontend integration: POST /api/auth/social-login (creates/updates users with id, lan, role, sports_preferences), GET /api/users/{id}/notifications (returns notifications created by rr_notify), PATCH /api/users/{id}/sports (persists sports preferences), GET /api/users/{id} (user retrieval). Fixed critical MongoDB ObjectId serialization bug causing 500 errors. All 13 tests passed (100% success rate). Authentication flow now fully functional for frontend onboarding."
 
   - task: "Player Grouping Logic"
     implemented: true
