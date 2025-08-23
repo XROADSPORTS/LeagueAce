@@ -141,14 +141,17 @@ function App() {
     }
   };
 
-  const handleAppleSignIn = async () => {
+  const handleAppleSignIn = async (selectedType) => {
     try {
+      setLoading(true);
+      const roleName = selectedType === 'manager' ? 'League Manager' : 'Player';
       const mockAppleResponse = {
         provider: "Apple",
         token: "mock_apple_token",
-        email: "user@icloud.com",
-        name: "Apple User",
-        provider_id: "apple_456"
+        email: roleName === 'League Manager' ? "manager.user@icloud.com" : "user@icloud.com",
+        name: roleName === 'League Manager' ? "Manager User" : "Apple User",
+        provider_id: "apple_456",
+        role: roleName
       };
       
       const response = await axios.post(`${API}/auth/social-login`, mockAppleResponse);
@@ -156,6 +159,8 @@ function App() {
       setCurrentView("sport-selection");
     } catch (error) {
       console.error("Error with Apple sign-in:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
