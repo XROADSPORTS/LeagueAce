@@ -3308,11 +3308,17 @@ function App() {
                     {rrWeeks.map(w => (
                       <TabsTrigger key={w.week_index} value={w.week_index.toString()}>
                         Week {w.week_index+1}
-                        {/* conflict indicator placeholder: backend conflicts are per schedule; expose via tooltip in future */}
                       </TabsTrigger>
                     ))}
                   </TabsList>
                 </Tabs>
+                <div className="rr-conflicts">
+                  <Button size="sm" className="blue-outline-button" onClick={async ()=> {
+                    const meta = await fetchRRScheduleMeta(rrTierId);
+                    const totalConflicts = meta && meta.conflicts ? Object.values(meta.conflicts).reduce((acc, arr) => acc + (arr?.length || 0), 0) : 0;
+                    toast({ title: 'Schedule Quality', description: `Feasibility: ${meta.feasibility_score || 0}, Quality: ${meta.schedule_quality || 0}, Conflicts: ${totalConflicts}` });
+                  }}>Conflicts/Quality</Button>
+                </div>
               </div>
               <div className="rr-week-list">
                 {rrWeeks.length === 0 ? (
