@@ -3238,23 +3238,32 @@ function App() {
         }
       };
 
-      const RRMatchCard = ({ match }) => (
-        <div className="rr-match glass-layer-1">
-          <div className="rr-head">
-            <div className="rr-title">Week {match.week_index}</div>
-            <div className="rr-sub">{match.scheduled_at ? new Date(match.scheduled_at).toLocaleString() : 'TBD'} • {match.scheduled_venue || 'Venue TBD'}</div>
+      const RRMatchCard = ({ match }) => {
+        const confirmations = match.partner_override?.confirmations?.length || 0;
+        const status = match.status || 'proposed';
+        const toss = match.toss_winner_user_id ? `${match.toss_winner_user_id} (${match.toss_choice})` : '—';
+        return (
+          <div className="rr-match glass-layer-1">
+            <div className="rr-head">
+              <div className="rr-title">Week {match.week_index + 1}</div>
+              <div className="rr-sub">
+                <Badge className="badge" variant="outline">{status}</Badge>
+                <span style={{ marginLeft: 8 }}>{match.scheduled_at ? new Date(match.scheduled_at).toLocaleString() : 'TBD'} • {match.scheduled_venue || 'Venue TBD'}</span>
+              </div>
+            </div>
+            <div className="rr-players">
+              <div className="rr-player-row">{match.player_ids.join(' • ')}</div>
+              <div className="rr-meta-row">Toss: {toss} • Override confirms: {confirmations}/4</div>
+            </div>
+            <div className="rr-actions">
+              <Button size="sm" className="blue-outline-button" onClick={() => doToss(match.id)}>Toss</Button>
+              <Button size="sm" className="blue-outline-button" onClick={() => proposeOverride(match)}>Override</Button>
+              <Button size="sm" className="blue-outline-button" onClick={() => confirmOverride(match.id)}>Confirm Override</Button>
+              <Button size="sm" className="btn-primary-ios" onClick={() => setRrShowMatch(match)}>Open</Button>
+            </div>
           </div>
-          <div className="rr-players">
-            <div className="rr-player-row">{match.player_ids.join(' • ')}</div>
-          </div>
-          <div className="rr-actions">
-            <Button size="sm" className="blue-outline-button" onClick={() => doToss(match.id)}>Toss</Button>
-            <Button size="sm" className="blue-outline-button" onClick={() => proposeOverride(match)}>Override</Button>
-            <Button size="sm" className="blue-outline-button" onClick={() => confirmOverride(match.id)}>Confirm Override</Button>
-            <Button size="sm" className="btn-primary-ios" onClick={() => setRrShowMatch(match)}>Open</Button>
-          </div>
-        </div>
-      );
+        );
+      };
 
       return (
         <div className="rr-dashboard">
