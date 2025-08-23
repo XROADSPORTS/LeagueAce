@@ -2822,8 +2822,13 @@ function App() {
     useEffect(() => {
       loadUpcomingMatches();
       if (user) {
-        // Attempt to load RR weeks for default tier selection if any
-        // rrTierId will be selected via a simple input for now
+        // Load player's RR tiers for dropdown (placeholder: using joined tiers data)
+        // If backend adds a dedicated RR tiers endpoint, switch to that
+        if (userJoinedTiers && Array.isArray(userJoinedTiers)) {
+          const rrTiers = userJoinedTiers.filter(t => (t?.competition_system || '').toLowerCase().includes('round'));
+          setRrMyTiers(rrTiers);
+          if (!rrTierId && rrTiers.length > 0) setRrTierId(rrTiers[0].id);
+        }
         if (rrTierId) {
           fetchRRWeeks(rrTierId);
           fetchRRStandings(rrTierId);
