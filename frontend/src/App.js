@@ -477,7 +477,7 @@ function App() {
                       step="0.5"
                       value={formData.rating_level}
                       onChange={(e) => {
-                        const val = clampRound(parseFloat(e.target.value));
+                        const val = clampRound(e.target.value);
                         setFormData({...formData, rating_level: val});
                       }}
                       required
