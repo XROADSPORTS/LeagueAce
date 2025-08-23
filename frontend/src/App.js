@@ -3314,6 +3314,19 @@ function App() {
                   <Button className="blue-outline-button" onClick={() => confirmOverride(rrShowMatch.id)}>Confirm Override</Button>
                   <Button className="btn-primary-ios" onClick={() => submitScore(rrShowMatch.id)}>Submit Demo Score</Button>
                   <Button className="btn-primary-ios" onClick={() => approveScore(rrShowMatch.id)}>Approve</Button>
+                  {rrShowMatch.status === 'confirmed' && (
+                    <Button className="blue-outline-button" onClick={async ()=> {
+                      try {
+                        const { data } = await axios.get(`${API}/rr/matches/${rrShowMatch.id}/ics`);
+                        const blob = new Blob([data.ics], { type: 'text/calendar;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = `rr_${rrShowMatch.id}.ics`; a.click(); URL.revokeObjectURL(url);
+                      } catch (e) {
+                        toast({ title: 'Error', description: e?.response?.data?.detail || 'ICS unavailable', variant: 'destructive' });
+                      }
+                    }}>Add to Calendar</Button>
+                  )}
                 </div>
                 <div className="rr-close">
                   <Button variant="ghost" onClick={()=> setRrShowMatch(null)}>Close</Button>
