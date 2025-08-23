@@ -1619,22 +1619,23 @@ function App() {
                         setMembersLoading(true);
                         if (typeof onRefresh === 'function') { await onRefresh(); }
                         let dataResp = await axios.get(`${API}/rating-tiers/${tid}/members`, { params: { _ts: Date.now() } });
-                        let data = dataResp.data;
+                        let data = Array.isArray(dataResp.data) ? dataResp.data : [];
                         // Fallback: if empty, try resolving tier id via join code, then refetch
-                        if (!Array.isArray(data) || data.length === 0) {
+                        if (data.length === 0) {
                           try {
                             const code = (tierState.join_code || tier.join_code || '').trim().toUpperCase();
                             if (code && code.length === 6) {
                               const by = await axios.get(`${API}/rating-tiers/by-code/${code}`);
-                              if (by?.data?.id && by.data.id !== tid) {
-                                const second = await axios.get(`${API}/rating-tiers/${by.data.id}/members`, { params: { _ts: Date.now() } });
-                                data = second.data;
-                                // also sync the id if needed
-                                setTierState(prev => ({ ...prev, id: by.data.id }));
+                              const resolvedId = by?.data?.id;
+                              if (resolvedId) {
+                                const second = await axios.get(`${API}/rating-tiers/${resolvedId}/members`, { params: { _ts: Date.now() } });
+                                data = Array.isArray(second.data) ? second.data : [];
+                                setTierState(prev => ({ ...prev, id: resolvedId }));
                               }
                             }
                           } catch (_) { /* ignore */ }
                         }
+                        setMembers(data);
                         setTierState(prev => ({ ...prev, _members: data, current_players: Array.isArray(data) ? data.length : prev.current_players }));
                         if (!data || data.length === 0) {
                           setTimeout(async () => {
