@@ -355,6 +355,7 @@ class UserProfileCreate(BaseModel):
     name: str
     phone: Optional[str] = None
     rating_level: float = Field(ge=3.0, le=5.5)
+    lan: Optional[str] = None  # optional on create; will be generated if missing
     photo_url: Optional[str] = None
     role: UserRole = UserRole.PLAYER
     auth_provider: AuthProvider = AuthProvider.EMAIL
