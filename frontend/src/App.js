@@ -184,6 +184,17 @@ function App() {
     } catch (error) {
       const detail = error?.response?.data?.detail || "Apple sign-in failed";
       toast({ title: "Sign-in error", description: detail, variant: "destructive" });
+  // Persist auth in sessionStorage (Remember: Session-only)
+  useEffect(() => {
+    try {
+      if (user) {
+        sessionStorage.setItem('la:auth_user', JSON.stringify(user));
+      } else {
+        sessionStorage.removeItem('la:auth_user');
+      }
+    } catch (_) {}
+  }, [user]);
+
       console.error("Error with Apple sign-in:", error);
     } finally {
       setLoading(false);
