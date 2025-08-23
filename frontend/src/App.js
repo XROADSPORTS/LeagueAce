@@ -548,9 +548,10 @@ function App() {
           toast({ title: "League created", description: `${created.name} (${created.sport_type})` });
           // Immediately proceed to Tier 2: select this league and open Four-Tier tab
           setSelectedLeague(created);
+          saveLastManagerLeague(user.id, activeSport, created.id);
           setActiveManagerTab("four-tier");
           // Refresh persisted list
-          loadManagerData();
+          await loadManagerData();
           setShowCreateLeague(false);
           setLeagueData({ name: "", sport_type: activeSport, description: "" });
         } catch (error) {
