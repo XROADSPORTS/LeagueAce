@@ -159,7 +159,7 @@ class JoinByCodeTester:
             data=rating_data
         )
         
-        if not success or 'id' not in response:
+        if not success or not response or 'id' not in response:
             print("❌ Failed to create Rating Tier")
             return False
         
