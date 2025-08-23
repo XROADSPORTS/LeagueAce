@@ -517,6 +517,76 @@ async def rr_match_ics(match_id: str):
     ics = f"BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//LeagueAce//RR//EN\nBEGIN:VEVENT\nUID:{m.get('id')}@leagueace\nDTSTAMP:{dtstamp}\nDTSTART:{dtstart}\nSUMMARY:{summary}\nLOCATION:{location}\nEND:VEVENT\nEND:VCALENDAR"
     return {"ics": ics}
 
+# ========= RR Toss & Partner Override =========
+class RRTossRequest(BaseModel):
+    actor_user_id: str
+    choice: Optional[str] = None  # 'serve' or 'court' or None (random choice)
+
+@app.post("/api/rr/matches/{match_id}/toss")
+async def rr_toss(match_id: str, body: RRTossRequest):
+    m = await db.rr_matches.find_one({"id": match_id})
+    if not m:
+        raise HTTPException(status_code=404, detail="Match not found")
+    if m.get("toss_winner_user_id"):
+        raise HTTPException(status_code=400, detail="Toss already done")
+    players = m.get("player_ids") or []
+    if not players or len(players) != 4:
+        raise HTTPException(status_code=400, detail="Match must have 4 players for toss")
+    winner = random.choice(players)
+    choice = body.choice if body.choice in ("serve", "court") else random.choice(["serve", "court"])
+    await db.rr_matches.update_one({"id": match_id}, {"$set": {"toss_winner_user_id": winner, "toss_choice": choice}})
+    await rr_audit("toss", match_id, body.actor_user_id, {"winner": winner, "choice": choice})
+    await rr_notify(players, f"Toss: {winner} chose {choice}")
+    return {"winner_user_id": winner, "choice": choice}
+
+class RRPartnerOverrideRequest(BaseModel):
+    actor_user_id: str
+    sets: List[List[List[str]]]  # [[[p1,p2],[p3,p4]], ... x3]
+
+@app.post("/api/rr/matches/{match_id}/partner-override")
+async def rr_partner_override(match_id: str, body: RRPartnerOverrideRequest):
+    m = await db.rr_matches.find_one({"id": match_id})
+    if not m:
+        raise HTTPException(status_code=404, detail="Match not found")
+    players = set(m.get("player_ids") or [])
+    if len(players) != 4:
+        raise HTTPException(status_code=400, detail="Match must have 4 players")
+    # Validate 3 sets and all players involved each set
+    if len(body.sets) != 3:
+        raise HTTPException(status_code=400, detail="Need 3 sets of override pairs")
+    for st in body.sets:
+        if len(st) != 2 or any(len(pair) != 2 for pair in st):
+            raise HTTPException(status_code=400, detail="Each set requires two pairs of two players")
+        flat = set(st[0] + st[1])
+        if flat != players:
+            raise HTTPException(status_code=400, detail="Each set must include exactly these 4 players")
+    override = {"sets": body.sets, "confirmations": [body.actor_user_id]}
+    await db.rr_matches.update_one({"id": match_id}, {"$set": {"partner_override": override}})
+    await rr_audit("partner_override_propose", match_id, body.actor_user_id, {"sets": body.sets})
+    await rr_notify(list(players), "Partner override proposed. All 4 players must confirm.")
+    return {"status": "pending_confirmations"}
+
+class RRPartnerOverrideConfirmRequest(BaseModel):
+    user_id: str
+
+@app.post("/api/rr/matches/{match_id}/partner-override/confirm")
+async def rr_partner_override_confirm(match_id: str, body: RRPartnerOverrideConfirmRequest):
+    m = await db.rr_matches.find_one({"id": match_id})
+    if not m or not m.get("partner_override"):
+        raise HTTPException(status_code=404, detail="No override pending")
+    override = m.get("partner_override")
+    confs = set(override.get("confirmations") or [])
+    if body.user_id in confs:
+        return {"status": "already_confirmed"}
+    confs.add(body.user_id)
+    override["confirmations"] = list(confs)
+    await db.rr_matches.update_one({"id": match_id}, {"$set": {"partner_override": override}})
+    await rr_audit("partner_override_confirm", match_id, body.user_id, None)
+    players = set(m.get("player_ids") or [])
+    await rr_notify(list(players), f"Override confirmations: {len(confs)}/4")
+    locked = all(p in confs for p in players)
+    return {"status": "locked" if locked else "pending", "confirmations": len(confs)}
+
 # ========= RR Let’s Play & Scorecard =========
 
 # Let’s Play partner rotation logic helper
