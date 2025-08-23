@@ -432,7 +432,7 @@ function App() {
         name: "",
         email: "",
         phone: "",
-        rating_level: 4.0,
+        rating_level: role === 'Player' ? 4.0 : null,
         role: role
       });
 
