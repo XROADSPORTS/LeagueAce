@@ -473,6 +473,11 @@ async def rr_schedule_tier(tier_id: str, body: RRScheduleRequest):
 
     return {"status": "ok", "weeks": weeks, "feasibility_score": feasibility_score, "conflicts": conflicts, "schedule_quality": schedule_quality}
 
+@app.get("/api/rr/schedule-meta")
+async def rr_schedule_meta(tier_id: str):
+    meta = await db.rr_schedule_meta.find_one({"tier_id": tier_id})
+    return parse_from_mongo(meta) if meta else {"tier_id": tier_id, "feasibility_score": 0, "schedule_quality": 0, "conflicts": {}}
+
 @app.get("/api/rr/weeks")
 async def rr_weeks(player_id: str, tier_id: Optional[str] = None):
     q = {"tier_id": tier_id} if tier_id else {}
