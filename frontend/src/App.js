@@ -120,12 +120,14 @@ function App() {
   // Authentication functions (same as before)
   const handleGoogleSignIn = async () => {
     try {
+      setLoading(true);
       const mockGoogleResponse = {
         provider: "Google",
         token: "mock_google_token",
-        email: "user@gmail.com",
-        name: "Google User",
-        provider_id: "google_123"
+        email: signupType === 'manager' ? "manager.user@gmail.com" : "sarah.johnson@gmail.com",
+        name: signupType === 'manager' ? "Manager User" : "Sarah Johnson",
+        provider_id: "google_123",
+        role: signupType === 'manager' ? "League Manager" : "Player"
       };
       
       const response = await axios.post(`${API}/auth/social-login`, mockGoogleResponse);
@@ -133,6 +135,8 @@ function App() {
       setCurrentView("sport-selection");
     } catch (error) {
       console.error("Error with Google sign-in:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
