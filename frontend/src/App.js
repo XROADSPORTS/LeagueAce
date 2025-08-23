@@ -2713,6 +2713,7 @@ function App() {
                       className={`glass-card-blue league-card ${selectedLeague?.id === league.id ? 'selected' : ''}`}
                       onClick={() => {
                         setSelectedLeague(league);
+                        saveLastManagerLeague(user.id, activeSport, league.id);
                         setActiveManagerTab('four-tier');
                       }}
                     >
