@@ -1705,8 +1705,9 @@ function App() {
                                     <Button size="sm" variant="destructive" className="danger-outline-button" onClick={async ()=>{
                                       if (!confirm('Remove this player from the tier?')) return;
                                       try {
-                                        await axios.delete(`${API}/rating-tiers/${tier.id}/members/${m.user_id}`);
-                                        const { data } = await axios.get(`${API}/rating-tiers/${tier.id}/members`);
+                                        await axios.delete(`${API}/rating-tiers/${currentTierId}/members/${m.user_id}`);
+                                        const { data } = await axios.get(`${API}/rating-tiers/${currentTierId}/members`, { params: { _ts: Date.now() } });
+                                        setMembers(Array.isArray(data) ? data : []);
                                         setTierState(prev => ({ ...prev, _members: data }));
                                         if (typeof onRefresh === 'function') { await onRefresh(); }
                                         toast({ title: 'Removed', description: 'Player removed from this tier' });
