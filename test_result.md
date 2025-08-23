@@ -436,7 +436,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Authentication & Profiles: verify /api/auth/social-login role escalation works"
     - "Role-aware Social Login Flow (Frontend): ensure role persists (Manager vs Player)"
   stuck_tasks: []
   test_all: false
