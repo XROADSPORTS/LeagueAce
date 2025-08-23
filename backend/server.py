@@ -477,6 +477,25 @@ async def rr_match_ics(match_id: str):
     return {"ics": ics}
 
 # ========= RR Let’s Play & Scorecard =========
+
+# Let’s Play partner rotation logic helper
+# Given 4 players [p1,p2,p3,p4], we rotate partners across 3 sets:
+# - Set 1: (p1,p2) vs (p3,p4)
+# - Set 2: (p1,p3) vs (p2,p4)
+# - Set 3: (p1,p4) vs (p2,p3)
+# If manual override is desired, frontend can submit sets using submit-scorecard with chosen winners/losers;
+# a separate confirmation layer could be added later if required.
+
+def rr_default_pairings(players: List[str]) -> List[List[List[str]]]:
+    if len(players) != 4:
+        raise ValueError("Exactly 4 players required")
+    p1, p2, p3, p4 = players
+    return [
+        [[p1, p2], [p3, p4]],
+        [[p1, p3], [p2, p4]],
+        [[p1, p4], [p2, p3]],
+    ]
+
 class RRSubmitScorecard(BaseModel):
     sets: List[RRScoreSet]
     submitted_by_user_id: str
