@@ -335,7 +335,10 @@ function App() {
           </div>
           <div className="social-login-buttons">
             <Button 
-              onClick={() => handleGoogleSignIn(signupType)}
+              onClick={() => { 
+                if (!signupType) { toast({ title: "Select account type", description: "Choose Player or League Manager first", variant: "destructive" }); return; }
+                handleGoogleSignIn(signupType);
+              }}
               className="social-login-button google-button"
               disabled={loading}
             >
