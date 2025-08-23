@@ -1435,6 +1435,9 @@ function App() {
       const [memberListOpen, setMemberListOpen] = useState(false);
       const [membersLoading, setMembersLoading] = useState(false);
       const [members, setMembers] = useState([]);
+      const [showDebug, setShowDebug] = useState(false);
+      const currentTierId = (tierState.id || tier.id);
+      const currentJoinCode = (tierState.join_code || tier.join_code || '').trim().toUpperCase();
 
       const [minInput, setMinInput] = useState(tier.min_rating);
       const [maxInput, setMaxInput] = useState(tier.max_rating);
