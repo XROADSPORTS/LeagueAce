@@ -1601,6 +1601,22 @@ function App() {
                   <p className="no-groups">No groups created yet</p>
                 )}
                 
+
+                <div className="members-section" style={{ marginTop: 16 }}>
+                  <h5>Members</h5>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button size="sm" className="blue-outline-button" onClick={async ()=>{
+                      try {
+                        const { data } = await axios.get(`${API}/rating-tiers/${tier.id}/members`);
+                        setTierState(prev => ({ ...prev, _members: data }));
+                        setMemberListOpen(true);
+                      } catch (err) {
+                        toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to load members', variant: 'destructive' });
+                      }
+                    }}>Player List</Button>
+                  </div>
+                </div>
+
                 {!showGroupForm ? (
                   <Button 
                     size="sm"
