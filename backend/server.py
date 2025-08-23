@@ -283,11 +283,15 @@ async def get_joined_tiers(user_id: str, sport_type: Optional[str] = None):
         # Only apply sport_type filter when league has a sport_type stored
         if sport_type and league and league.get("sport_type") and league.get("sport_type") != sport_type:
             continue
+        # compute current players in tier
+        current_players = await db.tier_memberships.count_documents({"rating_tier_id": tier.get("id"), "status": "Active"})
         out.append({
             "id": tier.get("id"),
             "name": tier.get("name"),
             "min_rating": tier.get("min_rating"),
             "max_rating": tier.get("max_rating"),
+            "max_players": tier.get("max_players"),
+            "current_players": int(current_players),
             "join_code": tier.get("join_code"),
             "league_name": league.get("name") if league else None,
             "sport_type": league.get("sport_type") if league else None,
