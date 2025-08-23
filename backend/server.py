@@ -976,9 +976,25 @@ async def rr_weeks(player_id: str, tier_id: Optional[str] = None):
     q = {"tier_id": tier_id} if tier_id else {}
     matches = await db.rr_matches.find(q).to_list(5000)
     user_matches = [m for m in matches if player_id in (m.get("player_ids") or [])]
-    by_week: Dict[int, List[Dict[str, Any]]] = {}
+    # attach player objects for avatars
+    def attach_players(mdoc):
+        ids = mdoc.get("player_ids") or []
+        mdoc = parse_from_mongo(mdoc)
+        mdoc["player_objs"] = []
+        return mdoc, ids
+    enriched = []
     for m in user_matches:
-        by_week.setdefault(int(m.get("week_index", 0)), []).append(parse_from_mongo(m))
+        mdoc, ids = attach_players(m)
+        players = []
+        for pid in ids:
+            u = await db.users.find_one({"id": pid})
+            if u:
+                players.append({"id": u.get("id"), "name": u.get("name"), "photo_url": u.get("photo_url")})
+        mdoc["player_objs"] = players
+        enriched.append(mdoc)
+    by_week: Dict[int, List[Dict[str, Any]]] = {}
+    for m in enriched:
+        by_week.setdefault(int(m.get("week_index", 0)), []).append(m)
     weeks = [{"week_index": k, "matches": v} for k, v in sorted(by_week.items(), key=lambda x: x[0])]
     return {"weeks": weeks}
 
