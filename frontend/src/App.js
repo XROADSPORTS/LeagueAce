@@ -902,7 +902,7 @@ function App() {
             format_tier_id: formatTierId,
             ...ratingData
           });
-          loadRatingTiers(formatTierId);
+          await loadRatingTiers(formatTierId);
           toast({ 
             title: "Success", 
             description: `Rating tier "${ratingData.name}" created with join code!` 
