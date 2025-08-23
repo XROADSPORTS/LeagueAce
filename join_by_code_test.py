@@ -47,8 +47,14 @@ class JoinByCodeTester:
                     response_data = response.json()
                     if isinstance(response_data, dict) and len(response_data) > 0:
                         print(f"   Response keys: {list(response_data.keys())}")
+                    elif response_data is None:
+                        print(f"   Response data is None")
+                    else:
+                        print(f"   Response data: {response_data}")
                     return True, response_data
-                except:
+                except Exception as e:
+                    print(f"   JSON parse error: {e}")
+                    print(f"   Raw response: {response.text}")
                     return True, {}
             else:
                 print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
