@@ -476,6 +476,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Round Robin UI Integration"
     - "User Authentication UI"
     - "Group Management UI"
     - "Competition System UI"
