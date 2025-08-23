@@ -3467,9 +3467,21 @@ function App() {
                   <Button className="btn-primary-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={()=> createInvite()}>
                     {creatingInvite ? 'Creating…' : 'Create Partner Link'}
                   </Button>
-                  <Button className="btn-outline-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={()=> {
-                    const partnerId = prompt('Enter partner\'s LeagueAce User ID');
-                    if (partnerId) createInvite(partnerId);
+                  <Button className="btn-outline-ios" disabled={creatingInvite || (tierCode||'').length !== 6} onClick={async ()=> {
+                    const q = prompt('Search by Name or LAN (e.g., LAN-ABC123)');
+                    if (!q) return;
+                    try {
+                      const { data } = await axios.get(`${API}/users/search`, { params: { q } });
+                      const options = (data.results||[]).map(r => `${r.name} • ${r.lan||'—'} • ${r.id}`);
+                      const chosen = options.length === 1 ? options[0] : prompt(`Select:\n${options.join('\n')}\n\nPaste the full line to choose`);
+                      if (chosen) {
+                        const parts = chosen.split('•');
+                        const id = parts[2]?.trim();
+                        if (id) createInvite(id);
+                      }
+                    } catch (e) {
+                      toast({ title: 'Error', description: 'Search failed', variant: 'destructive' });
+                    }
                   }}>
                     Invite User (in-app)
                   </Button>
