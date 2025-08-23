@@ -87,7 +87,7 @@ class QADatasetProvisioner:
         player_data = {
             "provider": "Google", 
             "token": "qa_player_token",
-            "email": "player.qa@leagueace.test",
+            "email": "player.qa@gmail.com",
             "name": "QA Player",
             "provider_id": "qa_player_123",
             "role": "Player",
