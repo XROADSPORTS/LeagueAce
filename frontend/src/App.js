@@ -3282,7 +3282,10 @@ function App() {
                 <Tabs value={weekTab.toString()} onValueChange={(v)=> setWeekTab(parseInt(v))}>
                   <TabsList>
                     {rrWeeks.map(w => (
-                      <TabsTrigger key={w.week_index} value={w.week_index.toString()}>Week {w.week_index+1}</TabsTrigger>
+                      <TabsTrigger key={w.week_index} value={w.week_index.toString()}>
+                        Week {w.week_index+1}
+                        {/* conflict indicator placeholder: backend conflicts are per schedule; expose via tooltip in future */}
+                      </TabsTrigger>
                     ))}
                   </TabsList>
                 </Tabs>
