@@ -3875,8 +3875,8 @@ function App() {
             <PlayerDoubles />
           </TabsContent>
 
-          <TabsContent value="schedule" className="tab-content">
-            <PlayerSchedule />
+          <TabsContent value="rr" className="tab-content">
+            <RoundRobinDashboard />
           </TabsContent>
 
           <TabsContent value="standings" className="tab-content">
