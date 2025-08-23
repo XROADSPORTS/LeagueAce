@@ -10,6 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, EmailStr
 from motor.motor_asyncio import AsyncIOMotorClient
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
 # ========= FastAPI app =========
 app = FastAPI(title="LeagueAce API", version="1.0.0")
 
