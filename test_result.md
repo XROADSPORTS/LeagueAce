@@ -362,15 +362,18 @@ backend:
 
   - task: "Round Robin New Features Bundle"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "🎾 ROUND ROBIN NEW FEATURES TESTING COMPLETE - Comprehensive testing of new RR features delivered in this bundle. **EXCELLENT RESULTS**: 28/29 tests passed (96.6% success rate). **✅ WORKING FEATURES**: 1) Scheduler with 8 players and week_windows mapping returns correct response structure and creates RR slates/matches ✅, 2) Availability constraints working - users not available for assigned windows appear in conflicts ✅, 3) Let's Play helper with use_default_pairings=true works without error, normal validation remains ✅, 4) Standings endpoint has correct structure ready for pct_game_win and badges ✅, 5) Re-run schedule clears old data and replaces with new ✅, 6) Availability endpoints GET/PUT working perfectly ✅. **❌ CRITICAL BUG**: POST /api/rr/matches/{mid}/approve-scorecard returns 500 Internal Server Error due to KeyError in rr_recalc_standings function - player ID '72e9e875-0c7a-4ec3-baa7-6d2d1c084c28' not found in stats dictionary. This prevents testing of pct_game_win calculation with 4-decimal rounding and badges (first_match, finished_all). **ROOT CAUSE**: The standings recalculation logic has a bug where it tries to access player IDs that don't exist in the stats dictionary when processing scorecard sets. **IMPACT**: Cannot verify standings computation and badge functionality until this bug is fixed."
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL BUG FIX VERIFIED - STANDINGS COMPUTATION FULLY RESTORED! **COMPREHENSIVE FIX TESTING RESULTS**: 27/27 tests passed (100% success rate) for the fixed standings computation as requested in review. **✅ CRITICAL SUCCESS**: Fixed KeyError in rr_recalc_standings function by adding safety checks for player IDs in winners/losers lists. **✅ NO 500 ERRORS**: POST /api/rr/matches/{mid}/approve-scorecard now works perfectly without Internal Server Errors. **✅ STANDINGS COMPUTATION VERIFIED**: GET /api/rr/standings returns correct pct_game_win with 4-decimal precision (0.5312, 0.4688, etc.) and proper sorting by set points then game win percentage. **✅ BADGES WORKING**: first_match badges correctly awarded to players with matches_played >= 1, finished_all badges awarded appropriately. **✅ AVAILABILITY CONFLICTS**: Scheduling with availability constraints correctly detects conflicts (Week 0: 3 players, Week 6: 8 players, etc.). **✅ COMPLETE WORKFLOW**: Successfully tested create users → configure tier → schedule with constraints → propose/confirm slots → submit scorecard → approve scorecard → verify standings. **TECHNICAL FIX**: Added safety check in standings calculation to ensure all winner/loser player IDs exist in stats dictionary before accessing, preventing KeyError exceptions. The Round Robin standings computation is now fully functional and production-ready."
 
 frontend:
   - task: "Doubles UI Phase 1: My Doubles Teams + Partner Link"
