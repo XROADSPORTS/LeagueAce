@@ -163,7 +163,7 @@ async def social_login(body: SocialLoginRequest):
             "phone": None,
             "rating_level": 4.0,
             "lan": lan_code,
-            "role": "Player",
+            "role": (body.role or "Player"),
             "sports_preferences": [],
             "created_at": now_utc().isoformat(),
             "auth": {"provider": body.provider, "provider_id": body.provider_id}
