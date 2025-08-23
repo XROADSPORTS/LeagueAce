@@ -3370,11 +3370,32 @@ function App() {
                       [rrShowMatch.player_ids[2], rrShowMatch.player_ids[3]],
                     ];
                     const pairs = p || (idx === 0 ? defaultPairs : idx === 1 ? [[rrShowMatch.player_ids[0], rrShowMatch.player_ids[2]], [rrShowMatch.player_ids[1], rrShowMatch.player_ids[3]]] : [[rrShowMatch.player_ids[0], rrShowMatch.player_ids[3]], [rrShowMatch.player_ids[1], rrShowMatch.player_ids[2]]]);
+                    const t1 = setInputs[idx].team1_games;
+                    const t2 = setInputs[idx].team2_games;
+                    const winnerIdx = setInputs[idx].winnerIdx;
                     return (
                       <div key={num} className="set-row">
                         <div>Set {num}</div>
                         <div>{pairs[0].join(' & ')} vs {pairs[1].join(' & ')}</div>
-                        <div className="score-box">—</div>
+                        <div className="score-box">
+                          <Input placeholder="Team1" className="blue-input" value={t1} onChange={(e)=> {
+                            const v = e.target.value; const arr = [...setInputs]; arr[idx] = { ...arr[idx], team1_games: v }; setSetInputs(arr);
+                          }} style={{ width: 70, marginRight: 6 }} />
+                          <Input placeholder="Team2" className="blue-input" value={t2} onChange={(e)=> {
+                            const v = e.target.value; const arr = [...setInputs]; arr[idx] = { ...arr[idx], team2_games: v }; setSetInputs(arr);
+                          }} style={{ width: 70, marginRight: 6 }} />
+                          <Select value={winnerIdx === null ? '' : String(winnerIdx)} onValueChange={(v)=> {
+                            const w = v === '' ? null : parseInt(v); const arr = [...setInputs]; arr[idx] = { ...arr[idx], winnerIdx: w }; setSetInputs(arr);
+                          }}>
+                            <SelectTrigger className="blue-input" style={{ width: 140 }}>
+                              <SelectValue placeholder="Winner team" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">Team 1</SelectItem>
+                              <SelectItem value="1">Team 2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     );
                   })}
