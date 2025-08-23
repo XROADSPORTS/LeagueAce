@@ -570,6 +570,10 @@ test_plan:
 frontend:
 
   - task: "Rating Tier Membership counts and Manager Tier 3 members list"
+      - working: false
+        agent: "user"
+        comment: "Specific case: League CP-RR, join code J4YQDP. Player Sarah Johnson joined via this code. Manager Player List button shows no data."
+
     implemented: true
     working: true
     file: "backend/server.py"
