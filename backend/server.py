@@ -319,7 +319,13 @@ async def create_format_tier(payload: FormatTierCreate):
 @app.get("/api/format-tiers/{format_tier_id}/rating-tiers")
 async def list_rating_tiers(format_tier_id: str):
     rows = await db.rating_tiers.find({"format_tier_id": format_tier_id}).sort("created_at", 1).to_list(1000)
-    return [parse_from_mongo(r) for r in rows]
+    out = []
+    for r in rows:
+        doc = parse_from_mongo(r)
+        count = await db.tier_memberships.count_documents({"rating_tier_id": doc.get("id"), "status": "Active"})
+        doc["current_players"] = int(count)
+        out.append(doc)
+    return out
 
 @app.post("/api/rating-tiers")
 async def create_rating_tier(payload: RatingTierCreate):
