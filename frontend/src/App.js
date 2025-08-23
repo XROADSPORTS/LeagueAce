@@ -1433,6 +1433,7 @@ function App() {
       const [tierState, setTierState] = useState(tier);
       const [showEditRange, setShowEditRange] = useState(false);
       const [memberListOpen, setMemberListOpen] = useState(false);
+      const [membersLoading, setMembersLoading] = useState(false);
 
       const [minInput, setMinInput] = useState(tier.min_rating);
       const [maxInput, setMaxInput] = useState(tier.max_rating);
