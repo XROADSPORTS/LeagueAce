@@ -416,6 +416,10 @@ function App() {
             <span>Or continue with</span>
           </div>
           <div className="social-login-buttons">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <Input id="social-email" placeholder="Override email (optional)" className="blue-input" style={{ maxWidth: 260 }} />
+              <Input id="social-name" placeholder="Override name (optional)" className="blue-input" style={{ maxWidth: 220 }} />
+            </div>
             <Button 
               onClick={() => { 
                 const effectiveType = signupType || 'player';
