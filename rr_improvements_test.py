@@ -513,7 +513,7 @@ class RRImprovementsAPITester:
         
         # Test confirmations from all 4 players
         confirmations_made = 0
-        for i, user_id in enumerate(self.user_ids[:4]):
+        for i, user_id in enumerate(match_players):
             confirm_data = {
                 "user_id": user_id
             }
