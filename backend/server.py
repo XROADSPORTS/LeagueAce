@@ -295,12 +295,6 @@ async def get_joined_tiers(user_id: str, sport_type: Optional[str] = None):
         })
     return out
 
-    if not manager:
-        raise HTTPException(status_code=404, detail="Manager user not found")
-    row = League(name=league.name, sport_type=league.sport_type, description=league.description, manager_id=created_by)
-    await db.leagues.insert_one(prepare_for_mongo(row.dict()))
-    return parse_from_mongo(row.dict())
-
 @app.get("/api/leagues/{league_id}/format-tiers")
 async def list_format_tiers(league_id: str):
     rows = await db.format_tiers.find({"league_id": league_id}).sort("created_at", 1).to_list(1000)
