@@ -108,7 +108,7 @@ class JoinByCodeTester:
             params={"created_by": self.manager_id}
         )
         
-        if not success or 'id' not in response:
+        if not success or not response or 'id' not in response:
             print("❌ Failed to create Tennis League")
             return False
         
