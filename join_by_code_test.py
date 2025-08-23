@@ -393,7 +393,7 @@ class JoinByCodeTester:
             data=out_of_range_player_data
         )
         
-        if not success or 'id' not in response:
+        if not success or not response or 'id' not in response:
             print("   ❌ Failed to create out-of-range player")
             return False
         
