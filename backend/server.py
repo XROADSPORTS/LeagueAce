@@ -1108,6 +1108,17 @@ async def create_season(season_data: SeasonCreate):
     return season_obj
 
 @api_router.get("/leagues/{league_id}/seasons", response_model=List[Season])
+
+@api_router.get("/users/search")
+async def search_users(q: str):
+    # Search by name (case-insensitive) or exact LAN
+    regex = {"$regex": q, "$options": "i"}
+    users = await db.users.find({"$or": [{"name": regex}, {"lan": q}]}).limit(20).to_list(20)
+    out = []
+    for u in users:
+        out.append({"id": u.get("id"), "name": u.get("name"), "lan": u.get("lan"), "email": u.get("email")})
+    return {"results": out}
+
 async def get_league_seasons(league_id: str):
     seasons = await db.seasons.find({"league_id": league_id}).to_list(100)
     return [Season(**parse_from_mongo(season)) for season in seasons]
