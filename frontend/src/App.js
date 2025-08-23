@@ -845,6 +845,22 @@ function App() {
         }
       };
 
+      // SSE: Live membership updates for selected format tier
+      useEffect(() => {
+        if (!selectedFormatTier?.id) return;
+        const url = `${API}/events/tier-memberships?format_tier_id=${selectedFormatTier.id}`;
+        const es = new EventSource(url);
+        es.onmessage = () => {
+          // A membership changed; refresh rating tiers for this format
+          loadRatingTiers(selectedFormatTier.id);
+        };
+        es.onerror = () => {
+          es.close();
+        };
+        return () => es.close();
+      }, [selectedFormatTier?.id]);
+
+
       // Auto-load formats when a league is selected or re-selected
       useEffect(() => {
         if (selectedLeague?.id) {
