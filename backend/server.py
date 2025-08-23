@@ -218,6 +218,78 @@ async def create_league(league: LeagueCreate, created_by: Optional[str] = None):
         raise HTTPException(status_code=400, detail="created_by (manager_id) is required")
     # verify user exists
     manager = await db.users.find_one({"id": created_by})
+
+# ========= Join by Code & Memberships =========
+class JoinByCodeRequest(BaseModel):
+    join_code: str
+
+class TierMembership(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rating_tier_id: str
+    user_id: str
+    status: Literal["Active", "Pending", "Rejected"] = "Active"
+    created_at: datetime = Field(default_factory=now_utc)
+
+@app.get("/api/rating-tiers/by-code/{code}")
+async def get_tier_by_code(code: str):
+    code = (code or "").strip().upper()
+    tier = await db.rating_tiers.find_one({"join_code": code})
+    if not tier:
+        raise HTTPException(status_code=404, detail="Join code not found")
+    fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")})
+    league = await db.leagues.find_one({"id": fmt.get("league_id")}) if fmt else None
+    out = parse_from_mongo(tier)
+    out["league_name"] = league.get("name") if league else None
+    return out
+
+@app.post("/api/join-by-code/{user_id}")
+async def join_by_code(user_id: str, body: JoinByCodeRequest):
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    code = (body.join_code or "").strip().upper()
+    tier = await db.rating_tiers.find_one({"join_code": code})
+    if not tier:
+        raise HTTPException(status_code=404, detail="Invalid join code")
+    # rating validation
+    rating = user.get("rating_level", 4.0)
+    min_r = float(tier.get("min_rating", 3.0))
+    max_r = float(tier.get("max_rating", 5.0))
+    if rating < min_r or rating > max_r:
+        raise HTTPException(status_code=400, detail=f"Your rating {rating} is outside this tier range {min_r}-{max_r}")
+    # duplicate check
+    existing = await db.tier_memberships.find_one({"rating_tier_id": tier.get("id"), "user_id": user_id, "status": "Active"})
+    if existing:
+        raise HTTPException(status_code=400, detail="Already joined this tier")
+    seat = TierMembership(rating_tier_id=tier.get("id"), user_id=user_id, status="Active")
+    await db.tier_memberships.insert_one(prepare_for_mongo(seat.dict()))
+    return parse_from_mongo(seat.dict())
+
+@app.get("/api/users/{user_id}/joined-tiers")
+async def get_joined_tiers(user_id: str, sport_type: Optional[str] = None):
+    memberships = await db.tier_memberships.find({"user_id": user_id, "status": "Active"}).to_list(1000)
+    out = []
+    for m in memberships:
+        tier = await db.rating_tiers.find_one({"id": m.get("rating_tier_id")})
+        if not tier:
+            continue
+        fmt = await db.format_tiers.find_one({"id": tier.get("format_tier_id")})
+        league = await db.leagues.find_one({"id": fmt.get("league_id")}) if fmt else None
+        if sport_type and league and league.get("sport_type") != sport_type:
+            continue
+        out.append({
+            "id": tier.get("id"),
+            "name": tier.get("name"),
+            "min_rating": tier.get("min_rating"),
+            "max_rating": tier.get("max_rating"),
+            "join_code": tier.get("join_code"),
+            "league_name": league.get("name") if league else None,
+            "sport_type": league.get("sport_type") if league else None,
+            "joined_at": m.get("created_at"),
+            "status": m.get("status")
+        })
+    return out
+
     if not manager:
         raise HTTPException(status_code=404, detail="Manager user not found")
     row = League(name=league.name, sport_type=league.sport_type, description=league.description, manager_id=created_by)
