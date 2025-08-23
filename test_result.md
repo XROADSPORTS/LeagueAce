@@ -436,11 +436,11 @@ metadata:
 
 - task: "Frontend: Social sign-in (Player) and default role feedback"
   implemented: true
-  working: unknown
+  working: false
   file: "frontend/src/App.js"
-  stuck_count: 0
+  stuck_count: 1
   priority: "high"
-  needs_retesting: true
+  needs_retesting: false
   status_history:
     - working: false
       agent: "user"
@@ -448,14 +448,17 @@ metadata:
     - working: unknown
       agent: "main"
       comment: "Added default-to-Player behavior on first screen, success/error toasts, and loading disable. Needs UI retest."
+    - working: false
+      agent: "testing"
+      comment: "❌ CRITICAL ISSUE: Social sign-in flow is partially working but gets stuck at sport selection screen. Testing shows: ✅ Google sign-in button works and triggers POST /api/auth/social-login (200 response), ✅ Successfully redirects to sport-selection screen, ❌ After selecting Tennis sport and clicking 'Continue with 1 sport', the app does not progress to Player Dashboard. The continue button shows 'Continue with 0 sports' even after selecting Tennis, indicating sport selection state is not being tracked properly. Backend API calls are working (auth endpoints return 200), but frontend state management for sport selection is broken."
 
 - task: "Frontend: Join-by-code modal UX and post-join refresh"
   implemented: true
-  working: unknown
+  working: false
   file: "frontend/src/App.js"
-  stuck_count: 0
+  stuck_count: 1
   priority: "high"
-  needs_retesting: true
+  needs_retesting: false
   status_history:
     - working: false
       agent: "user"
@@ -463,14 +466,17 @@ metadata:
     - working: unknown
       agent: "main"
       comment: "Hardened handler with validation toasts, loading spinner, progress bar, and immediate dashboard refresh on success. Needs UI retest."
+    - working: false
+      agent: "testing"
+      comment: "❌ CANNOT TEST: Unable to test join-by-code modal functionality because the app never reaches the Player Dashboard due to the sport selection bug. The flow gets stuck at sport selection screen where clicking 'Continue with 1 sport' doesn't progress to dashboard. Without access to Player Dashboard, cannot locate or test the 'Join New League' modal functionality. This is blocked by the sport selection issue."
 
 - task: "Frontend: Manager league persistence across tabs"
   implemented: true
-  working: unknown
+  working: false
   file: "frontend/src/App.js"
-  stuck_count: 0
+  stuck_count: 1
   priority: "medium"
-  needs_retesting: true
+  needs_retesting: false
   status_history:
     - working: false
       agent: "user"
@@ -478,6 +484,9 @@ metadata:
     - working: unknown
       agent: "main"
       comment: "Persisted last selected league in localStorage and auto-load formats/ratings when re-selecting. Needs UI retest."
+    - working: false
+      agent: "testing"
+      comment: "❌ CANNOT TEST: Unable to test Manager league persistence because the app gets stuck at sport selection screen for both Player and Manager roles. After selecting League Manager role and signing in with Google, the flow reaches sport selection but clicking 'Continue with 1 sport' after selecting Tennis does not progress to Manager Dashboard. The same sport selection bug affects both Player and Manager flows, preventing access to dashboard functionality."
 
 agent_communication:
   - agent: "main"
