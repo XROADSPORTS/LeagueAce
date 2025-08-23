@@ -309,6 +309,38 @@ async def list_format_tiers(league_id: str):
     rows = await db.format_tiers.find({"league_id": league_id}).sort("created_at", 1).to_list(1000)
     return [parse_from_mongo(r) for r in rows]
 
+
+# ========= SSE: Tier membership events =========
+subscribers: Dict[str, List[asyncio.Queue]] = {}
+
+async def publish_event(topic: str, data: Dict[str, Any]):
+    queues = subscribers.get(topic, [])
+    for q in queues:
+        await q.put(data)
+
+@app.get("/api/events/tier-memberships")
+async def sse_tier_memberships(format_tier_id: Optional[str] = None, rating_tier_id: Optional[str] = None):
+    topic = "tier_memberships"
+    if format_tier_id:
+        topic = f"tier_memberships:format:{format_tier_id}"
+    if rating_tier_id:
+        topic = f"tier_memberships:rating:{rating_tier_id}"
+    q: asyncio.Queue = asyncio.Queue()
+    subscribers.setdefault(topic, []).append(q)
+
+    async def event_generator():
+        try:
+            while True:
+                data = await q.get()
+                yield f"data: {data}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            # cleanup
+            subscribers[topic].remove(q)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 @app.post("/api/format-tiers")
 async def create_format_tier(payload: FormatTierCreate):
     # validate league
