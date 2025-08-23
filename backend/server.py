@@ -166,18 +166,6 @@ async def upload_picture(user_id: str, file: UploadFile = File(...)):
     await db.users.update_one({"id": user_id}, {"$set": {"photo_url": url}})
     return {"url": url}
 
-    data = {k: v for k, v in payload.dict().items() if v is not None}
-    if "lan" in data and data["lan"]:
-        ex = await db.users.find_one({"lan": data["lan"]})
-        if ex and ex.get("id") != user_id:
-            raise HTTPException(status_code=400, detail="LAN already in use")
-    if data:
-        await db.users.update_one({"id": user_id}, {"$set": prepare_for_mongo(data)})
-    doc = await db.users.find_one({"id": user_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserProfile(**parse_from_mongo(doc))
-
 # ========= League/Format/Rating Tier Models =========
 class LeagueCreate(BaseModel):
     name: str
