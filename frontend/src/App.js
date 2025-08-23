@@ -3736,6 +3736,7 @@ function App() {
           const payload = {};
           if (editName.trim() !== (user.name || "")) payload.name = editName.trim();
           if (editPhone !== (user.phone || "")) payload.phone = editPhone;
+          if (editLAN !== (user.lan || "")) payload.lan = editLAN.trim();
           const { data } = await axios.patch(`${API}/users/${user.id}`, payload);
           setUser(data);
           toast({ title: 'Saved', description: 'Profile updated successfully' });
