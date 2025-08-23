@@ -359,6 +359,16 @@ class UserProfileCreate(BaseModel):
     photo_url: Optional[str] = None
     role: UserRole = UserRole.PLAYER
     auth_provider: AuthProvider = AuthProvider.EMAIL
+
+# LAN generation helper
+async def generate_unique_lan() -> str:
+    # Format: LAN-XXXXXX (alphanumeric)
+    while True:
+        code = 'LAN-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        existing = await db.users.find_one({"lan": code})
+        if not existing:
+            return code
+
     google_id: Optional[str] = None
     apple_id: Optional[str] = None
 
